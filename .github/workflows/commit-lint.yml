@@ -3,6 +3,9 @@ name: Commit Message Lint
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches: [ "**" ]
+  workflow_dispatch:
 
 jobs:
   lint:
