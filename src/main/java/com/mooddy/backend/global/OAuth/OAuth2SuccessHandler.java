@@ -3,7 +3,7 @@ package com.mooddy.backend.global.OAuth;
 import com.mooddy.backend.feature.user.domain.AuthProvider;
 import com.mooddy.backend.feature.user.domain.User;
 import com.mooddy.backend.global.security.JwtService;
-import com.mooddy.backend.repository.UserRepository;
+import com.mooddy.backend.feature.user.repository.UserRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

@@ -1,4 +1,4 @@
-package com.mooddy.backend.global.exception.exception;
+package com.mooddy.backend.global.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
