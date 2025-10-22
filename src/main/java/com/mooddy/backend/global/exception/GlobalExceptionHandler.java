@@ -1,4 +1,4 @@
-package com.mooddy.backend.global.exception.exception;
+package com.mooddy.backend.global.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

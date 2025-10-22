@@ -1,7 +1,7 @@
 package com.mooddy.backend.feature.user.controller;
 
 import com.mooddy.backend.feature.user.domain.User;
-import com.mooddy.backend.repository.UserRepository;
+import com.mooddy.backend.feature.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PatchMapping;

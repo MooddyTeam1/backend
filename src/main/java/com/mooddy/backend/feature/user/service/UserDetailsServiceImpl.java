@@ -1,7 +1,7 @@
 package com.mooddy.backend.feature.user.service;
 
 import com.mooddy.backend.feature.user.domain.User;
-import com.mooddy.backend.repository.UserRepository;
+import com.mooddy.backend.feature.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

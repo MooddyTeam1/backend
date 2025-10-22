@@ -1,4 +1,4 @@
-package com.mooddy.backend.repository;
+package com.mooddy.backend.feature.user.repository;
 
 import com.mooddy.backend.feature.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
