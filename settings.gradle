@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 rootProject.name = 'backend'
+=======
+rootProject.name = 'mooddy_Auth'
+>>>>>>> 3fd2c58 (Temp: 기존 코드 임시 커밋)

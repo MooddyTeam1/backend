@@ -1,0 +1,27 @@
+### 회원가입
+POST http://localhost:8080/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test2@example.com",
+  "nickname": "testuser2",
+  "password": "password123",
+  "birthDate": "2000-01-01"
+}
+
+### 로그인
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "email": "test2@example.com",
+  "password": "password123"
+}
+
+### 인증된 사용자 테스트
+GET http://localhost:8080/api/test/hello
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6InRlc3R1c2VyMSIsImlkIjoxLCJlbWFpbCI6InRlc3QxQGV4YW1wbGUuY29tIiwic3ViIjoidGVzdDFAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjEwMjg3MTEsImV4cCI6MTc2MTExNTExMX0.xFmwqXGISyzSeb5J3_4fgPBt841o_uVHTlrxOvazWws
+
+### 온보딩 완료
+PATCH http://localhost:8080/users/1/onboarding
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6InRlc3R1c2VyMiIsImlkIjoxLCJlbWFpbCI6InRlc3QyQGV4YW1wbGUuY29tIiwic3ViIjoidGVzdDJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjEwMzEyNDIsImV4cCI6MTc2MTExNzY0Mn0.kr9OoPJqRv5gPPJw08utqN8bh8Bv9SWpY-IgRv-rCeI
