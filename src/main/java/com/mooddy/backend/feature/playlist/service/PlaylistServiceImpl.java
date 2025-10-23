@@ -354,7 +354,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         playlistRepository.save(playlist);
         log.info("플레이리스트 갱신 완료");
 
-        playlist = playlistRepository.findById(playlistId).get();
+        playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
         return PlaylistResponseDto.from(playlist, user);
     }
 
