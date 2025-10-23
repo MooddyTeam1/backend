@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +30,7 @@ public class ItunesServiceImpl implements ItunesService {
 
     @Override
     public List<TrackSearchResponseDto> searchTracks(String query) {
-        log.info("🔍 iTunes 검색 시작 (WebClient) - query: {}", query);
+        log.info("iTunes 검색 시작 (WebClient) - query: {}", query);
 
         String uriString = UriComponentsBuilder.fromHttpUrl(ITUNES_SEARCH_URL)
                 .queryParam("term", query)
@@ -43,6 +44,7 @@ public class ItunesServiceImpl implements ItunesService {
                     .uri(uriString)
                     .retrieve()
                     .bodyToMono(ItunesResponse.class)
+                    .timeout(Duration.ofSeconds(5))
                     .block();
 
             if (response == null || response.getResults() == null) {
@@ -50,14 +52,14 @@ public class ItunesServiceImpl implements ItunesService {
                 return Collections.emptyList();
             }
 
-            log.info("✅ iTunes 검색 완료 - 결과 수: {}", response.getResultCount());
+            log.info("iTunes 검색 완료 - 결과 수: {}", response.getResultCount());
 
             return response.getResults().stream()
                     .map(this::mapToTrackSearchResponseDto)
                     .collect(Collectors.toList());
 
         } catch (Exception e) {
-            log.error("❌ iTunes 검색 실패 (WebClient)", e);
+            log.error("iTunes 검색 실패 (WebClient)", e);
             throw new RuntimeException("Failed to search tracks from iTunes", e);
         }
     }
@@ -76,7 +78,7 @@ public class ItunesServiceImpl implements ItunesService {
     }
 
     private ItunesTrackDto fetchTrackFromApi(Long trackId) {
-        log.info("🎵 iTunes API로 곡 조회 - trackId: {}", trackId);
+        log.info("iTunes API로 곡 조회 - trackId: {}", trackId);
         String uriString = UriComponentsBuilder.fromHttpUrl(ITUNES_LOOKUP_URL)
                 .queryParam("id", trackId)
                 .toUriString();
@@ -85,10 +87,11 @@ public class ItunesServiceImpl implements ItunesService {
                 .uri(uriString)
                 .retrieve()
                 .bodyToMono(ItunesResponse.class)
+                .timeout(Duration.ofSeconds(5))
                 .block();
 
         if (response == null || response.getResults() == null || response.getResults().isEmpty()) {
-            log.error("❌ iTunes 곡 조회 실패 - trackId: {}", trackId);
+            log.error("iTunes 곡 조회 실패 - trackId: {}", trackId);
             throw new RuntimeException("Failed to get track from iTunes API");
         }
         return response.getResults().get(0);
