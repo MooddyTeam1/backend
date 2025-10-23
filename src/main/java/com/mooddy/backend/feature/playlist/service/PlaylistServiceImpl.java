@@ -58,7 +58,7 @@ public class PlaylistServiceImpl implements PlaylistService {
 
         Playlist reloaded = playlistRepository.findById(savedPlaylist.getId())
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
-        return PlaylistResponseDto.from(reloaded);
+        return PlaylistResponseDto.from(reloaded, user);
     }
 
     /**
@@ -86,7 +86,7 @@ public class PlaylistServiceImpl implements PlaylistService {
                     }
                     return false;
                 })
-                .map(PlaylistResponseDto::from)
+                .map(playlist -> PlaylistResponseDto.from(playlist, requester))
                 .collect(Collectors.toList());
     }
 
@@ -97,7 +97,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     @Transactional(readOnly = true)
     public List<PlaylistResponseDto> getPublicPlaylists() {
         return playlistRepository.findByVisibility(Visibility.PUBLIC).stream()
-                .map(PlaylistResponseDto::from)
+                .map(playlist -> PlaylistResponseDto.from(playlist, null))
                 .collect(Collectors.toList());
     }
 
@@ -117,7 +117,7 @@ public class PlaylistServiceImpl implements PlaylistService {
 
         // 1. PUBLIC: 모두 접근 가능 → 아무 검사 없이 통과
         if (visibility == Visibility.PUBLIC) {
-            return PlaylistResponseDto.from(playlist);
+            return PlaylistResponseDto.from(playlist, user);
         }
 
         // 인증되지 않은 사용자는 PUBLIC이 아닌 경우 접근 불가
@@ -130,13 +130,13 @@ public class PlaylistServiceImpl implements PlaylistService {
             if (!ownerId.equals(requesterId)) {
                 throw new RuntimeException("비공개 플레이리스트는 작성자만 볼 수 있습니다.");
             }
-            return PlaylistResponseDto.from(playlist);
+            return PlaylistResponseDto.from(playlist, user);
         }
 
         // 3. SHARED: 소유자 또는 공유받은 사람만 접근 가능
         if (visibility == Visibility.SHARED) {
             if (ownerId.equals(requesterId)) {
-                return PlaylistResponseDto.from(playlist);
+                return PlaylistResponseDto.from(playlist, user);
             }
 
             boolean isSharedUser = playlist.getPlaylistVisibilities().stream()
@@ -146,10 +146,10 @@ public class PlaylistServiceImpl implements PlaylistService {
                 throw new RuntimeException("이 플레이리스트에 접근할 권한이 없습니다.");
             }
 
-            return PlaylistResponseDto.from(playlist);
+            return PlaylistResponseDto.from(playlist, user);
         }
 
-        return PlaylistResponseDto.from(playlist);
+        return PlaylistResponseDto.from(playlist, user);
     }
 
     /**
@@ -190,7 +190,7 @@ public class PlaylistServiceImpl implements PlaylistService {
 
         Playlist reloaded = playlistRepository.findById(updatedPlaylist.getId())
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
-        return PlaylistResponseDto.from(reloaded);
+        return PlaylistResponseDto.from(reloaded, user);
     }
 
     /**
@@ -252,7 +252,7 @@ public class PlaylistServiceImpl implements PlaylistService {
         playlistRepository.save(playlist);
         log.info("플레이리스트 갱신 완료");
 
-        return PlaylistResponseDto.from(playlist);
+        return PlaylistResponseDto.from(playlist, user);
     }
 
     /**
@@ -314,7 +314,7 @@ public class PlaylistServiceImpl implements PlaylistService {
         int oldPosition = playlistTrack.getPosition();
 
         if (oldPosition == newPosition) {
-            return PlaylistResponseDto.from(playlist);
+            return PlaylistResponseDto.from(playlist, user);
         }
 
         playlistTrack.setPosition(-1);
@@ -355,7 +355,7 @@ public class PlaylistServiceImpl implements PlaylistService {
         log.info("플레이리스트 갱신 완료");
 
         playlist = playlistRepository.findById(playlistId).get();
-        return PlaylistResponseDto.from(playlist);
+        return PlaylistResponseDto.from(playlist, user);
     }
 
     /**

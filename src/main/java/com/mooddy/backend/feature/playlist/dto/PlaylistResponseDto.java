@@ -1,9 +1,13 @@
 package com.mooddy.backend.feature.playlist.dto;
 
 import com.mooddy.backend.feature.playlist.domain.Playlist;
+import com.mooddy.backend.feature.playlist.domain.PlaylistTrack;
 import com.mooddy.backend.feature.playlist.domain.Visibility;
+import com.mooddy.backend.feature.user.domain.User;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,7 +24,16 @@ public record PlaylistResponseDto(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static PlaylistResponseDto from(Playlist playlist) {
+    public static PlaylistResponseDto from(Playlist playlist, User requester) {
+        boolean isOwner = requester != null
+                && playlist.getUser().getId().equals(requester.getId());
+
+        List<Long> sharedUserIds = isOwner
+                ? playlist.getPlaylistVisibilities().stream()
+                .map(pv -> pv.getUser().getId())
+                .collect(Collectors.toList())
+                : Collections.emptyList();  // 소유자가 아니면 목록 숨김
+
         return new PlaylistResponseDto(
                 playlist.getId(),
                 playlist.getTitle(),
@@ -30,12 +43,10 @@ public record PlaylistResponseDto(
                 playlist.getUser().getId(),
                 playlist.getUser().getNickname(),
                 playlist.getPlaylistTracks().stream()
-                        .sorted((a, b) -> a.getPosition().compareTo(b.getPosition()))
+                        .sorted(Comparator.comparingInt(PlaylistTrack::getPosition))
                         .map(PlaylistTrackResponseDto::from)
                         .collect(Collectors.toList()),
-                playlist.getPlaylistVisibilities().stream()
-                        .map(pv -> pv.getUser().getId())
-                        .collect(Collectors.toList()),
+                sharedUserIds,
                 playlist.getCreatedAt(),
                 playlist.getUpdatedAt()
         );
