@@ -66,8 +66,26 @@ public class PlaylistServiceImpl implements PlaylistService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<PlaylistResponseDto> getUserPlaylists(Long userId) {
-        return playlistRepository.findByUserId(userId).stream()
+    public List<PlaylistResponseDto> getUserPlaylists(Long userId, User requester) {
+
+        List<Playlist> allPlaylists = playlistRepository.findByUserId(userId);
+
+        boolean isOwner = requester != null && requester.getId().equals(userId);
+
+        return allPlaylists.stream()
+                .filter(playlist -> {
+                    Visibility visibility = playlist.getVisibility();
+
+                    if (visibility == Visibility.PUBLIC) return true;
+
+                    if (isOwner) return true;
+
+                    if (visibility == Visibility.SHARED && requester != null) {
+                        return playlist.getPlaylistVisibilities().stream()
+                                .anyMatch(pv -> pv.getUser().getId().equals(requester.getId()));
+                    }
+                    return false;
+                })
                 .map(PlaylistResponseDto::from)
                 .collect(Collectors.toList());
     }
