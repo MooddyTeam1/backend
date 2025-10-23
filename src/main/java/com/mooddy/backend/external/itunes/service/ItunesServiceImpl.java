@@ -7,6 +7,7 @@ import com.mooddy.backend.feature.track.dto.TrackSearchResponseDto;
 import com.mooddy.backend.feature.track.repository.TrackRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -67,14 +68,29 @@ public class ItunesServiceImpl implements ItunesService {
     @Override
     @Transactional
     public Track getOrCreateTrackEntity(Long trackId) {
+        // 1차 조회: DB에 이미 있는지 확인
         Optional<Track> existingTrack = trackRepository.findByTrackId(trackId);
         if (existingTrack.isPresent()) {
+            log.info("DB의 Track 사용 - trackId: {}", trackId);
             return existingTrack.get();
         }
 
-        ItunesTrackDto itunesTrack = fetchTrackFromApi(trackId);
-        Track track = mapToEntity(itunesTrack);
-        return trackRepository.save(track);
+        try {
+            // iTunes API에서 정보 가져와서 저장
+            log.info("iTunes API에서 Track 생성 - trackId: {}", trackId);
+            ItunesTrackDto itunesTrack = fetchTrackFromApi(trackId);
+            Track track = mapToEntity(itunesTrack);
+            return trackRepository.save(track);
+
+        } catch (DataIntegrityViolationException e) {
+            // 동시에 다른 요청이 이미 저장했을 경우
+            log.warn("동시성 충돌 감지 - 다시 조회 시도: trackId={}", trackId);
+
+            // 2차 조회: 다른 요청이 저장한 Track 가져오기
+            return trackRepository.findByTrackId(trackId)
+                    .orElseThrow(() -> new RuntimeException(
+                            "Track 저장 실패 및 재조회 실패 - trackId: " + trackId));
+        }
     }
 
     private ItunesTrackDto fetchTrackFromApi(Long trackId) {
