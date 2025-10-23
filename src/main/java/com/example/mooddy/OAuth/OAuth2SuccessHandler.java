@@ -1,7 +1,6 @@
 package com.example.mooddy.OAuth;
 
-import com.example.mooddy.entity.AuthProvider;
-import com.example.mooddy.entity.User;
+import com.example.mooddy.domain.User;
 import com.example.mooddy.repository.UserRepository;
 import com.example.mooddy.security.JwtService;
 import jakarta.servlet.ServletException;
@@ -60,7 +59,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                     newUser.setNickname(generateNickname(finalEmail));
                     newUser.setPassword("");
                     newUser.setEnabled(true);
-                    newUser.setProvider(AuthProvider.valueOf(registrationId.toUpperCase()));
+                    newUser.setProvider(User.AuthProvider.valueOf(registrationId.toUpperCase()));
                     newUser.setCreatedAt(LocalDateTime.now());
                     newUser.setUpdatedAt(LocalDateTime.now());
                     return userRepository.save(newUser);

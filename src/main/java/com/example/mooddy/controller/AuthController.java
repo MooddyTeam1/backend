@@ -1,9 +1,8 @@
 package com.example.mooddy.controller;
 
-
-import com.example.mooddy.dto.AuthRequest;
-import com.example.mooddy.dto.AuthResponse;
-import com.example.mooddy.dto.SignupRequest;
+import com.example.mooddy.dto.AuthResponseDto;
+import com.example.mooddy.dto.LoginRequestDto;
+import com.example.mooddy.dto.SignupRequestDto;
 import com.example.mooddy.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,21 +16,21 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // 회원가입
+    // 1. 회원가입
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> signup(
-            @Valid @RequestBody SignupRequest signupRequest
+    public ResponseEntity<AuthResponseDto> signup(
+            @Valid @RequestBody SignupRequestDto signupRequest
     ) {
-        AuthResponse response = authService.signup(signupRequest);
+        AuthResponseDto response = authService.signup(signupRequest);
         return ResponseEntity.ok(response);
     }
 
-    // 로그인
+    // 2. 로그인
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(
-            @Valid @RequestBody AuthRequest authRequest
+    public ResponseEntity<AuthResponseDto> login(
+            @Valid @RequestBody LoginRequestDto authRequest
     ) {
-        AuthResponse response = authService.login(authRequest);
+        AuthResponseDto response = authService.login(authRequest);
         return ResponseEntity.ok(response);
     }
 }

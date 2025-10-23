@@ -1,6 +1,6 @@
 package com.example.mooddy.service;
 
-import com.example.mooddy.entity.ListeningHistory;
+import com.example.mooddy.domain.ListeningHistory;
 import com.example.mooddy.repository.ListeningHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

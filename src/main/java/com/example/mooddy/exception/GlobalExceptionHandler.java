@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
 
   // DTO 검증 실패시 메서드
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ErrorResponse> hadlerMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+  public ResponseEntity<ErrorResponse> handlerMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
     String errorMessage = ex.getBindingResult()
             .getFieldErrors()
             .stream()

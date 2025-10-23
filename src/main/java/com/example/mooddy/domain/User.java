@@ -1,4 +1,4 @@
-package com.example.mooddy.entity;
+package com.example.mooddy.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,27 +8,26 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(name = "users", indexes = {
-        @Index(name = "idx_username", columnList = "username"),
-        @Index(name = "idx_email", columnList = "email")
-})
+@Table(name = "users")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserProfile implements UserDetails {
+public class User implements UserDetails {
 
+    // User 엔티티에 Profile 필드 통합
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String username;
+    private String nickname;
 
     @Column(unique = true, nullable = false)
     private String email;
@@ -36,66 +35,55 @@ public class UserProfile implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "full_name")
-    private String fullName;
+    @Column
+    private LocalDate birthDate;
 
+    // --- Profile Fields Start ---
+    private String username;
     private String bio;
+    private String location;
 
-    @Column(name = "profile_image_url", columnDefinition = "TEXT")
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> favoriteGenres;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> favoriteArtists;
+
+    private String musicStyle;
+    private String spotifyLink;
+    private String youtubeMusicLink;
+    private String appleMusicLink;
     private String profileImageUrl;
-
-    private String providerId;
+    // --- Profile Fields End ---
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_At")
     private LocalDateTime updatedAt;
 
-    // ✅ Builder로 생성할 때도 기본 true 유지
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider;
+
     @Builder.Default
     private boolean enabled = true;
 
-    @PrePersist
-    protected void onCreate() {
-        enabled = true;
-    }
+    @Builder.Default
+    private boolean onboardingCompleted = false;
 
-    // ✅ UserDetails 인터페이스 구현
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override
-    public String getPassword() {
-        return this.password;
-    }
-
-    @Override
     public String getUsername() {
-        return this.username;
+        return this.email; // 혹은 nickname 등 인증에 사용할 필드
     }
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return this.enabled;
+    public enum AuthProvider {
+        LOCAL, GOOGLE, SPOTIFY
     }
 }

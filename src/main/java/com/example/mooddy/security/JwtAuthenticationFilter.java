@@ -47,7 +47,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // "Bearer "
         jwt = authHeader.substring(7);
 
-        // jwt 비어있거나 "null", "undefined" 면 다음 필터 진행
         if (jwt.isEmpty() || jwt.equals("null") || jwt.equals("undefined")) {
             filterChain.doFilter(request, response);
             return;

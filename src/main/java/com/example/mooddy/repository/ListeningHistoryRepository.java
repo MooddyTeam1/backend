@@ -1,6 +1,6 @@
 package com.example.mooddy.repository;
 
-import com.example.mooddy.entity.ListeningHistory;
+import com.example.mooddy.domain.ListeningHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

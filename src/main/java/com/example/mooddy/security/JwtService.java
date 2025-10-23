@@ -1,7 +1,7 @@
 package com.example.mooddy.security;
 
 
-import com.example.mooddy.entity.User;
+import com.example.mooddy.domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

@@ -1,4 +1,4 @@
-package com.example.mooddy.entity;
+package com.example.mooddy.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
