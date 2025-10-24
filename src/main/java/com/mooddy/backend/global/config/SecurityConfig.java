@@ -1,8 +1,8 @@
 package com.mooddy.backend.global.config;
 
-import com.mooddy.backend.global.security.JwtAuthenticationFilter;
-import com.mooddy.backend.global.security.JwtAuthenticationEntryPoint;
 import com.mooddy.backend.global.OAuth.OAuth2SuccessHandler;
+import com.mooddy.backend.global.security.JwtAuthenticationEntryPoint;
+import com.mooddy.backend.global.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions().disable()) // h2-console
                 //url별 접근 권한 규칙 정함
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**",
+                        .requestMatchers("/api/auth/**",
                                 "/h2-console/**",
                                 "/oauth2/**",
                                 "/login/oauth2/**"
@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .sessionManagement(
                         session -> session
                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                        )
+                )
                 .formLogin(AbstractHttpConfigurer::disable)
                 // 인증실패시 EntryPoint 연결
                 .exceptionHandling(exception -> exception
