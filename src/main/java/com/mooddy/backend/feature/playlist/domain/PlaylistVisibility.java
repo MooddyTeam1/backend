@@ -1,7 +1,10 @@
 package com.mooddy.backend.feature.playlist.domain;
 
 import com.mooddy.backend.feature.user.domain.User;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,5 +40,14 @@ public class PlaylistVisibility {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    /**
+     * 협업 권한
+     * - 공유받은 사용자는 기본적으로 COLLABORATOR (곡 편집만 가능)
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private CollaborationRole role = CollaborationRole.COLLABORATOR;
 }
 

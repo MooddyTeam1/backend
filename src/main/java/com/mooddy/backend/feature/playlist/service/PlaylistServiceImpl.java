@@ -35,6 +35,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     private final PlaylistVisibilityRepository playlistVisibilityRepository;
     private final UserRepository userRepository;
     private final ItunesService itunesService;
+    private final PlaylistPermissionValidator permissionValidator;
 
     /**
      * 플레이리스트 생성
@@ -118,44 +119,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        // ===== 권한 검사 로직 추가 =====
-        Visibility visibility = playlist.getVisibility();
-        Long ownerId = playlist.getUser().getId();
-        Long requesterId = (user != null) ? user.getId() : null;
-
-        // 1. PUBLIC: 모두 접근 가능 → 아무 검사 없이 통과
-        if (visibility == Visibility.PUBLIC) {
-            return PlaylistResponseDto.from(playlist, user);
-        }
-
-        // 인증되지 않은 사용자는 PUBLIC이 아닌 경우 접근 불가
-        if (requesterId == null) {
-            throw new RuntimeException("이 플레이리스트에 접근할 권한이 없습니다.");
-        }
-
-        // 2. PRIVATE: 소유자만 접근 가능
-        if (visibility == Visibility.PRIVATE) {
-            if (!ownerId.equals(requesterId)) {
-                throw new RuntimeException("비공개 플레이리스트는 작성자만 볼 수 있습니다.");
-            }
-            return PlaylistResponseDto.from(playlist, user);
-        }
-
-        // 3. SHARED: 소유자 또는 공유받은 사람만 접근 가능
-        if (visibility == Visibility.SHARED) {
-            if (ownerId.equals(requesterId)) {
-                return PlaylistResponseDto.from(playlist, user);
-            }
-
-            boolean isSharedUser = playlist.getPlaylistVisibilities().stream()
-                    .anyMatch(pv -> pv.getUser().getId().equals(requesterId));
-
-            if (!isSharedUser) {
-                throw new RuntimeException("이 플레이리스트에 접근할 권한이 없습니다.");
-            }
-
-            return PlaylistResponseDto.from(playlist, user);
-        }
+        // 권한 검증 (PUBLIC/PRIVATE/SHARED 모두 처리)
+        permissionValidator.validateCanView(playlist, user);
 
         return PlaylistResponseDto.from(playlist, user);
     }
@@ -171,9 +136,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        if (!playlist.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("플레이리스트를 수정할 권한이 없습니다.");
-        }
+        // 권한 검증: 소유자만 정보 수정 가능
+        permissionValidator.validateCanModifyInfo(playlist, user);
 
         if (request.title() != null) {
             playlist.setTitle(request.title());
@@ -212,9 +176,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        if (!playlist.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("플레이리스트를 삭제할 권한이 없습니다.");
-        }
+        // 권한 검증: 소유자만 삭제 가능
+        permissionValidator.validateCanDelete(playlist, user);
 
         playlistRepository.delete(playlist);
         log.info("플레이리스트 삭제 완료");
@@ -231,9 +194,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        if (!playlist.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("플레이리스트를 수정할 권한이 없습니다.");
-        }
+        // 권한 검증: 소유자 + 협업자 모두 곡 추가 가능
+        permissionValidator.validateCanModifyTracks(playlist, user);
 
         Track track = itunesService.getOrCreateTrackEntity(trackId);
 
@@ -274,9 +236,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        if (!playlist.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("플레이리스트를 수정할 권한이 없습니다.");
-        }
+        // 권한 검증: 소유자 + 협업자 모두 곡 삭제 가능
+        permissionValidator.validateCanModifyTracks(playlist, user);
 
         PlaylistTrack playlistTrack = playlistTrackRepository
                 .findByPlaylistIdAndTrackId(playlistId, trackId)
@@ -307,9 +268,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        if (!playlist.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("플레이리스트를 수정할 권한이 없습니다.");
-        }
+        // 권한 검증: 소유자 + 협업자 모두 곡 순서 변경 가능
+        permissionValidator.validateCanModifyTracks(playlist, user);
 
         int playlistSize = playlist.getPlaylistTracks().size();
         if (newPosition < 0 || newPosition >= playlistSize) {
