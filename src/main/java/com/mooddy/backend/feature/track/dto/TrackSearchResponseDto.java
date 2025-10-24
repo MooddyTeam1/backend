@@ -1,0 +1,14 @@
+package com.mooddy.backend.feature.track.dto;
+
+public record TrackSearchResponseDto(
+        String trackId,
+        String title,
+        String artist,
+        String album,
+        Integer durationMs,
+        String albumCoverUrl,
+        String releaseDate,
+        String previewUrl,
+        String primaryGenreName
+) {
+}
