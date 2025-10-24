@@ -1,5 +1,7 @@
 package com.mooddy.backend.global.OAuth;
 
+import com.mooddy.backend.external.spotify.domain.SpotifyToken;
+import com.mooddy.backend.external.spotify.repository.SpotifyTokenRepository;
 import com.mooddy.backend.feature.user.domain.AuthProvider;
 import com.mooddy.backend.feature.user.domain.User;
 import com.mooddy.backend.global.security.JwtService;
@@ -11,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -18,6 +22,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -27,6 +33,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
+    private final SpotifyTokenRepository spotifyTokenRepository;
 
     @Value("${frontend.url}")
     private String frontendUrl;
@@ -68,6 +76,37 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
+
+        // Spotify OAuth 로그인 시 액세스 토큰을 가져와 User 객체에 저장
+        if ("spotify".equalsIgnoreCase(registrationId)) {
+            // Spotify용 OAuth2AuthorizedClient를 조회
+            OAuth2AuthorizedClient authorizedClient = oAuth2AuthorizedClientService
+                    .loadAuthorizedClient(registrationId, authentication.getName());
+
+            if (authorizedClient != null && authorizedClient.getAccessToken() != null) {
+                String spotifyAccessToken = authorizedClient.getAccessToken().getTokenValue();
+                Instant expiresAt = authorizedClient.getAccessToken().getExpiresAt();
+                Long expiresIn = Duration.between(Instant.now(), expiresAt).getSeconds();
+
+                log.info("Spotify 토큰: {}", spotifyAccessToken);
+
+                // DB에 기존 SpotifyToken 조회, 없으면 새로 생성
+                SpotifyToken spotifyToken = spotifyTokenRepository.findByUser(user)
+                        .orElse(SpotifyToken.builder().user(user).build());
+
+                // 만료된 토큰 삭제 및 새로 생성
+                if (spotifyToken.isExpired()) {
+                    spotifyTokenRepository.delete(spotifyToken);
+                    spotifyToken = SpotifyToken.builder().user(user).build();
+                }
+
+                spotifyToken.setAccessToken(spotifyAccessToken);
+                spotifyToken.setExpiresIn(expiresIn);
+                spotifyToken.setCreatedAt(LocalDateTime.now());
+
+                spotifyTokenRepository.save(spotifyToken);
+            }
+        }
 
         // JWT 발급
         String accessToken = jwtService.generateToken(user);

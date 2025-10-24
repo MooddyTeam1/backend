@@ -1,5 +1,7 @@
 package com.mooddy.backend.feature.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.mooddy.backend.external.spotify.domain.SpotifyToken;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -51,6 +53,10 @@ public class User implements UserDetails {
     private boolean enabled;
 
     private boolean onboardingCompleted = false;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonBackReference
+    private SpotifyToken spotifyToken;
 
     @PrePersist
     public void prePersist() { enabled = true; }
