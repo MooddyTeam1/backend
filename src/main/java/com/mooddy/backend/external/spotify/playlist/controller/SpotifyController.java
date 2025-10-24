@@ -16,13 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/playlists")
+@RequestMapping("/api/spotify/playlists")
 @RequiredArgsConstructor
 public class SpotifyController {
 
     private final SpotifyService spotifyService;
 
-    @GetMapping("/spotify/me")
+    @GetMapping("/me")
     public ResponseEntity<List<PlaylistResponseDto>> getSpotifyPlaylists(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestHeader String spotifyAccessToken

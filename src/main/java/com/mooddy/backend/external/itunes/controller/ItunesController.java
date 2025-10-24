@@ -18,7 +18,7 @@ public class ItunesController {
 
     private final ItunesService itunesService;
 
-    @GetMapping("/search")
+    @GetMapping("/track/search")
     public ResponseEntity<List<TrackSearchResponseDto>> searchTracks(@RequestParam("query") String query) {
         List<TrackSearchResponseDto> tracks = itunesService.searchTracks(query);
         return ResponseEntity.ok(tracks);

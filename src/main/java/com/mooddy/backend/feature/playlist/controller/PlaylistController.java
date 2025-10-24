@@ -123,6 +123,7 @@ public class PlaylistController {
 
     /**
      * 플레이리스트 내 곡 순서 변경
+     * http://localhost:8080/api/playlists/1/tracks/1/position?newPosition=1
      */
     @PutMapping("/{playlistId}/tracks/{trackId}/position")
     public ResponseEntity<PlaylistResponseDto> updateTrackPosition(
