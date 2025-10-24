@@ -37,7 +37,7 @@ public class SpotifyController {
         List<Playlist> playlists = spotifyService.getSpotifyPlaylists(spotifyAccessToken, userId);
 
         List<PlaylistResponseDto> responseDto = playlists.stream()
-                .map(PlaylistResponseDto::from)
+                .map(playlist -> PlaylistResponseDto.from(playlist, user))
                 .toList();
 
         return ResponseEntity.ok(responseDto);
