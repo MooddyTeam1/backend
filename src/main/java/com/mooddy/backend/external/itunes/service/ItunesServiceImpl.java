@@ -1,7 +1,7 @@
 package com.mooddy.backend.external.itunes.service;
 
-import com.mooddy.backend.external.itunes.dto.ItunesResponse;
-import com.mooddy.backend.external.itunes.dto.ItunesTrackDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mooddy.backend.external.itunes.dto.*;
 import com.mooddy.backend.feature.track.domain.Track;
 import com.mooddy.backend.feature.track.dto.TrackSearchResponseDto;
 import com.mooddy.backend.feature.track.repository.TrackRepository;
@@ -14,10 +14,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,18 +27,19 @@ public class ItunesServiceImpl implements ItunesService {
 
     private final WebClient webClient;
     private final TrackRepository trackRepository;
+    private final ObjectMapper objectMapper;
     private static final String ITUNES_SEARCH_URL = "https://itunes.apple.com/search";
     private static final String ITUNES_LOOKUP_URL = "https://itunes.apple.com/lookup";
 
     @Override
-    public List<TrackSearchResponseDto> searchTracks(String query) {
+    public ItunesSearchResultDto search(String query) {
         log.info("iTunes 검색 시작 (WebClient) - query: {}", query);
 
         String uriString = UriComponentsBuilder.fromHttpUrl(ITUNES_SEARCH_URL)
                 .queryParam("term", query)
                 .queryParam("media", "music")
-                .queryParam("entity", "song")
-                .queryParam("limit", 20)
+                .queryParam("entity", "musicTrack,album,musicArtist")
+                .queryParam("limit", 10)
                 .toUriString();
 
         try {
@@ -50,18 +52,40 @@ public class ItunesServiceImpl implements ItunesService {
 
             if (response == null || response.getResults() == null) {
                 log.warn("iTunes API로부터 응답이 없거나 결과가 비어있습니다.");
-                return Collections.emptyList();
+                return new ItunesSearchResultDto(
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList()
+                );
             }
 
             log.info("iTunes 검색 완료 - 결과 수: {}", response.getResultCount());
 
-            return response.getResults().stream()
-                    .map(this::mapToTrackSearchResponseDto)
-                    .collect(Collectors.toList());
+            // 결과를 wrapperType 기준으로 분류
+            List<TrackSearchResponseDto> tracks = new ArrayList<>();
+            List<AlbumSearchResponseDto> albums = new ArrayList<>();
+            List<ArtistSearchResponseDto> artists = new ArrayList<>();
+
+            for (Map<String, Object> result : response.getResults()) {
+                String wrapperType = (String) result.get("wrapperType");
+
+                if ("track".equals(wrapperType)) {
+                    ItunesTrackDto trackDto = objectMapper.convertValue(result, ItunesTrackDto.class);
+                    tracks.add(mapToTrackSearchResponseDto(trackDto));
+                } else if ("collection".equals(wrapperType)) {
+                    ItunesAlbumDto albumDto = objectMapper.convertValue(result, ItunesAlbumDto.class);
+                    albums.add(mapToAlbumSearchResponseDto(albumDto));
+                } else if ("artist".equals(wrapperType)) {
+                    ItunesArtistDto artistDto = objectMapper.convertValue(result, ItunesArtistDto.class);
+                    artists.add(mapToArtistSearchResponseDto(artistDto));
+                }
+            }
+
+            return new ItunesSearchResultDto(tracks, albums, artists);
 
         } catch (Exception e) {
             log.error("iTunes 검색 실패 (WebClient)", e);
-            throw new RuntimeException("Failed to search tracks from iTunes", e);
+            throw new RuntimeException("Failed to search from iTunes", e);
         }
     }
 
@@ -110,7 +134,9 @@ public class ItunesServiceImpl implements ItunesService {
             log.error("iTunes 곡 조회 실패 - trackId: {}", trackId);
             throw new RuntimeException("Failed to get track from iTunes API");
         }
-        return response.getResults().get(0);
+        
+        Map<String, Object> result = response.getResults().get(0);
+        return objectMapper.convertValue(result, ItunesTrackDto.class);
     }
 
     private Track mapToEntity(ItunesTrackDto itunesTrack) {
@@ -138,6 +164,26 @@ public class ItunesServiceImpl implements ItunesService {
                 itunesTrack.getReleaseDate(),
                 itunesTrack.getPreviewUrl(),
                 itunesTrack.getPrimaryGenreName()
+        );
+    }
+
+    private AlbumSearchResponseDto mapToAlbumSearchResponseDto(ItunesAlbumDto albumDto) {
+        return new AlbumSearchResponseDto(
+                String.valueOf(albumDto.getCollectionId()),
+                albumDto.getCollectionName(),
+                albumDto.getArtistName(),
+                albumDto.getArtworkUrl100(),
+                albumDto.getTrackCount(),
+                albumDto.getReleaseDate(),
+                albumDto.getPrimaryGenreName()
+        );
+    }
+
+    private ArtistSearchResponseDto mapToArtistSearchResponseDto(ItunesArtistDto artistDto) {
+        return new ArtistSearchResponseDto(
+                String.valueOf(artistDto.getArtistId()),
+                artistDto.getArtistName(),
+                artistDto.getPrimaryGenreName()
         );
     }
 }
