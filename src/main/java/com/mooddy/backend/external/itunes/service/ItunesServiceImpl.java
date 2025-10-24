@@ -92,8 +92,17 @@ public class ItunesServiceImpl implements ItunesService {
     @Override
     @Transactional
     public Track getOrCreateTrackEntity(Long trackId) {
+        ItunesTrackDto itunesTrack = fetchTrackFromApi(trackId);
+
         // 1차 조회: DB에 이미 있는지 확인
         Optional<Track> existingTrack = trackRepository.findByTrackId(trackId);
+        if (existingTrack.isEmpty()) {
+            existingTrack = trackRepository.findByTitleAndArtistAndAlbum(
+                    itunesTrack.getTrackName(),  // title
+                    itunesTrack.getArtistName() // artist
+            );
+        }
+
         if (existingTrack.isPresent()) {
             log.info("DB의 Track 사용 - trackId: {}", trackId);
             return existingTrack.get();
@@ -102,7 +111,6 @@ public class ItunesServiceImpl implements ItunesService {
         try {
             // iTunes API에서 정보 가져와서 저장
             log.info("iTunes API에서 Track 생성 - trackId: {}", trackId);
-            ItunesTrackDto itunesTrack = fetchTrackFromApi(trackId);
             Track track = mapToEntity(itunesTrack);
             return trackRepository.save(track);
 
