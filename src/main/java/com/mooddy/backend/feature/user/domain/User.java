@@ -39,6 +39,9 @@ public class User implements UserDetails {
     @Column
     private LocalDate birthDate;
 
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

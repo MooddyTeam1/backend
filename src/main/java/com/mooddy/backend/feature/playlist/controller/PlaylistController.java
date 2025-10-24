@@ -112,12 +112,12 @@ public class PlaylistController {
     /**
      * 플레이리스트에서 곡 제거
      */
-    @DeleteMapping("/{playlistId}/tracks/{trackId}")
+    @DeleteMapping("/{playlistId}/tracks/{trackDBId}")
     public ResponseEntity<Void> removeTrackFromPlaylist(
             @PathVariable Long playlistId,
-            @PathVariable Long trackId,
+            @PathVariable Long trackDBId,
             @AuthenticationPrincipal User user) {
-        playlistService.removeTrackFromPlaylist(playlistId, user, trackId);
+        playlistService.removeTrackFromPlaylist(playlistId, user, trackDBId);
         return ResponseEntity.noContent().build();
     }
 
@@ -125,13 +125,13 @@ public class PlaylistController {
      * 플레이리스트 내 곡 순서 변경
      * http://localhost:8080/api/playlists/1/tracks/1/position?newPosition=1
      */
-    @PutMapping("/{playlistId}/tracks/{trackId}/position")
+    @PutMapping("/{playlistId}/tracks/{trackDBId}/position")
     public ResponseEntity<PlaylistResponseDto> updateTrackPosition(
             @PathVariable Long playlistId,
-            @PathVariable Long trackId,
+            @PathVariable Long trackDBId,
             @AuthenticationPrincipal User user,
             @RequestParam Integer newPosition) {
-        PlaylistResponseDto playlist = playlistService.updateTrackPosition(playlistId, user, trackId, newPosition);
+        PlaylistResponseDto playlist = playlistService.updateTrackPosition(playlistId, user, trackDBId, newPosition);
         return ResponseEntity.ok(playlist);
     }
 }
