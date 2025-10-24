@@ -46,8 +46,11 @@ public class PlaylistController {
      * 특정 사용자의 플레이리스트 목록 조회
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<PlaylistResponseDto>> getUserPlaylists(@PathVariable Long userId) {
-        List<PlaylistResponseDto> playlists = playlistService.getUserPlaylists(userId);
+    public ResponseEntity<List<PlaylistResponseDto>> getUserPlaylists(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal User requester
+    ) {
+        List<PlaylistResponseDto> playlists = playlistService.getUserPlaylists(userId, requester);
         return ResponseEntity.ok(playlists);
     }
 
