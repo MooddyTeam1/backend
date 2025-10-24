@@ -28,8 +28,10 @@ public class Track {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true)
     private Long trackId;
+
+    private String spotifyId;
 
     @Column(nullable = false)
     private String title;

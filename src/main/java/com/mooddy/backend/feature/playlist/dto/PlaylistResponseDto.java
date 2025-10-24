@@ -22,7 +22,8 @@ public record PlaylistResponseDto(
         List<PlaylistTrackResponseDto> tracks,
         List<Long> sharedUserIds,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        String spotifyPlaylistId
 ) {
     public static PlaylistResponseDto from(Playlist playlist, User requester) {
         boolean isOwner = requester != null
@@ -48,7 +49,8 @@ public record PlaylistResponseDto(
                         .collect(Collectors.toList()),
                 sharedUserIds,
                 playlist.getCreatedAt(),
-                playlist.getUpdatedAt()
+                playlist.getUpdatedAt(),
+                playlist.getSpotifyPlaylistId()
         );
     }
 }
