@@ -74,6 +74,12 @@ public class PlaylistServiceImpl implements PlaylistService {
 
         return allPlaylists.stream()
                 .filter(playlist -> {
+                    log.info("requesterId={}, targetUserId={}, playlistId={}, visibility={}",
+                            requester != null ? requester.getId() : null,
+                            userId,
+                            playlist.getId(),
+                            playlist.getVisibility());
+
                     Visibility visibility = playlist.getVisibility();
 
                     if (visibility == Visibility.PUBLIC) return true;
@@ -88,6 +94,8 @@ public class PlaylistServiceImpl implements PlaylistService {
                 })
                 .map(playlist -> PlaylistResponseDto.from(playlist, requester))
                 .collect(Collectors.toList());
+
+
     }
 
     /**
