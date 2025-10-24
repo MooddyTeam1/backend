@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ItunesTrackDto {
+    private String wrapperType;
     private Long trackId;
     private String trackName;
     private String artistName;
