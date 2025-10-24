@@ -34,7 +34,10 @@ spring:
             provider: spotify
             authorization-grant-type: authorization_code
             redirect-uri: "http://127.0.0.1:8080/login/oauth2/code/spotify"
-            scope: user-read-email
+            scope:
+              - playlist-read-private
+              - playlist-read-collaborative
+              - user-read-email
 
   logging:
     level:
