@@ -1,4 +1,4 @@
-package com.mooddy.backend.external.spotify.playlist.dto;
+package com.mooddy.backend.external.spotify.dto.playlist;
 
 import com.mooddy.backend.feature.playlist.domain.Playlist;
 import com.mooddy.backend.feature.playlist.domain.Visibility;
@@ -19,6 +19,7 @@ public class SpotifyResponse {
                 .description(this.description)
                 .coverImageUrl(this.img)
                 .visibility(this.isPublic ? Visibility.PUBLIC : Visibility.PRIVATE)
+                .spotifyPlaylistId(this.id)
                 .user(user)
                 .build();
     }
