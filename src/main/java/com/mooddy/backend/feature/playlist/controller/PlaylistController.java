@@ -4,9 +4,13 @@ import com.mooddy.backend.feature.playlist.dto.AddTrackRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistForkRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistResponseDto;
+import com.mooddy.backend.feature.playlist.dto.SearchType;
 import com.mooddy.backend.feature.playlist.service.PlaylistService;
 import com.mooddy.backend.feature.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -146,5 +150,26 @@ public class PlaylistController {
             @RequestBody(required = false) PlaylistForkRequestDto request) {
         PlaylistResponseDto forkedPlaylist = playlistService.forkPlaylist(playlistId, user, request);
         return ResponseEntity.ok(forkedPlaylist);
+    }
+
+    /**
+     * 플레이리스트 검색
+     * @param keyword 검색어 (필수)
+     * @param type 검색 타입 (PLAYLIST: 제목/설명, TRACK: 노래/아티스트) - 기본값: PLAYLIST
+     * @param pageable 페이징 정보 (기본: 10개, 최신순)
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Page<PlaylistResponseDto>> searchPlaylists(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "PLAYLIST") SearchType type,
+            @PageableDefault(size = 10) Pageable pageable) {
+        
+        // 검색어 검증 (공백만 있는 경우 예외 처리)
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("검색어를 입력해주세요");
+        }
+
+        Page<PlaylistResponseDto> results = playlistService.searchPlaylists(keyword.trim(), type, pageable);
+        return ResponseEntity.ok(results);
     }
 }
