@@ -5,6 +5,7 @@ import com.mooddy.backend.feature.playlist.domain.Playlist;
 import com.mooddy.backend.feature.playlist.domain.PlaylistTrack;
 import com.mooddy.backend.feature.playlist.domain.PlaylistVisibility;
 import com.mooddy.backend.feature.playlist.domain.Visibility;
+import com.mooddy.backend.feature.playlist.dto.PlaylistForkRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistResponseDto;
 import com.mooddy.backend.feature.playlist.repository.PlaylistRepository;
@@ -325,6 +326,64 @@ public class PlaylistServiceImpl implements PlaylistService {
         playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
         return PlaylistResponseDto.from(playlist, user);
+    }
+
+    /**
+     * 플레이리스트 Fork (복사)
+     */
+    @Override
+    @Transactional
+    public PlaylistResponseDto forkPlaylist(Long playlistId, User user, PlaylistForkRequestDto request) {
+        log.info("🍴 플레이리스트 Fork 시작 - playlistId: {}, userId: {}", playlistId, user.getId());
+
+        // 1. 원본 플레이리스트 조회
+        Playlist original = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
+
+        // 2. 권한 검증 (PUBLIC 또는 SHARED+권한 필요)
+        permissionValidator.validateCanView(original, user);
+
+        // 3. visibility 결정 (요청값 있으면 사용, 없으면 PUBLIC)
+        Visibility forkVisibility = (request != null && request.visibility() != null)
+                ? request.visibility()
+                : Visibility.PUBLIC;
+
+        log.info("Fork visibility: {}", forkVisibility);
+
+        // 4. 새 플레이리스트 생성 (메타데이터 복사)
+        Playlist forkedPlaylist = Playlist.builder()
+                .title("Fork: " + original.getTitle())
+                .description(original.getDescription() != null ? "Fork: " + original.getDescription() : null)
+                .coverImageUrl(original.getCoverImageUrl())
+                .visibility(forkVisibility)
+                .user(user)
+                .build();
+
+        Playlist savedPlaylist = playlistRepository.save(forkedPlaylist);
+        log.info("새 플레이리스트 생성 완료 - id: {}", savedPlaylist.getId());
+
+        // 5. 트랙 복사 (position 유지)
+        List<PlaylistTrack> originalTracks = original.getPlaylistTracks();
+        log.info("복사할 트랙 개수: {}", originalTracks.size());
+
+        for (PlaylistTrack originalTrack : originalTracks) {
+            PlaylistTrack forkedTrack = PlaylistTrack.builder()
+                    .playlist(savedPlaylist)
+                    .track(originalTrack.getTrack())
+                    .position(originalTrack.getPosition())
+                    .build();
+            playlistTrackRepository.save(forkedTrack);
+        }
+
+        log.info("트랙 복사 완료");
+
+        // 6. 저장된 플레이리스트 재조회 (최신 데이터 포함)
+        Playlist reloaded = playlistRepository.findById(savedPlaylist.getId())
+                .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
+
+        log.info("🍴 플레이리스트 Fork 완료 - 원본 ID: {}, 새 ID: {}", playlistId, reloaded.getId());
+
+        return PlaylistResponseDto.from(reloaded, user);
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.mooddy.backend.feature.playlist.controller;
 
 import com.mooddy.backend.feature.playlist.dto.AddTrackRequestDto;
+import com.mooddy.backend.feature.playlist.dto.PlaylistForkRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistResponseDto;
 import com.mooddy.backend.feature.playlist.service.PlaylistService;
@@ -133,5 +134,17 @@ public class PlaylistController {
             @RequestParam Integer newPosition) {
         PlaylistResponseDto playlist = playlistService.updateTrackPosition(playlistId, user, trackDBId, newPosition);
         return ResponseEntity.ok(playlist);
+    }
+
+    /**
+     * 플레이리스트 Fork (복사)
+     */
+    @PostMapping("/{playlistId}/fork")
+    public ResponseEntity<PlaylistResponseDto> forkPlaylist(
+            @PathVariable Long playlistId,
+            @AuthenticationPrincipal User user,
+            @RequestBody(required = false) PlaylistForkRequestDto request) {
+        PlaylistResponseDto forkedPlaylist = playlistService.forkPlaylist(playlistId, user, request);
+        return ResponseEntity.ok(forkedPlaylist);
     }
 }

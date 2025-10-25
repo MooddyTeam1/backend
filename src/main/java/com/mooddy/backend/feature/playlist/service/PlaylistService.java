@@ -1,5 +1,6 @@
 package com.mooddy.backend.feature.playlist.service;
 
+import com.mooddy.backend.feature.playlist.dto.PlaylistForkRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistResponseDto;
 import com.mooddy.backend.feature.user.domain.User;
@@ -24,4 +25,6 @@ public interface PlaylistService {
     void removeTrackFromPlaylist(Long playlistId, User user, Long trackId);
 
     PlaylistResponseDto updateTrackPosition(Long playlistId, User user, Long trackId, Integer newPosition);
+
+    PlaylistResponseDto forkPlaylist(Long playlistId, User user, PlaylistForkRequestDto request);
 }
