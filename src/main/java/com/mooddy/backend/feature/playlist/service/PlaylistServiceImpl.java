@@ -8,6 +8,7 @@ import com.mooddy.backend.feature.playlist.domain.Visibility;
 import com.mooddy.backend.feature.playlist.dto.PlaylistForkRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistResponseDto;
+import com.mooddy.backend.feature.playlist.dto.SearchType;
 import com.mooddy.backend.feature.playlist.repository.PlaylistRepository;
 import com.mooddy.backend.feature.playlist.repository.PlaylistTrackRepository;
 import com.mooddy.backend.feature.playlist.repository.PlaylistVisibilityRepository;
@@ -16,6 +17,8 @@ import com.mooddy.backend.feature.user.domain.User;
 import com.mooddy.backend.feature.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -334,7 +337,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     @Override
     @Transactional
     public PlaylistResponseDto forkPlaylist(Long playlistId, User user, PlaylistForkRequestDto request) {
-        log.info("🍴 플레이리스트 Fork 시작 - playlistId: {}, userId: {}", playlistId, user.getId());
+        log.info("플레이리스트 Fork 시작 - playlistId: {}, userId: {}", playlistId, user.getId());
 
         // 1. 원본 플레이리스트 조회
         Playlist original = playlistRepository.findById(playlistId)
@@ -381,9 +384,33 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist reloaded = playlistRepository.findById(savedPlaylist.getId())
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        log.info("🍴 플레이리스트 Fork 완료 - 원본 ID: {}, 새 ID: {}", playlistId, reloaded.getId());
+        log.info("플레이리스트 Fork 완료 - 원본 ID: {}, 새 ID: {}", playlistId, reloaded.getId());
 
         return PlaylistResponseDto.from(reloaded, user);
+    }
+
+    /**
+     * 플레이리스트 검색
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PlaylistResponseDto> searchPlaylists(String keyword, SearchType type, Pageable pageable) {
+        log.info("플레이리스트 검색 시작 - keyword: {}, type: {}", keyword, type);
+
+        Page<Playlist> results;
+
+        if (type == SearchType.PLAYLIST) {
+            // 플레이리스트 제목/설명 검색
+            results = playlistRepository.searchByTitleOrDescription(keyword, pageable);
+        } else {
+            // 노래 제목/아티스트 검색
+            results = playlistRepository.searchByTrack(keyword, pageable);
+        }
+
+        log.info("검색 완료 - 결과 개수: {}", results.getTotalElements());
+
+        // PlaylistResponseDto로 변환 (인증 없이 검색하므로 null 전달)
+        return results.map(playlist -> PlaylistResponseDto.from(playlist, null));
     }
 
     /**
