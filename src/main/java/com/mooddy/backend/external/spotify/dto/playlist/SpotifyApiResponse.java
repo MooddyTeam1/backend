@@ -1,4 +1,4 @@
-package com.mooddy.backend.external.spotify.playlist.dto;
+package com.mooddy.backend.external.spotify.dto.playlist;
 
 import lombok.Data;
 

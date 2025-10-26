@@ -5,8 +5,10 @@ import com.mooddy.backend.feature.playlist.domain.Playlist;
 import com.mooddy.backend.feature.playlist.domain.PlaylistTrack;
 import com.mooddy.backend.feature.playlist.domain.PlaylistVisibility;
 import com.mooddy.backend.feature.playlist.domain.Visibility;
+import com.mooddy.backend.feature.playlist.dto.PlaylistForkRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistResponseDto;
+import com.mooddy.backend.feature.playlist.dto.SearchType;
 import com.mooddy.backend.feature.playlist.repository.PlaylistRepository;
 import com.mooddy.backend.feature.playlist.repository.PlaylistTrackRepository;
 import com.mooddy.backend.feature.playlist.repository.PlaylistVisibilityRepository;
@@ -15,6 +17,8 @@ import com.mooddy.backend.feature.user.domain.User;
 import com.mooddy.backend.feature.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +39,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     private final PlaylistVisibilityRepository playlistVisibilityRepository;
     private final UserRepository userRepository;
     private final ItunesService itunesService;
+    private final PlaylistPermissionValidator permissionValidator;
 
     /**
      * 플레이리스트 생성
@@ -74,6 +79,12 @@ public class PlaylistServiceImpl implements PlaylistService {
 
         return allPlaylists.stream()
                 .filter(playlist -> {
+                    log.info("requesterId={}, targetUserId={}, playlistId={}, visibility={}",
+                            requester != null ? requester.getId() : null,
+                            userId,
+                            playlist.getId(),
+                            playlist.getVisibility());
+
                     Visibility visibility = playlist.getVisibility();
 
                     if (visibility == Visibility.PUBLIC) return true;
@@ -88,6 +99,8 @@ public class PlaylistServiceImpl implements PlaylistService {
                 })
                 .map(playlist -> PlaylistResponseDto.from(playlist, requester))
                 .collect(Collectors.toList());
+
+
     }
 
     /**
@@ -110,44 +123,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        // ===== 권한 검사 로직 추가 =====
-        Visibility visibility = playlist.getVisibility();
-        Long ownerId = playlist.getUser().getId();
-        Long requesterId = (user != null) ? user.getId() : null;
-
-        // 1. PUBLIC: 모두 접근 가능 → 아무 검사 없이 통과
-        if (visibility == Visibility.PUBLIC) {
-            return PlaylistResponseDto.from(playlist, user);
-        }
-
-        // 인증되지 않은 사용자는 PUBLIC이 아닌 경우 접근 불가
-        if (requesterId == null) {
-            throw new RuntimeException("이 플레이리스트에 접근할 권한이 없습니다.");
-        }
-
-        // 2. PRIVATE: 소유자만 접근 가능
-        if (visibility == Visibility.PRIVATE) {
-            if (!ownerId.equals(requesterId)) {
-                throw new RuntimeException("비공개 플레이리스트는 작성자만 볼 수 있습니다.");
-            }
-            return PlaylistResponseDto.from(playlist, user);
-        }
-
-        // 3. SHARED: 소유자 또는 공유받은 사람만 접근 가능
-        if (visibility == Visibility.SHARED) {
-            if (ownerId.equals(requesterId)) {
-                return PlaylistResponseDto.from(playlist, user);
-            }
-
-            boolean isSharedUser = playlist.getPlaylistVisibilities().stream()
-                    .anyMatch(pv -> pv.getUser().getId().equals(requesterId));
-
-            if (!isSharedUser) {
-                throw new RuntimeException("이 플레이리스트에 접근할 권한이 없습니다.");
-            }
-
-            return PlaylistResponseDto.from(playlist, user);
-        }
+        // 권한 검증 (PUBLIC/PRIVATE/SHARED 모두 처리)
+        permissionValidator.validateCanView(playlist, user);
 
         return PlaylistResponseDto.from(playlist, user);
     }
@@ -163,9 +140,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        if (!playlist.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("플레이리스트를 수정할 권한이 없습니다.");
-        }
+        // 권한 검증: 소유자만 정보 수정 가능
+        permissionValidator.validateCanModifyInfo(playlist, user);
 
         if (request.title() != null) {
             playlist.setTitle(request.title());
@@ -204,9 +180,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        if (!playlist.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("플레이리스트를 삭제할 권한이 없습니다.");
-        }
+        // 권한 검증: 소유자만 삭제 가능
+        permissionValidator.validateCanDelete(playlist, user);
 
         playlistRepository.delete(playlist);
         log.info("플레이리스트 삭제 완료");
@@ -223,9 +198,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        if (!playlist.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("플레이리스트를 수정할 권한이 없습니다.");
-        }
+        // 권한 검증: 소유자 + 협업자 모두 곡 추가 가능
+        permissionValidator.validateCanModifyTracks(playlist, user);
 
         Track track = itunesService.getOrCreateTrackEntity(trackId);
 
@@ -266,9 +240,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        if (!playlist.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("플레이리스트를 수정할 권한이 없습니다.");
-        }
+        // 권한 검증: 소유자 + 협업자 모두 곡 삭제 가능
+        permissionValidator.validateCanModifyTracks(playlist, user);
 
         PlaylistTrack playlistTrack = playlistTrackRepository
                 .findByPlaylistIdAndTrackId(playlistId, trackId)
@@ -299,9 +272,8 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        if (!playlist.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("플레이리스트를 수정할 권한이 없습니다.");
-        }
+        // 권한 검증: 소유자 + 협업자 모두 곡 순서 변경 가능
+        permissionValidator.validateCanModifyTracks(playlist, user);
 
         int playlistSize = playlist.getPlaylistTracks().size();
         if (newPosition < 0 || newPosition >= playlistSize) {
@@ -357,6 +329,88 @@ public class PlaylistServiceImpl implements PlaylistService {
         playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
         return PlaylistResponseDto.from(playlist, user);
+    }
+
+    /**
+     * 플레이리스트 Fork (복사)
+     */
+    @Override
+    @Transactional
+    public PlaylistResponseDto forkPlaylist(Long playlistId, User user, PlaylistForkRequestDto request) {
+        log.info("플레이리스트 Fork 시작 - playlistId: {}, userId: {}", playlistId, user.getId());
+
+        // 1. 원본 플레이리스트 조회
+        Playlist original = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
+
+        // 2. 권한 검증 (PUBLIC 또는 SHARED+권한 필요)
+        permissionValidator.validateCanView(original, user);
+
+        // 3. visibility 결정 (요청값 있으면 사용, 없으면 PUBLIC)
+        Visibility forkVisibility = (request != null && request.visibility() != null)
+                ? request.visibility()
+                : Visibility.PUBLIC;
+
+        log.info("Fork visibility: {}", forkVisibility);
+
+        // 4. 새 플레이리스트 생성 (메타데이터 복사)
+        Playlist forkedPlaylist = Playlist.builder()
+                .title("Fork: " + original.getTitle())
+                .description(original.getDescription() != null ? "Fork: " + original.getDescription() : null)
+                .coverImageUrl(original.getCoverImageUrl())
+                .visibility(forkVisibility)
+                .user(user)
+                .build();
+
+        Playlist savedPlaylist = playlistRepository.save(forkedPlaylist);
+        log.info("새 플레이리스트 생성 완료 - id: {}", savedPlaylist.getId());
+
+        // 5. 트랙 복사 (position 유지)
+        List<PlaylistTrack> originalTracks = original.getPlaylistTracks();
+        log.info("복사할 트랙 개수: {}", originalTracks.size());
+
+        for (PlaylistTrack originalTrack : originalTracks) {
+            PlaylistTrack forkedTrack = PlaylistTrack.builder()
+                    .playlist(savedPlaylist)
+                    .track(originalTrack.getTrack())
+                    .position(originalTrack.getPosition())
+                    .build();
+            playlistTrackRepository.save(forkedTrack);
+        }
+
+        log.info("트랙 복사 완료");
+
+        // 6. 저장된 플레이리스트 재조회 (최신 데이터 포함)
+        Playlist reloaded = playlistRepository.findById(savedPlaylist.getId())
+                .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
+
+        log.info("플레이리스트 Fork 완료 - 원본 ID: {}, 새 ID: {}", playlistId, reloaded.getId());
+
+        return PlaylistResponseDto.from(reloaded, user);
+    }
+
+    /**
+     * 플레이리스트 검색
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PlaylistResponseDto> searchPlaylists(String keyword, SearchType type, Pageable pageable) {
+        log.info("플레이리스트 검색 시작 - keyword: {}, type: {}", keyword, type);
+
+        Page<Playlist> results;
+
+        if (type == SearchType.PLAYLIST) {
+            // 플레이리스트 제목/설명 검색
+            results = playlistRepository.searchByTitleOrDescription(keyword, pageable);
+        } else {
+            // 노래 제목/아티스트 검색
+            results = playlistRepository.searchByTrack(keyword, pageable);
+        }
+
+        log.info("검색 완료 - 결과 개수: {}", results.getTotalElements());
+
+        // PlaylistResponseDto로 변환 (인증 없이 검색하므로 null 전달)
+        return results.map(playlist -> PlaylistResponseDto.from(playlist, null));
     }
 
     /**

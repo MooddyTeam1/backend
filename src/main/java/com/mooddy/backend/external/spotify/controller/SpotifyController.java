@@ -1,10 +1,11 @@
-package com.mooddy.backend.external.spotify.playlist.controller;
+package com.mooddy.backend.external.spotify.controller;
 
-import com.mooddy.backend.external.spotify.playlist.service.SpotifyService;
+import com.mooddy.backend.external.spotify.service.SpotifyService;
 import com.mooddy.backend.feature.playlist.domain.Playlist;
 import com.mooddy.backend.feature.playlist.dto.PlaylistResponseDto;
 import com.mooddy.backend.feature.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/spotify/playlists")
 @RequiredArgsConstructor
+@Slf4j
 public class SpotifyController {
 
     private final SpotifyService spotifyService;
@@ -34,7 +36,11 @@ public class SpotifyController {
             return ResponseEntity.badRequest().build();
         }
 
+        // 플레이리스트 불러오기
         List<Playlist> playlists = spotifyService.getSpotifyPlaylists(spotifyAccessToken, userId);
+
+        // 플레이리스트 트랙 불러오기
+        playlists.forEach(playlist -> spotifyService.SpotifyPlaylistTracks(spotifyAccessToken, playlist));
 
         List<PlaylistResponseDto> responseDto = playlists.stream()
                 .map(playlist -> PlaylistResponseDto.from(playlist, user))

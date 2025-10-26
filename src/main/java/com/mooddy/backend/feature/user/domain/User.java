@@ -13,7 +13,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -39,6 +41,9 @@ public class User implements UserDetails {
     @Column
     private LocalDate birthDate;
 
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -57,6 +62,22 @@ public class User implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonBackReference
     private SpotifyToken spotifyToken;
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_genre",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id")
+    )
+    private Set<Genre> favoriteGenres = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_artist",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "artst_id")
+    )
+    private Set<Artist> favoriteArtists = new HashSet<>();
 
     @PrePersist
     public void prePersist() { enabled = true; }

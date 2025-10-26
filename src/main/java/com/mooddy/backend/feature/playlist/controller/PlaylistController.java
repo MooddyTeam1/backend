@@ -1,11 +1,16 @@
 package com.mooddy.backend.feature.playlist.controller;
 
 import com.mooddy.backend.feature.playlist.dto.AddTrackRequestDto;
+import com.mooddy.backend.feature.playlist.dto.PlaylistForkRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistRequestDto;
 import com.mooddy.backend.feature.playlist.dto.PlaylistResponseDto;
+import com.mooddy.backend.feature.playlist.dto.SearchType;
 import com.mooddy.backend.feature.playlist.service.PlaylistService;
 import com.mooddy.backend.feature.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -112,12 +117,12 @@ public class PlaylistController {
     /**
      * 플레이리스트에서 곡 제거
      */
-    @DeleteMapping("/{playlistId}/tracks/{trackId}")
+    @DeleteMapping("/{playlistId}/tracks/{trackDBId}")
     public ResponseEntity<Void> removeTrackFromPlaylist(
             @PathVariable Long playlistId,
-            @PathVariable Long trackId,
+            @PathVariable Long trackDBId,
             @AuthenticationPrincipal User user) {
-        playlistService.removeTrackFromPlaylist(playlistId, user, trackId);
+        playlistService.removeTrackFromPlaylist(playlistId, user, trackDBId);
         return ResponseEntity.noContent().build();
     }
 
@@ -125,13 +130,46 @@ public class PlaylistController {
      * 플레이리스트 내 곡 순서 변경
      * http://localhost:8080/api/playlists/1/tracks/1/position?newPosition=1
      */
-    @PutMapping("/{playlistId}/tracks/{trackId}/position")
+    @PutMapping("/{playlistId}/tracks/{trackDBId}/position")
     public ResponseEntity<PlaylistResponseDto> updateTrackPosition(
             @PathVariable Long playlistId,
-            @PathVariable Long trackId,
+            @PathVariable Long trackDBId,
             @AuthenticationPrincipal User user,
             @RequestParam Integer newPosition) {
-        PlaylistResponseDto playlist = playlistService.updateTrackPosition(playlistId, user, trackId, newPosition);
+        PlaylistResponseDto playlist = playlistService.updateTrackPosition(playlistId, user, trackDBId, newPosition);
         return ResponseEntity.ok(playlist);
+    }
+
+    /**
+     * 플레이리스트 Fork (복사)
+     */
+    @PostMapping("/{playlistId}/fork")
+    public ResponseEntity<PlaylistResponseDto> forkPlaylist(
+            @PathVariable Long playlistId,
+            @AuthenticationPrincipal User user,
+            @RequestBody(required = false) PlaylistForkRequestDto request) {
+        PlaylistResponseDto forkedPlaylist = playlistService.forkPlaylist(playlistId, user, request);
+        return ResponseEntity.ok(forkedPlaylist);
+    }
+
+    /**
+     * 플레이리스트 검색
+     * @param keyword 검색어 (필수)
+     * @param type 검색 타입 (PLAYLIST: 제목/설명, TRACK: 노래/아티스트) - 기본값: PLAYLIST
+     * @param pageable 페이징 정보 (기본: 10개, 최신순)
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Page<PlaylistResponseDto>> searchPlaylists(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "PLAYLIST") SearchType type,
+            @PageableDefault(size = 10) Pageable pageable) {
+        
+        // 검색어 검증 (공백만 있는 경우 예외 처리)
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("검색어를 입력해주세요");
+        }
+
+        Page<PlaylistResponseDto> results = playlistService.searchPlaylists(keyword.trim(), type, pageable);
+        return ResponseEntity.ok(results);
     }
 }

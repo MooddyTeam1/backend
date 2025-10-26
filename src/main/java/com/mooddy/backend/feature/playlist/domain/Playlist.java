@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -28,7 +29,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "playlists")
+@Table(name = "playlists", indexes = {
+        @Index(name = "idx_playlist_title", columnList = "title"),
+        @Index(name = "idx_playlist_visibility", columnList = "visibility")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -69,6 +73,8 @@ public class Playlist {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    private String spotifyPlaylistId; // Spotify API용 ID 추가
 
     //엔티티 매니저(영속성 컨텍스트)때문에 안될때 수동 갱신 트리거
     public void touch() {
