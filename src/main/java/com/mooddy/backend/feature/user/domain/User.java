@@ -1,6 +1,7 @@
 package com.mooddy.backend.feature.user.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mooddy.backend.external.spotify.domain.SpotifyToken;
 import jakarta.persistence.*;
 import lombok.*;
@@ -78,6 +79,16 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "artst_id")
     )
     private Set<Artist> favoriteArtists = new HashSet<>();
+
+    // 내가 팔로우하는 사람들
+    @OneToMany(mappedBy = "follower", fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonIgnore
+    private Set<Follow> followingList = new HashSet<>();
+
+    // 나를 팔로우하는 사람들
+    @OneToMany(mappedBy = "following", fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonIgnore
+    private Set<Follow> followerList = new HashSet<>();
 
     @PrePersist
     public void prePersist() { enabled = true; }
