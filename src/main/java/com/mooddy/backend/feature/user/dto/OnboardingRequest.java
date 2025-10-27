@@ -6,6 +6,6 @@ import java.util.List;
 
 @Data
 public class OnboardingRequest {
-    private List<Long> genreIds;
-    private List<Long> artistIds;
+    private List<String> genre;
+    private List<String> artist;
 }

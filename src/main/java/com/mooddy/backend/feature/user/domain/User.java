@@ -64,21 +64,21 @@ public class User implements UserDetails {
     @JsonBackReference
     private SpotifyToken spotifyToken;
 
-    @ManyToMany
-    @JoinTable(
+    @ElementCollection
+    @CollectionTable(
             name = "user_genre",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "genre_id")
+            joinColumns = @JoinColumn(name = "user_id")
     )
-    private Set<Genre> favoriteGenres = new HashSet<>();
+    @Column(name = "genre")
+    private Set<String> favoriteGenres = new HashSet<>();
 
-    @ManyToMany
-    @JoinTable(
+    @ElementCollection
+    @CollectionTable(
             name = "user_artist",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "artst_id")
+            joinColumns = @JoinColumn(name = "user_id")
     )
-    private Set<Artist> favoriteArtists = new HashSet<>();
+    @Column(name = "artist")
+    private Set<String> favoriteArtists = new HashSet<>();
 
     // 내가 팔로우하는 사람들
     @OneToMany(mappedBy = "follower", fetch = FetchType.LAZY, orphanRemoval = true)
