@@ -5,6 +5,7 @@ import com.mooddy.backend.feature.user.domain.User;
 import com.mooddy.backend.feature.user.dto.UserFollowResponse;
 import com.mooddy.backend.feature.user.repository.FollowRepository;
 import com.mooddy.backend.feature.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ public class UserFollowServiceImpl implements UserFollowService{
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public void toggleFollow(Long userId, Long targetId) {
         boolean exists = followRepository.existsByFollowerIdAndFollowingId(userId, targetId);
 
