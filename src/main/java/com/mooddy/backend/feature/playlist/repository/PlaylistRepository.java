@@ -28,6 +28,18 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
             "WHERE p.id = :id")
     Optional<Playlist> findByIdWithTracks(@Param("id") Long id);
 
+    @Query("SELECT DISTINCT p FROM Playlist p " +
+            "LEFT JOIN FETCH p.playlistTracks pt " +
+            "LEFT JOIN FETCH pt.track " +
+            "WHERE p.user.id = :userId")
+    List<Playlist> findByUserIdWithTracks(@Param("userId") Long userId);
+
+    @Query("SELECT DISTINCT p FROM Playlist p " +
+            "LEFT JOIN FETCH p.playlistTracks pt " +
+            "LEFT JOIN FETCH pt.track " +
+            "WHERE p.visibility = :visibility")
+    List<Playlist> findByVisibilityWithTracks(@Param("visibility") Visibility visibility);
+
     /**
      * 플레이리스트 제목 또는 설명으로 검색 (부분 검색)
      * PUBLIC 플레이리스트만 검색
