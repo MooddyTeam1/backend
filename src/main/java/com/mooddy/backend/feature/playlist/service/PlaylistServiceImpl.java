@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -73,7 +74,8 @@ public class PlaylistServiceImpl implements PlaylistService {
     @Transactional(readOnly = true)
     public List<PlaylistResponseDto> getUserPlaylists(Long userId, User requester) {
 
-        List<Playlist> allPlaylists = playlistRepository.findByUserId(userId);
+        List<Playlist> allPlaylists = playlistRepository.findByUserIdWithTracks(userId);
+        allPlaylists = deduplicatePreservingOrder(allPlaylists);
 
         boolean isOwner = requester != null && requester.getId().equals(userId);
 
@@ -109,7 +111,10 @@ public class PlaylistServiceImpl implements PlaylistService {
     @Override
     @Transactional(readOnly = true)
     public List<PlaylistResponseDto> getPublicPlaylists() {
-        return playlistRepository.findByVisibility(Visibility.PUBLIC).stream()
+        List<Playlist> playlists = playlistRepository.findByVisibilityWithTracks(Visibility.PUBLIC);
+        playlists = deduplicatePreservingOrder(playlists);
+
+        return playlists.stream()
                 .map(playlist -> PlaylistResponseDto.from(playlist, null))
                 .collect(Collectors.toList());
     }
@@ -454,5 +459,12 @@ public class PlaylistServiceImpl implements PlaylistService {
             playlist.getPlaylistVisibilities().add(visibilityEntry);
             playlistVisibilityRepository.save(visibilityEntry);
         }
+    }
+
+    private <T> List<T> deduplicatePreservingOrder(List<T> source) {
+        if (source == null || source.size() < 2) {
+            return source;
+        }
+        return new ArrayList<>(new LinkedHashSet<>(source));
     }
 }
