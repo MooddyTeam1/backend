@@ -1,0 +1,65 @@
+name: Commit Message Convention
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  check-commit-message:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate commit messages
+        run: |
+          echo "🔎 Checking commit messages with scripts/validate-commit-msg.js"
+
+          # 이벤트 타입에 따라 검사할 커밋 범위 선택
+          if [ "${{ github.event_name }}" = "push" ]; then
+            range="${{ github.event.before }}..${{ github.sha }}"
+          else
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          fi
+
+          echo "Commit range: $range"
+
+          # 첫 푸시처럼 before SHA가 0000... 인 경우 대비
+          if echo "$range" | grep -q "0000000000000000000000000000000000000000"; then
+            echo "⚠️ First push or unknown before SHA, checking last 20 commits only."
+            commits=$(git log -20 --pretty=%H)
+          else
+            commits=$(git rev-list "$range")
+          fi
+
+          invalid=0
+
+          for sha in $commits; do
+            msg=$(git log -1 --pretty=%s "$sha")
+            echo "→ $sha : $msg"
+
+            # JS 스크립트에 --msg로 커밋 제목 전달
+            if node scripts/validate-commit-msg.js --msg "$msg"; then
+              echo "   ✅ OK"
+            else
+              echo "   ❌ INVALID"
+              invalid=1
+            fi
+          done
+
+          if [ "$invalid" -ne 0 ]; then
+            echo ""
+            echo "❌ 하나 이상의 커밋 메시지가 컨벤션을 지키지 않았습니다."
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ 모든 커밋 메시지가 컨벤션을 통과했습니다."

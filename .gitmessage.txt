@@ -1,0 +1,7 @@
+# <type>(<scope>): <subject>
+# type: feat, fix, docs, style, refactor, test, chore, perf, revert
+# scope: 기능 or 모듈명 (ex: auth, todo, user 등)
+# subject: 변경 사항 요약 (명령문, 첫 글자 소문자)
+
+# body (optional): 변경 이유나 상세 설명
+# footer (optional): 이슈 번호나 참고 사항

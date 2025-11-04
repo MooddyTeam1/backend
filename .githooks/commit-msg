@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# 커밋 메시지 파일 경로를 JS 검증 스크립트에 전달
+node scripts/validate-commit-msg.js "$1"
