@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # ✅ base/head 둘 다 히스토리에 있도록 전체 히스토리 가져오기
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -37,7 +40,12 @@ jobs:
             echo "⚠️ First push or unknown before SHA, checking last 20 commits only."
             commits=$(git log -20 --pretty=%H)
           else
-            commits=$(git rev-list "$range")
+            # ✅ range가 이상해서 rev-list가 실패하면 마지막 20개 커밋만 검사하도록 fallback
+            if ! commits=$(git rev-list "$range"); then
+              echo "⚠️ Invalid revision range: $range"
+              echo "   → 마지막 20개의 커밋만 검사합니다."
+              commits=$(git log -20 --pretty=%H)
+            fi
           fi
 
           invalid=0
