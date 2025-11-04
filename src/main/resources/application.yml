@@ -1,3 +1,9 @@
+jwt:
+  secret: change-me-to-secure-key-change-this-in-prod
+  access-token-validity-in-seconds: 3600
+  refresh-token-validity-in-seconds: 1209600
+  issuer: moa-backend
+
 spring:
   application:
     name: backend
