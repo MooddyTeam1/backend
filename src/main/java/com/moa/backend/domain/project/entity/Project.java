@@ -1,12 +1,16 @@
-package com.moa.backend.domain.user.entity;
+package com.moa.backend.domain.project.entity;
 
+import com.moa.backend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -18,42 +22,38 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "project")
+public class Project {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "email", nullable = false, unique = true, length = 100)
-    private String email;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "creator_user_id", nullable = false)
+    private User creator;
 
-    @Column(name = "password", nullable = false, length = 255)
-    private String password;
+    @Column(name = "title", nullable = false, length = 200)
+    private String title;
 
-    @Column(name = "name", nullable = false, length = 50)
-    private String name;
+    @Column(name = "goal_amount", nullable = false)
+    private Long goalAmount;
+
+    @Column(name = "start_at", nullable = false)
+    private LocalDateTime startAt;
+
+    @Column(name = "end_at", nullable = false)
+    private LocalDateTime endAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 20)
-    private UserRole role;
+    @Column(name = "status", nullable = false, length = 20)
+    private ProjectStatus status;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    private User(String email, String password, String name, UserRole role) {
-        this.email = email;
-        this.password = password;
-        this.name = name;
-        this.role = role;
-    }
-
-    public static User createUser(String email, String encodedPassword, String name) {
-        return new User(email, encodedPassword, name, UserRole.BACKER);
-    }
 
     @PrePersist
     protected void onCreate() {
@@ -66,3 +66,4 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 }
+
