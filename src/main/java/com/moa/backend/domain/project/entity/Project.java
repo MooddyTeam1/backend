@@ -24,7 +24,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Entity
-@Table(name = "projects")
+@Table(name = "project")
 @Builder
 public class Project {
 
@@ -32,9 +32,9 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-//    @JoinColumn(name = "creator_user_id", nullable = false)
-//    private User creator;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "creator_user_id", nullable = false)
+    private User creator;
 
     @Column(name = "title", nullable = false, length = 200)
     private String title;
