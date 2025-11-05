@@ -6,7 +6,9 @@ import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
+import com.moa.backend.domain.user.entity.CreatorStatus;
 import com.moa.backend.domain.user.entity.User;
+import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 public class ProjectServiceImpl implements ProjectService{
 
     private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
 
     // 프로젝트 등록
     @Override
@@ -30,6 +33,13 @@ public class ProjectServiceImpl implements ProjectService{
 
         if (userId == null) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+
+        if (user.getCreatorStatus() != CreatorStatus.APPROVED) {
+            throw new AppException(ErrorCode.UNAUTHORIZED_CREATOR);
         }
 
         if (request.getGoalAmount() <=0) {
@@ -52,6 +62,7 @@ public class ProjectServiceImpl implements ProjectService{
                 .endAt(request.getEndAt())
                 .category(request.getCategory())
                 .thumbnailUrl(request.getThumbnailUrl())
+                .creator(user)
                 .build();
 
         Project save = projectRepository.save(project);
@@ -102,9 +113,14 @@ public class ProjectServiceImpl implements ProjectService{
     //프로젝트 삭제
     @Override
     @Transactional
-    public ProjectResponse deleteProject(Long id) {
-        Project project = projectRepository.findById(id)
+    public ProjectResponse deleteProject(Long userId, Long projectId) {
+
+        Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
+
+        if (!project.getCreator().getId().equals(userId)) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
 
         if (project.isInProgress()) {
             throw new AppException(ErrorCode.PROJECT_CANNOT_DELETE_IN_PROGRESS);

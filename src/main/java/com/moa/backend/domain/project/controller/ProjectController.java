@@ -73,9 +73,9 @@ public class ProjectController {
     //프로젝트 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<ProjectResponse> deleteProjectsById(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long id
     ) {
-        return ResponseEntity.ok(projectService.deleteProject(id));
+        return ResponseEntity.ok(projectService.deleteProject(principal.getId(), id));
     }
 }
