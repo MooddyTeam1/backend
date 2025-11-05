@@ -7,3 +7,30 @@ jwt:
 spring:
   application:
     name: backend
+
+  # H2 Database
+  datasource:
+    url: jdbc:h2:mem:moaDB
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true  # H2 콘솔 활성화 (http://localhost:8080/h2-console)
+      path: /h2-console
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: create  # 서버 시작 시 테이블 자동 생성 (개발용)
+    show-sql: true      # SQL 로그 출력
+    properties:
+      hibernate:
+        format_sql: true  # SQL 포맷팅
+    defer-datasource-initialization: true  # ⭐ data.sql을 Hibernate 테이블 생성 후에 실행
+
+  # data.sql 자동 실행
+  sql:
+    init:
+      mode: always  # 항상 data.sql 실행
