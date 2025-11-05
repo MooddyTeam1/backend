@@ -15,6 +15,16 @@ public enum ErrorCode {
     NOT_FOUND("COMM-404", HttpStatus.NOT_FOUND, "요청하신 대상을 찾을 수 없습니다."),
     BUSINESS_CONFLICT("BUSN-409", HttpStatus.CONFLICT, "요청이 현재 상태와 충돌합니다."),
 
+    ORDER_NOT_FOUND("ORD-404", HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."),
+    ORDER_ALREADY_PAID("ORD-409", HttpStatus.CONFLICT, "이미 결제 완료된 주문입니다."),
+    ORDER_ALREADY_EXISTS("ORD-409B", HttpStatus.CONFLICT, "해당 프로젝트에 이미 주문이 존재합니다."),
+
+    REWARD_NOT_FOUND("RWD-404", HttpStatus.NOT_FOUND, "선택한 리워드를 찾을 수 없습니다."),
+    REWARD_OUT_OF_STOCK("RWD-409", HttpStatus.CONFLICT, "리워드 재고가 부족합니다."),
+
+    PROJECT_NOT_FOUND("PRJ-404", HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."),
+    PROJECT_NOT_FUNDING("PRJ-409", HttpStatus.CONFLICT, "현재 펀딩 중이 아닌 프로젝트입니다."),
+
     // 서버 내부 오류
     INTERNAL_ERROR("SYS-500", HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
 

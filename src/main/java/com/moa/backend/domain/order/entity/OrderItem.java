@@ -43,5 +43,23 @@ public class OrderItem {
 
     @Column(name = "subtotal", nullable = false)
     private Long subtotal;
+
+    @Column(name = "note", length = 255)
+    private String note;
+
+    public static OrderItem of(Reward reward, String rewardName, Long rewardPrice, Integer quantity, String note) {
+        OrderItem item = new OrderItem();
+        item.reward = reward;
+        item.rewardName = rewardName;
+        item.rewardPrice = rewardPrice;
+        item.quantity = quantity;
+        item.subtotal = rewardPrice * quantity;
+        item.note = note;
+        return item;
+    }
+
+    void assignOrder(Order order) {
+        this.order = order;
+    }
 }
 
