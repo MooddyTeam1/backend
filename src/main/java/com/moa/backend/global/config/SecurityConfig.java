@@ -6,8 +6,10 @@ import com.moa.backend.global.security.jwt.JwtAuthenticationFilter;
 import com.moa.backend.global.security.jwt.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,6 +41,11 @@ public class SecurityConfig {
                 .authenticationEntryPoint(new RestAuthenticationEntryPoint())
                 .accessDeniedHandler(new RestAccessDeniedHandler()))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                       HttpMethod.GET,
+                        "/api/projects/**"
+                ).permitAll()
+
                 .requestMatchers(
                     "/api/auth/signup",
                     "/api/auth/login",

@@ -1,5 +1,6 @@
 package com.moa.backend.domain.project.entity;
 
+import com.moa.backend.domain.project.dto.ProjectRequest;
 import com.moa.backend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,26 +16,31 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+
+import lombok.*;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Entity
-@Table(name = "project")
+@Table(name = "projects")
+@Builder
 public class Project {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "creator_user_id", nullable = false)
-    private User creator;
+//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+//    @JoinColumn(name = "creator_user_id", nullable = false)
+//    private User creator;
 
     @Column(name = "title", nullable = false, length = 200)
     private String title;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String content;
 
     @Column(name = "goal_amount", nullable = false)
     private Long goalAmount;
@@ -46,8 +52,16 @@ public class Project {
     private LocalDateTime endAt;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Category category;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private ProjectStatus status;
+    private ProjectStatus status = ProjectStatus.DRAFT;
+
+    @Column(length = 512)
+    private String thumbnailUrl;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -64,6 +78,10 @@ public class Project {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isInProgress() {
+        return this.status == ProjectStatus.FUNDING;
     }
 }
 
