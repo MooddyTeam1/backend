@@ -29,5 +29,5 @@ public interface ProjectService {
     List<ProjectResponse> getByCategory(Category category);
 
     //프로젝트 삭제
-    ProjectResponse deleteProject(Long id);
+    ProjectResponse deleteProject(Long userid, Long projectId);
 }
