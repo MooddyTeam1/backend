@@ -27,7 +27,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/h2-console/**")  // H2 콘솔 CSRF 비활성화
+                .disable())
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin()))  // H2 콘솔 iframe 허용
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(form -> form.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -40,7 +44,8 @@ public class SecurityConfig {
                     "/api/auth/login",
                     "/api/auth/refresh",
                     "/actuator/health",
-                    "/api/health"
+                    "/api/health",
+                    "/h2-console/**"  // H2 콘솔 접근 허용
                 ).permitAll()
                 .anyRequest().authenticated()
             )

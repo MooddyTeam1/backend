@@ -10,6 +10,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import com.moa.backend.global.error.AppException;
+import com.moa.backend.global.error.ErrorCode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,5 +41,28 @@ public class Reward {
 
     @Column(name = "stock_quantity")
     private Integer stockQuantity;
+
+    public void decreaseStock(int quantity) {
+        if (this.stockQuantity == null) {
+            return;
+        }
+        if (quantity <= 0) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "수량은 1 이상이어야 합니다.");
+        }
+        if (this.stockQuantity < quantity) {
+            throw new AppException(ErrorCode.BUSINESS_CONFLICT, "리워드 재고가 부족합니다.");
+        }
+        this.stockQuantity -= quantity;
+    }
+
+    public void restoreStock(int quantity) {
+        if (this.stockQuantity == null) {
+            return;
+        }
+        if (quantity <= 0) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "수량은 1 이상이어야 합니다.");
+        }
+        this.stockQuantity += quantity;
+    }
 }
 
