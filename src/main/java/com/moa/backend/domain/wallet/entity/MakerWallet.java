@@ -20,8 +20,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "creator_profile")
-public class CreatorProfile {
+@Table(name = "maker_wallet")
+public class MakerWallet {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,31 +31,24 @@ public class CreatorProfile {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(name = "bank_name", length = 50)
-    private String bankName;
+    @Column(name = "available_balance", nullable = false)
+    private Long availableBalance = 0L;
 
-    @Column(name = "account_number", length = 50)
-    private String accountNumber;
+    @Column(name = "pending_balance", nullable = false)
+    private Long pendingBalance = 0L;
 
-    @Column(name = "account_holder", length = 100)
-    private String accountHolder;
+    @Column(name = "total_earned", nullable = false)
+    private Long totalEarned = 0L;
 
-    @Column(name = "business_number", length = 50)
-    private String businessNumber;
-
-    @Column(name = "business_name", length = 100)
-    private String businessName;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "total_withdrawn", nullable = false)
+    private Long totalWithdrawn = 0L;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = this.createdAt;
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
@@ -63,4 +56,3 @@ public class CreatorProfile {
         this.updatedAt = LocalDateTime.now();
     }
 }
-

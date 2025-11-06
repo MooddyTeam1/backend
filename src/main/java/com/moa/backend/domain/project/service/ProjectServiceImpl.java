@@ -57,7 +57,7 @@ public class ProjectServiceImpl implements ProjectService{
                 .endAt(request.getEndAt())
                 .category(request.getCategory())
                 .thumbnailUrl(request.getThumbnailUrl())
-                .creator(user)
+                .maker(user)
                 .build();
 
         Project save = projectRepository.save(project);
@@ -113,7 +113,7 @@ public class ProjectServiceImpl implements ProjectService{
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
 
-        if (!project.getCreator().getId().equals(userId)) {
+        if (!project.getMaker().getId().equals(userId)) {
             throw new AppException(ErrorCode.FORBIDDEN);
         }
 

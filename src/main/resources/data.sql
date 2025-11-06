@@ -1,7 +1,7 @@
 -- ===================================
 -- SELECT * FROM users;
--- SELECT * FROM creator_profile;
--- SELECT * FROM creator_wallet;
+-- SELECT * FROM maker_business_profile;
+-- SELECT * FROM maker_wallet;
 -- SELECT * FROM project;
 -- SELECT * FROM reward;
 -- ===================================
@@ -12,17 +12,17 @@ VALUES (1, 'user@test.com', '$2a$10$PIyfq3OWrbkLwkCmxY2yoe7XDCCUXGYeiz6uVn1QVie.
        (3, 'admin@test.com', '$2a$10$PIyfq3OWrbkLwkCmxY2yoe7XDCCUXGYeiz6uVn1QVie.PF4lQG48e', '관리자', 'ADMIN', NOW(),
         NOW());
 
--- 2. 크리에이터 프로필 (user_id=2)
-INSERT INTO creator_profile (id, user_id, bank_name, account_number, account_holder, business_number, business_name,
+-- 2. 메이커 사업자 프로필 (user_id=2)
+INSERT INTO maker_business_profile (id, user_id, bank_name, account_number, account_holder, business_number, business_name,
                              created_at, updated_at)
-VALUES (1, 2, '카카오뱅크', '3333-12-1234567', '크리에이터', '123-45-67890', '크리에이터 스튜디오', NOW(), NOW());
+VALUES (1, 2, '카카오뱅크', '3333-12-1234567', '메이커', '123-45-67890', '메이커 스튜디오', NOW(), NOW());
 
--- 3. 크리에이터 지갑 (user_id=2)
-INSERT INTO creator_wallet (id, user_id, available_balance, pending_balance, total_earned, total_withdrawn, updated_at)
+-- 3. 메이커 지갑 (user_id=2)
+INSERT INTO maker_wallet (id, user_id, available_balance, pending_balance, total_earned, total_withdrawn, updated_at)
 VALUES (1, 2, 0, 0, 0, 0, NOW());
 
--- 4. 프로젝트 (creator_user_id=2, 현재 펀딩 중)
-INSERT INTO project (creator_user_id, title, content, goal_amount, category, start_at, end_at, status, created_at,
+-- 4. 프로젝트 (maker_user_id=2, 현재 펀딩 중)
+INSERT INTO project (maker_user_id, title, content, goal_amount, category, start_at, end_at, status, created_at,
                      updated_at)
 VALUES (2, '수제 도자기 머그컵 만들기',
         '전문 도예가와 함께 나만의 머그컵을 만드는 워크숍입니다. 초보자도 쉽게 따라할 수 있습니다.',
@@ -59,8 +59,8 @@ VALUES (1, 1, '머그컵 - 화이트', 15000, true, 100),
 --
 -- 회원가입 방법:
 -- POST http://localhost:8080/api/auth/signup
--- { "email": "backer@test.com", "password": "test1234", "name": "후원자" }
--- { "email": "creator@test.com", "password": "test1234", "name": "크리에이터" }
+-- { "email": "user@test.com", "password": "test1234", "name": "유저" }
+-- { "email": "maker@test.com", "password": "test1234", "name": "메이커" }
 -- { "email": "admin@test.com", "password": "test1234", "name": "관리자" }
 -- ===================================
 -- 이메일: user@test.com, maker@test.com, admin@test.com

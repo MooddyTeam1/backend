@@ -36,8 +36,8 @@ public class Settlement {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "creator_user_id", nullable = false)
-    private User creator;
+    @JoinColumn(name = "maker_user_id", nullable = false)
+    private User maker;
 
     @Column(name = "total_order_amount", nullable = false)
     private Long totalOrderAmount;

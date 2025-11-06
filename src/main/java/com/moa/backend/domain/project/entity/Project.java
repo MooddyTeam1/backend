@@ -1,6 +1,5 @@
 package com.moa.backend.domain.project.entity;
 
-import com.moa.backend.domain.project.dto.ProjectRequest;
 import com.moa.backend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,8 +32,8 @@ public class Project {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "creator_user_id", nullable = false)
-    private User creator;
+    @JoinColumn(name = "maker_user_id", nullable = false)
+    private User maker;
 
     @Column(name = "title", nullable = false, length = 200)
     private String title;
