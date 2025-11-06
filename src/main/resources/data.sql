@@ -23,9 +23,9 @@ INSERT INTO creator_wallet (id, user_id, available_balance, pending_balance, tot
 VALUES (1, 2, 0, 0, 0, 0, NOW());
 
 -- 4. 프로젝트 (creator_user_id=2, 현재 펀딩 중)
-INSERT INTO project (id, creator_user_id, title, content, goal_amount, category, start_at, end_at, status, created_at, updated_at)
+INSERT INTO project (creator_user_id, title, content, goal_amount, category, start_at, end_at, status, created_at, updated_at)
 VALUES
-    (1, 2,'수제 도자기 머그컵 만들기',
+    (2,'수제 도자기 머그컵 만들기',
      '전문 도예가와 함께 나만의 머그컵을 만드는 워크숍입니다. 초보자도 쉽게 따라할 수 있습니다.',
      5000000,
      'TECH',
@@ -35,7 +35,7 @@ VALUES
      NOW(),
      NOW()),
 
-    (2, 2,'수제 디저트 만들기 클래스',
+    (2,'수제 디저트 만들기 클래스',
      '신선한 재료를 사용해 쿠키와 마카롱을 직접 만들어보는 클래스입니다. 초보자도 쉽게 따라 할 수 있으며, 완성된 디저트는 포장해서 선물할 수도 있습니다.',
      3000000,
      'FOOD',

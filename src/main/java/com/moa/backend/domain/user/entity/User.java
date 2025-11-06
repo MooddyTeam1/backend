@@ -64,24 +64,6 @@ public class User {
         return new User(email, encodedPassword, name, UserRole.BACKER);
     }
 
-    //Creator 신청
-    public void applyCreator() {
-        if (this.role != UserRole.BACKER) {
-            throw new IllegalArgumentException("이미 CREATOR 이거나 ADMIN 입니다");
-        }
-        this.creatorStatus = CreatorStatus.PENDING;
-    }
-
-    //승인됨
-    public void approveCreator() {
-        this.role = UserRole.CREATOR;
-        this.creatorStatus = CreatorStatus.APPROVED;
-    }
-
-    //반려됨
-    public void rejectCreator() {
-        this.creatorStatus = CreatorStatus.REJECTED;
-    }
 
     @PrePersist
     protected void onCreate() {
