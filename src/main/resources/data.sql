@@ -5,13 +5,12 @@
 -- SELECT * FROM project;
 -- SELECT * FROM reward;
 -- ===================================
-INSERT INTO users (id, email, password, name, role, creator_status, created_at, updated_at)
-VALUES (1, 'backer@test.com', '$2a$10$PIyfq3OWrbkLwkCmxY2yoe7XDCCUXGYeiz6uVn1QVie.PF4lQG48e', '후원자', 'BACKER', 'NONE',
-        NOW(), NOW()),
-       (2, 'creator@test.com', '$2a$10$PIyfq3OWrbkLwkCmxY2yoe7XDCCUXGYeiz6uVn1QVie.PF4lQG48e', '크리에이터', 'CREATOR',
-        'APPROVED', NOW(), NOW()),
-       (3, 'admin@test.com', '$2a$10$PIyfq3OWrbkLwkCmxY2yoe7XDCCUXGYeiz6uVn1QVie.PF4lQG48e', '관리자', 'ADMIN', 'NONE',
-        NOW(), NOW());
+INSERT INTO users (id, email, password, name, role, created_at, updated_at)
+VALUES (1, 'user@test.com', '$2a$10$PIyfq3OWrbkLwkCmxY2yoe7XDCCUXGYeiz6uVn1QVie.PF4lQG48e', '유저', 'USER', NOW(), NOW()),
+       (2, 'maker@test.com', '$2a$10$PIyfq3OWrbkLwkCmxY2yoe7XDCCUXGYeiz6uVn1QVie.PF4lQG48e', '메이커', 'USER', NOW(),
+        NOW()),
+       (3, 'admin@test.com', '$2a$10$PIyfq3OWrbkLwkCmxY2yoe7XDCCUXGYeiz6uVn1QVie.PF4lQG48e', '관리자', 'ADMIN', NOW(),
+        NOW());
 
 -- 2. 크리에이터 프로필 (user_id=2)
 INSERT INTO creator_profile (id, user_id, bank_name, account_number, account_holder, business_number, business_name,
@@ -23,27 +22,27 @@ INSERT INTO creator_wallet (id, user_id, available_balance, pending_balance, tot
 VALUES (1, 2, 0, 0, 0, 0, NOW());
 
 -- 4. 프로젝트 (creator_user_id=2, 현재 펀딩 중)
-INSERT INTO project (creator_user_id, title, content, goal_amount, category, start_at, end_at, status, created_at, updated_at)
-VALUES
-    (2,'수제 도자기 머그컵 만들기',
-     '전문 도예가와 함께 나만의 머그컵을 만드는 워크숍입니다. 초보자도 쉽게 따라할 수 있습니다.',
-     5000000,
-     'TECH',
-     DATEADD('DAY', -5, CURRENT_TIMESTAMP),
-     DATEADD('DAY', 25, CURRENT_TIMESTAMP),
-     'FUNDING',
-     NOW(),
-     NOW()),
+INSERT INTO project (creator_user_id, title, content, goal_amount, category, start_at, end_at, status, created_at,
+                     updated_at)
+VALUES (2, '수제 도자기 머그컵 만들기',
+        '전문 도예가와 함께 나만의 머그컵을 만드는 워크숍입니다. 초보자도 쉽게 따라할 수 있습니다.',
+        5000000,
+        'TECH',
+        DATEADD('DAY', -5, CURRENT_TIMESTAMP),
+        DATEADD('DAY', 25, CURRENT_TIMESTAMP),
+        'FUNDING',
+        NOW(),
+        NOW()),
 
-    (2,'수제 디저트 만들기 클래스',
-     '신선한 재료를 사용해 쿠키와 마카롱을 직접 만들어보는 클래스입니다. 초보자도 쉽게 따라 할 수 있으며, 완성된 디저트는 포장해서 선물할 수도 있습니다.',
-     3000000,
-     'FOOD',
-     DATEADD('DAY', -2, CURRENT_TIMESTAMP),
-     DATEADD('DAY', 20, CURRENT_TIMESTAMP),
-     'FUNDING',
-     NOW(),
-     NOW());
+       (2, '수제 디저트 만들기 클래스',
+        '신선한 재료를 사용해 쿠키와 마카롱을 직접 만들어보는 클래스입니다. 초보자도 쉽게 따라 할 수 있으며, 완성된 디저트는 포장해서 선물할 수도 있습니다.',
+        3000000,
+        'FOOD',
+        DATEADD('DAY', -2, CURRENT_TIMESTAMP),
+        DATEADD('DAY', 20, CURRENT_TIMESTAMP),
+        'FUNDING',
+        NOW(),
+        NOW());
 
 -- 5. 리워드 (project_id=1)
 INSERT INTO reward (id, project_id, name, price, is_active, stock_quantity)
@@ -64,8 +63,8 @@ VALUES (1, 1, '머그컵 - 화이트', 15000, true, 100),
 -- { "email": "creator@test.com", "password": "test1234", "name": "크리에이터" }
 -- { "email": "admin@test.com", "password": "test1234", "name": "관리자" }
 -- ===================================
--- 이메일: backer@test.com, creator@test.com, admin@test.com
+-- 이메일: user@test.com, maker@test.com, admin@test.com
 -- 비밀번호: test1234 (모두 동일)
--- 프로젝트: id=1 (크리에이터 id=2)
+-- 프로젝트: id=1 (메이커 id=2)
 -- 리워드: id=1~5 (프로젝트 id=1)
 -- ===================================

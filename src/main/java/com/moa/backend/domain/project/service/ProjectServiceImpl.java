@@ -6,7 +6,6 @@ import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
-import com.moa.backend.domain.user.entity.CreatorStatus;
 import com.moa.backend.domain.user.entity.User;
 import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;

@@ -42,10 +42,6 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     private UserRole role;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "creator_status", nullable = false, length = 20)
-    private CreatorStatus creatorStatus = CreatorStatus.NONE;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -57,11 +53,10 @@ public class User {
         this.password = password;
         this.name = name;
         this.role = role;
-        this.creatorStatus = CreatorStatus.NONE;
     }
 
     public static User createUser(String email, String encodedPassword, String name) {
-        return new User(email, encodedPassword, name, UserRole.BACKER);
+        return new User(email, encodedPassword, name, UserRole.USER);
     }
 
 
