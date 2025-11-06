@@ -30,7 +30,7 @@ public class WalletTransaction {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "wallet_id", nullable = false)
-    private CreatorWallet wallet;
+    private MakerWallet wallet;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 20)
