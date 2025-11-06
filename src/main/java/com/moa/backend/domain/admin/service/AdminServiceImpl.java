@@ -1,14 +1,10 @@
 package com.moa.backend.domain.admin.service;
 
-import com.moa.backend.domain.admin.dto.UserResponse;
 import com.moa.backend.domain.project.dto.ProjectResponse;
 import com.moa.backend.domain.project.dto.ProjectStatusResponse;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
-import com.moa.backend.domain.user.entity.CreatorStatus;
-import com.moa.backend.domain.user.entity.User;
-import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import jakarta.transaction.Transactional;

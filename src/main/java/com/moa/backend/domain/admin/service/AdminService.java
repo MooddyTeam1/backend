@@ -1,6 +1,5 @@
 package com.moa.backend.domain.admin.service;
 
-import com.moa.backend.domain.admin.dto.UserResponse;
 import com.moa.backend.domain.project.dto.ProjectResponse;
 import com.moa.backend.domain.project.dto.ProjectStatusResponse;
 
