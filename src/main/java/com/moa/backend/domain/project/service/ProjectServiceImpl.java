@@ -38,10 +38,6 @@ public class ProjectServiceImpl implements ProjectService{
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
-        if (user.getCreatorStatus() != CreatorStatus.APPROVED) {
-            throw new AppException(ErrorCode.UNAUTHORIZED_CREATOR);
-        }
-
         if (request.getGoalAmount() <=0) {
             throw new AppException(ErrorCode.INVALID_AMOUNT);
         }

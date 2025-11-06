@@ -1,17 +1,20 @@
 package com.moa.backend.domain.admin.service;
 
 import com.moa.backend.domain.admin.dto.UserResponse;
+import com.moa.backend.domain.project.dto.ProjectResponse;
+import com.moa.backend.domain.project.dto.ProjectStatusResponse;
 
 import java.util.List;
 
 public interface AdminService {
 
-    //판매자 승인
-    void approveCreator(Long userId);
 
-    //판매자 반려
-    void rejectCreator(Long userId);
+    //프로젝트 승인
+    ProjectStatusResponse approveProject(Long projectId);
 
-    //승인 대기목록
-    List<UserResponse> getPendingCreators();
+    //프로젝트 반려
+    ProjectStatusResponse rejectProject(Long projectId, String reason);
+
+    //프로젝트 승인 대기목록
+    List<ProjectResponse> getDraftProjects();
 }

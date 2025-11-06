@@ -60,6 +60,10 @@ public class Project {
     @Column(name = "status", nullable = false, length = 20)
     private ProjectStatus status = ProjectStatus.DRAFT;
 
+    private String rejectionReason;
+    private LocalDateTime approvedAt;
+    private LocalDateTime rejectedAt;
+
     @Column(length = 512)
     private String thumbnailUrl;
 

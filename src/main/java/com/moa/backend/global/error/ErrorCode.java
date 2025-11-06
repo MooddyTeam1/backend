@@ -32,6 +32,10 @@ public enum ErrorCode {
     PROJECT_DUPLICATE_TITLE("POST-BUSN-409", HttpStatus.CONFLICT, "동일한 제목의 게시글이 이미 존재합니다."),
     PROJECT_CANNOT_DELETE_IN_PROGRESS("POST-BUSN-410", HttpStatus.CONFLICT, "진행 중인 펀딩은 삭제할 수 없습니다."),
 
+    PROJECT_ALREADY_FUNDING("PROJECT-409", HttpStatus.CONFLICT, "이미 승인되어 펀딩 중인 프로젝트입니다."),
+    PROJECT_ALREADY_SUCCESS("PROJECT-409", HttpStatus.CONFLICT, "이미 펀딩이 완료된 프로젝트입니다."),
+    PROJECT_ALREADY_FAILED("PROJECT-409", HttpStatus.CONFLICT, "반려되거나 펀딩 실패한 프로젝트입니다."),
+
     UNAUTHORIZED_CREATOR("AUTH-403", HttpStatus.FORBIDDEN, "판매자 권한이 없습니다."),
 
     // 서버 내부 오류
