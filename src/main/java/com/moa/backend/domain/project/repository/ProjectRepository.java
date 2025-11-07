@@ -34,5 +34,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     List<Project> findByReviewStatus(ProjectReviewStatus reviewStatus);
 
+    Optional<Project> findByIdAndMakerId(Long projectId, Long userId);
 }
 

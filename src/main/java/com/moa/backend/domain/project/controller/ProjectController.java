@@ -1,8 +1,6 @@
 package com.moa.backend.domain.project.controller;
 
-import com.moa.backend.domain.project.dto.CreateProjectRequest;
-import com.moa.backend.domain.project.dto.CreateProjectResponse;
-import com.moa.backend.domain.project.dto.ProjectDetailResponse;
+import com.moa.backend.domain.project.dto.*;
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.service.ProjectService;
@@ -70,4 +68,31 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getByCategory(category));
     }
 
+    //프로젝트 임시저장
+    @PostMapping("/temp")
+    public ResponseEntity<TempProjectResponse> saveTempProject(
+        @AuthenticationPrincipal JwtUserPrincipal principal,
+        @RequestBody TempProjectRequest request
+    ) {
+        return ResponseEntity.ok(projectService.saveTemp(principal.getId(), request));
+    }
+
+    //프로젝트 임시저장 조회
+    @GetMapping("/temp/{projectId}")
+    public ResponseEntity<TempProjectResponse> getTempProjectById(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId
+    ) {
+        return ResponseEntity.ok(projectService.getTempProject(principal.getId(), projectId));
+    }
+
+    //프로젝트 임시저장 수정
+    @PatchMapping("/temp/{projectId}")
+    public ResponseEntity<TempProjectResponse> updateTempProject(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId,
+            @RequestBody TempProjectRequest request
+    ) {
+        return ResponseEntity.ok(projectService.updateTemp(principal.getId(), projectId, request));
+    }
 }

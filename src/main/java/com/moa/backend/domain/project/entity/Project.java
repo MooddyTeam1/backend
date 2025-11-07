@@ -28,26 +28,26 @@ public class Project {
     @JoinColumn(name = "maker_user_id", nullable = false)
     private User maker;
 
-    @Column(name = "title", nullable = false, length = 200)
+    @Column(name = "title", nullable = true, length = 200)
     private String title;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = true)
     private String summary;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = true)
     private String storyMarkdown;
 
-    @Column(name = "goal_amount", nullable = false)
+    @Column(name = "goal_amount", nullable = true)
     private Long goalAmount;
 
-    @Column(name = "start_at", nullable = false)
+    @Column(name = "start_at", nullable = true)
     private LocalDate startDate;    //날짜만
 
-    @Column(name = "end_at", nullable = false)
+    @Column(name = "end_at", nullable = true)
     private LocalDate endDate;      //날짜만
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Category category;
 
     // 날짜 기반 자동 업데이트

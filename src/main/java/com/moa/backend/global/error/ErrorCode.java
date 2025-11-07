@@ -39,6 +39,7 @@ public enum ErrorCode {
     PROJECT_ALREADY_FUNDING("PROJECT-409", HttpStatus.CONFLICT, "이미 승인되어 펀딩 중인 프로젝트입니다."),
     PROJECT_ALREADY_SUCCESS("PROJECT-409", HttpStatus.CONFLICT, "이미 펀딩이 완료된 프로젝트입니다."),
     PROJECT_ALREADY_ENDED("PROJECT-409", HttpStatus.CONFLICT, "반려되거나 종료된 프로젝트입니다."),
+    PROJECT_NOT_EDITABLE("PROJECT-400", HttpStatus.BAD_REQUEST, "수정할 수 없는 프로젝트 상태입니다."),
 
     // 서버 내부 오류
     INTERNAL_ERROR("SYS-500", HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");

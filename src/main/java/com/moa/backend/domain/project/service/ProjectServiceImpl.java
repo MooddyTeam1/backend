@@ -1,8 +1,6 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.project.dto.CreateProjectRequest;
-import com.moa.backend.domain.project.dto.CreateProjectResponse;
-import com.moa.backend.domain.project.dto.ProjectDetailResponse;
+import com.moa.backend.domain.project.dto.*;
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
@@ -114,4 +112,66 @@ public class ProjectServiceImpl implements ProjectService{
                 .collect(Collectors.toList());
     }
 
+    //프로젝트 임시 저장
+    @Override
+    public TempProjectResponse saveTemp(Long userId, TempProjectRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+
+        Project project = Project.builder()
+                .title(request.getTitle())
+                .summary(request.getSummary())
+                .storyMarkdown(request.getStoryMarkdown())
+                .goalAmount(request.getGoalAmount())
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .category(request.getCategory())
+                .lifecycleStatus(ProjectLifecycleStatus.DRAFT)
+                .reviewStatus(ProjectReviewStatus.NONE)
+                .coverImageUrl(request.getCoverImageUrl())
+                .coverGallery(request.getCoverGallery())
+                .tags(request.getTags())
+                .maker(user)
+                .build();
+
+        Project temp = projectRepository.save(project);
+        return TempProjectResponse.from(temp);
+    }
+
+    //프로젝트 임시저장 조회
+    @Override
+    public TempProjectResponse getTempProject(Long userId, Long projectId) {
+        Project project = projectRepository.findByIdAndMakerId(projectId, userId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+
+        return TempProjectResponse.from(project);
+    }
+
+    //프로젝트 임시저장 수정
+    @Override
+    @Transactional
+    public TempProjectResponse updateTemp( Long userId, Long projectId, TempProjectRequest request) {
+        Project project = projectRepository.findByIdAndMakerId(projectId, userId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+
+        if(!(project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
+                (project.getReviewStatus() == ProjectReviewStatus.NONE ||
+                  project.getReviewStatus() == ProjectReviewStatus.REJECTED))){
+            throw new AppException(ErrorCode.PROJECT_NOT_EDITABLE);
+        }
+
+        if (request.getTitle() != null) project.setTitle(request.getTitle());
+        if (request.getSummary() != null) project.setSummary(request.getSummary());
+        if (request.getStoryMarkdown() != null) project.setStoryMarkdown(request.getStoryMarkdown());
+        if (request.getGoalAmount() != null) project.setGoalAmount(request.getGoalAmount());
+        if (request.getStartDate() != null) project.setStartDate(request.getStartDate());
+        if (request.getEndDate() != null) project.setEndDate(request.getEndDate());
+        if (request.getCategory() != null) project.setCategory(request.getCategory());
+        if (request.getCoverImageUrl() != null) project.setCoverImageUrl(request.getCoverImageUrl());
+        if (request.getCoverGallery() != null) project.setCoverGallery(request.getCoverGallery());
+        if (request.getTags() != null) project.setTags(request.getTags());
+
+        Project temp = projectRepository.save(project);
+        return TempProjectResponse.from(temp);
+    }
 }
