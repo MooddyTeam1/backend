@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "maker")
+@Table(name = "makers")
 public class Maker {
 
     @Id
