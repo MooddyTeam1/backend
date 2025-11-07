@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "payment")
+@Table(name = "payments")
 public class Payment {
 
     @Id

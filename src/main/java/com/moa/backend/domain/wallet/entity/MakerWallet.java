@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "maker_wallet")
+@Table(name = "maker_wallets")
 public class MakerWallet {
 
     @Id

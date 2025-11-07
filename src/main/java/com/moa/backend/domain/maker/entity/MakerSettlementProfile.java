@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "maker_settlement_profile")
+@Table(name = "maker_settlement_profiles")
 public class MakerSettlementProfile {
 
     @Id

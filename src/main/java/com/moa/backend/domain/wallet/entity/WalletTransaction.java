@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "wallet_transaction")
+@Table(name = "wallet_transactions")
 public class WalletTransaction {
 
     @Id

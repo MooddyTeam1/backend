@@ -35,7 +35,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Entity
-@Table(name = "project")
+@Table(name = "projects")
 @Builder
 public class Project {
 
