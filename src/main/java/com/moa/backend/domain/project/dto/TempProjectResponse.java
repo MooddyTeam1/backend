@@ -29,7 +29,7 @@ public class TempProjectResponse {
     public static TempProjectResponse from(Project project) {
         return TempProjectResponse.builder()
                 .projectId(project.getId())
-                .maker(project.getMaker().getName())
+                .maker(project.getMaker().getBusinessName())
                 .title(project.getTitle())
                 .summary(project.getSummary())
                 .storyMarkdown(project.getStoryMarkdown())

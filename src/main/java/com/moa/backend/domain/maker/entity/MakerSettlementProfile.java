@@ -1,6 +1,5 @@
 package com.moa.backend.domain.maker.entity;
 
-import com.moa.backend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -28,8 +27,8 @@ public class MakerSettlementProfile {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    @JoinColumn(name = "maker_id", nullable = false, unique = true)
+    private Maker maker;
 
     @Column(name = "bank_name", length = 50)
     private String bankName;

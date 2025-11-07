@@ -1,13 +1,13 @@
 package com.moa.backend.domain.project.service;
 
+import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.project.dto.*;
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
-import com.moa.backend.domain.user.entity.User;
-import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class ProjectServiceImpl implements ProjectService{
 
     private final ProjectRepository projectRepository;
-    private final UserRepository userRepository;
+    private final MakerRepository makerRepository;
 
     // 프로젝트 생성
     @Override
@@ -35,8 +35,7 @@ public class ProjectServiceImpl implements ProjectService{
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        Maker maker = findMakerByOwnerId(userId);
 
         if (request.getGoalAmount() <=0) {
             throw new AppException(ErrorCode.INVALID_AMOUNT);
@@ -64,7 +63,7 @@ public class ProjectServiceImpl implements ProjectService{
                 .coverImageUrl(request.getCoverImageUrl())
                 .coverGallery(request.getCoverGallery())
                 .tags(request.getTags())
-                .maker(user)
+                .maker(maker)
                 .build();
 
         Project save = projectRepository.save(project);
@@ -115,8 +114,7 @@ public class ProjectServiceImpl implements ProjectService{
     //프로젝트 임시 저장
     @Override
     public TempProjectResponse saveTemp(Long userId, TempProjectRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        Maker maker = findMakerByOwnerId(userId);
 
         Project project = Project.builder()
                 .title(request.getTitle())
@@ -131,7 +129,7 @@ public class ProjectServiceImpl implements ProjectService{
                 .coverImageUrl(request.getCoverImageUrl())
                 .coverGallery(request.getCoverGallery())
                 .tags(request.getTags())
-                .maker(user)
+                .maker(maker)
                 .build();
 
         Project temp = projectRepository.save(project);
@@ -141,7 +139,8 @@ public class ProjectServiceImpl implements ProjectService{
     //프로젝트 임시저장 조회
     @Override
     public TempProjectResponse getTempProject(Long userId, Long projectId) {
-        Project project = projectRepository.findByIdAndMakerId(projectId, userId)
+        Maker maker = findMakerByOwnerId(userId);
+        Project project = projectRepository.findByIdAndMaker_Id(projectId, maker.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         return TempProjectResponse.from(project);
@@ -151,7 +150,8 @@ public class ProjectServiceImpl implements ProjectService{
     @Override
     @Transactional
     public TempProjectResponse updateTemp( Long userId, Long projectId, TempProjectRequest request) {
-        Project project = projectRepository.findByIdAndMakerId(projectId, userId)
+        Maker maker = findMakerByOwnerId(userId);
+        Project project = projectRepository.findByIdAndMaker_Id(projectId, maker.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         if(!(project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
@@ -173,5 +173,9 @@ public class ProjectServiceImpl implements ProjectService{
 
         Project temp = projectRepository.save(project);
         return TempProjectResponse.from(temp);
+    }
+    private Maker findMakerByOwnerId(Long ownerUserId) {
+        return makerRepository.findByOwner_Id(ownerUserId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "메이커 정보를 찾을 수 없습니다."));
     }
 }

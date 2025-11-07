@@ -42,7 +42,7 @@ public class ProjectDetailResponse {
     public static ProjectDetailResponse from(Project project) {
         return ProjectDetailResponse.builder()
                 .id(project.getId())
-                .maker(project.getMaker().getName())
+                .maker(project.getMaker().getBusinessName())
                 .title(project.getTitle())
                 .summary(project.getSummary())
                 .storyMarkdown(project.getStoryMarkdown())

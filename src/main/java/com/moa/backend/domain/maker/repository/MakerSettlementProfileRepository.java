@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MakerSettlementProfileRepository extends JpaRepository<MakerSettlementProfile, Long> {
 
-    Optional<MakerSettlementProfile> findByUser_Id(Long userId);
+    Optional<MakerSettlementProfile> findByMaker_Id(Long makerId);
 }
