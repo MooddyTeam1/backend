@@ -11,5 +11,10 @@ public record LoginRequest(
     @NotBlank(message = "비밀번호는 필수 값입니다.")
     String password
 ) {
+    // 로그인 요청 처리 시 getEmail() 호출 누락으로 인한 컴파일 오류 방지
+    public String getEmail() {
+        return email;
+    }
 }
+
 

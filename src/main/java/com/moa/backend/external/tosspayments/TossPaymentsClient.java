@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-@Component
+//@Component
 @RequiredArgsConstructor
 @Slf4j
 public class TossPaymentsClient {

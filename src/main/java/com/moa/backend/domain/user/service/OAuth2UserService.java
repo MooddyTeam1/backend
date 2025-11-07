@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserServ
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +47,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
             SocialUser socialUser = SocialUser.from(registrationId, oauth2User);
 
             // 4. 사용자 처리 (생성 또는 업데이트)
-            User user = userService.processOAuth2User(socialUser);
+            User user = userService.handleSocialLogin(socialUser);
 
             // 5. 마지막 로그인 시간 업데이트
             user.setLastLoginAt(LocalDateTime.now());
