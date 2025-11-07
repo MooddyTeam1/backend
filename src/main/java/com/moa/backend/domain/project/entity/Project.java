@@ -1,20 +1,13 @@
 package com.moa.backend.domain.project.entity;
 
 import com.moa.backend.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
+import com.moa.backend.global.converter.StringListConverter;
+import jakarta.persistence.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.*;
 
@@ -39,38 +32,66 @@ public class Project {
     private String title;
 
     @Column(columnDefinition = "TEXT", nullable = false)
-    private String content;
+    private String summary;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String storyMarkdown;
 
     @Column(name = "goal_amount", nullable = false)
     private Long goalAmount;
 
     @Column(name = "start_at", nullable = false)
-    private LocalDateTime startAt;
+    private LocalDate startDate;    //날짜만
 
     @Column(name = "end_at", nullable = false)
-    private LocalDateTime endAt;
+    private LocalDate endDate;      //날짜만
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Category category;
 
+    // 날짜 기반 자동 업데이트
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private ProjectStatus status = ProjectStatus.DRAFT;
+    @Column(name = "lifecycle_status", nullable = false, length = 20)
+    private ProjectLifecycleStatus lifecycleStatus = ProjectLifecycleStatus.DRAFT;
 
-    private String rejectionReason;
+    // 관리자 심사 상태
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "review_status", nullable = false, length = 20)
+    private ProjectReviewStatus reviewStatus = ProjectReviewStatus.NONE;
+
+    private LocalDateTime requestAt;
     private LocalDateTime approvedAt;
     private LocalDateTime rejectedAt;
+    private String rejectedReason;
 
     @Column(length = 512)
-    private String thumbnailUrl;
+    private String coverImageUrl;
+
+    // 현재 h2(개발용)
+    // postgres(운영용) = TEXT 옆 (json_valid(cover_gallery))추가 및 data.sql 이중따옴표 제거
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = StringListConverter.class)
+    private List<String> coverGallery = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    private LocalDateTime liveStartAt;  //시간까지 00시고정.
+    private LocalDateTime liveEndAt;
+
+    @ElementCollection
+    @CollectionTable(
+            name = "project_tag",
+            joinColumns = @JoinColumn(name = "project_id")
+    )
+    @Column(name = "tag")
+    private List<String> tags = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -82,9 +103,4 @@ public class Project {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
-    public boolean isInProgress() {
-        return this.status == ProjectStatus.FUNDING;
-    }
 }
-
