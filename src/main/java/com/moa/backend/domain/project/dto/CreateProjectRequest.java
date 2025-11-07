@@ -41,9 +41,9 @@ public class CreateProjectRequest {
     @NotBlank(message = "대표 이미지는 필수입니다")
     private String coverImageUrl;
 
-    @Size(max = 5, message = "갤러리는 최대 5장까지만 등록 가능합니다")
+    @Size(max = 6, message = "갤러리는 최대 6장까지만 등록 가능합니다")
     private List<String> coverGallery;
 
-    @Size(max = 5, message = "태그는 최대 5개까지만 등록 가능합니다")
+    @Size(max = 6, message = "태그는 최대 6개까지만 등록 가능합니다")
     private List<String> tags;
 }

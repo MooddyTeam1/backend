@@ -14,6 +14,7 @@ import java.util.List;
 @Builder
 public class TempProjectResponse {
     private Long projectId;
+    private String maker;
     private String title;
     private String summary;
     private String storyMarkdown;
@@ -28,6 +29,7 @@ public class TempProjectResponse {
     public static TempProjectResponse from(Project project) {
         return TempProjectResponse.builder()
                 .projectId(project.getId())
+                .maker(project.getMaker().getName())
                 .title(project.getTitle())
                 .summary(project.getSummary())
                 .storyMarkdown(project.getStoryMarkdown())

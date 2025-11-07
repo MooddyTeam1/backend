@@ -72,6 +72,7 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toList());
     }
 
+    //프로젝트 승인대기조회(검토페이지)
     @Override
     public ProjectDetailResponse getProjectDetailsReview(Long projectId) {
         Project project = projectRepository.findByIdAndLifecycleStatusAndReviewStatus(

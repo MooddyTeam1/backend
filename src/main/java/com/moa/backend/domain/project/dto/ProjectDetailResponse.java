@@ -17,6 +17,7 @@ import java.util.List;
 @Builder
 public class ProjectDetailResponse {
     private Long id;
+    private String maker;
     private String title;
     private String summary;
     private String storyMarkdown;
@@ -41,6 +42,7 @@ public class ProjectDetailResponse {
     public static ProjectDetailResponse from(Project project) {
         return ProjectDetailResponse.builder()
                 .id(project.getId())
+                .maker(project.getMaker().getName())
                 .title(project.getTitle())
                 .summary(project.getSummary())
                 .storyMarkdown(project.getStoryMarkdown())

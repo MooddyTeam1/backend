@@ -2,5 +2,12 @@ package com.moa.backend.domain.project.entity;
 
 public enum Category {
     TECH,
-    FOOD
+    DESIGN,
+    FOOD,
+    FASHION,
+    BEAUTY,
+    HOME_LIVING,
+    GAME,
+    ART,
+    PUBLISH
 }
