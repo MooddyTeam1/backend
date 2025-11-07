@@ -1,25 +1,19 @@
 package com.moa.backend.domain.user.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "users")
+@ToString(exclude = "SocialConnections")
+@EqualsAndHashCode(exclude = "SocialConnections")
 public class User {
 
     @Id
@@ -69,5 +63,30 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+        @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+        private Set<SocialConnection> socialConnections = new HashSet<>();
+
+        // 소셜 연결 추가
+        public void addSocialConnection (String provider, String providerId, String providerEmail){
+            SocialConnection connection = new SocialConnection();
+            connection.setUser(this);
+            connection.setProvider(provider);
+            connection.setProviderId(providerId);
+            connection.setProviderEmail(providerEmail);
+            connection.setConnectedAt(LocalDateTime.now());
+
+            socialConnections.add(connection);
+        }
+
+        // 소셜 연결 제거
+        public void removeSocialConnection (String provider){
+            socialConnections.removeIf(conn -> conn.getProvider().equals(provider));
+        }
+
+        // 특정 제공자 연결 여부 확인
+        public boolean hasProvider (String provider){
+            return socialConnections.stream()
+                    .anyMatch(conn -> conn.getProvider().equals(provider));
+        }
     }
 }
