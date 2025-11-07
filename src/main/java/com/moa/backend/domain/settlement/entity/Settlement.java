@@ -1,7 +1,7 @@
 package com.moa.backend.domain.settlement.entity;
 
+import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.project.entity.Project;
-import com.moa.backend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -36,8 +36,8 @@ public class Settlement {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "maker_user_id", nullable = false)
-    private User maker;
+    @JoinColumn(name = "maker_id", nullable = false)
+    private Maker maker;
 
     @Column(name = "total_order_amount", nullable = false)
     private Long totalOrderAmount;

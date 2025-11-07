@@ -1,6 +1,6 @@
 package com.moa.backend.domain.project.entity;
 
-import com.moa.backend.domain.user.entity.User;
+import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.global.converter.StringListConverter;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -47,8 +47,8 @@ public class Project {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "maker_user_id", nullable = false)
-    private User maker;
+    @JoinColumn(name = "maker_id", nullable = false)
+    private Maker maker;
 
     @Column(name = "title", nullable = true, length = 200)
     private String title;

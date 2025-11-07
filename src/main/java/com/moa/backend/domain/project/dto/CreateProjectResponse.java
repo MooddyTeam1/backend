@@ -21,7 +21,7 @@ public class CreateProjectResponse {
     public static CreateProjectResponse from(Project project) {
         return CreateProjectResponse.builder()
                 .projectId(project.getId())
-                .maker(project.getMaker().getName())
+                .maker(project.getMaker().getBusinessName())
                 .title(project.getTitle())
                 .requestAt(project.getRequestAt())
                 .reviewStatus(project.getReviewStatus())
