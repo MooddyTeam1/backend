@@ -1,4 +1,4 @@
-package com.moa.backend.domain.wallet.entity;
+package com.moa.backend.domain.maker.entity;
 
 import com.moa.backend.domain.user.entity.User;
 import jakarta.persistence.Column;
@@ -20,8 +20,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "maker_business_profile")
-public class MakerBusinessProfile {
+@Table(name = "maker_settlement_profile")
+public class MakerSettlementProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,12 +39,6 @@ public class MakerBusinessProfile {
 
     @Column(name = "account_holder", length = 100)
     private String accountHolder;
-
-    @Column(name = "business_number", length = 50)
-    private String businessNumber;
-
-    @Column(name = "business_name", length = 100)
-    private String businessName;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
