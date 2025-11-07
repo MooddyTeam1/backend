@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 public class CreateProjectResponse {
     private Long projectId;
+    private String maker;
     private String title;
     private LocalDateTime requestAt;
     private ProjectReviewStatus reviewStatus;
@@ -20,6 +21,7 @@ public class CreateProjectResponse {
     public static CreateProjectResponse from(Project project) {
         return CreateProjectResponse.builder()
                 .projectId(project.getId())
+                .maker(project.getMaker().getName())
                 .title(project.getTitle())
                 .requestAt(project.getRequestAt())
                 .reviewStatus(project.getReviewStatus())
