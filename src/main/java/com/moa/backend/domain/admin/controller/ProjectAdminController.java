@@ -1,8 +1,9 @@
 package com.moa.backend.domain.admin.controller;
 
 import com.moa.backend.domain.admin.service.AdminService;
-import com.moa.backend.domain.project.dto.ProjectResponse;
-import com.moa.backend.domain.project.dto.ProjectStatusResponse;
+import com.moa.backend.domain.project.dto.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.ProjectDetailResponse;
+import com.moa.backend.domain.admin.dto.ProjectStatusResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin/projects")
+@RequestMapping("/api/admin/project")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class ProjectAdminController {
@@ -38,8 +39,16 @@ public class ProjectAdminController {
     }
 
     //프로젝트 승인 대기 조회
-    @GetMapping("/draft")
-    public ResponseEntity<List<ProjectResponse>> draftProject() {
-        return ResponseEntity.ok(adminService.getDraftProjects());
+    @GetMapping("/review")
+    public ResponseEntity<List<CreateProjectResponse>> reviewProject() {
+        return ResponseEntity.ok(adminService.getReviewProjects());
+    }
+
+    //프로젝트 승인대기 조회(검토페이지)
+    @GetMapping("/review/{projectId}")
+    public ResponseEntity<ProjectDetailResponse> projectDetailsReview(
+            @PathVariable Long projectId
+    ) {
+        return ResponseEntity.ok(adminService.getProjectDetailsReview(projectId));
     }
 }

@@ -1,9 +1,11 @@
 package com.moa.backend.domain.admin.service;
 
-import com.moa.backend.domain.project.dto.ProjectResponse;
-import com.moa.backend.domain.project.dto.ProjectStatusResponse;
+import com.moa.backend.domain.project.dto.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.ProjectDetailResponse;
+import com.moa.backend.domain.admin.dto.ProjectStatusResponse;
 import com.moa.backend.domain.project.entity.Project;
-import com.moa.backend.domain.project.entity.ProjectStatus;
+import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
+import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
@@ -31,7 +33,8 @@ public class AdminServiceImpl implements AdminService {
 
         validateProjectStatusChangeable(project);
 
-        project.setStatus(ProjectStatus.FUNDING);
+        project.setLifecycleStatus(ProjectLifecycleStatus.SCHEDULED);   //공개예정
+        project.setReviewStatus(ProjectReviewStatus.APPROVED);          //승인됨
         project.setApprovedAt(LocalDateTime.now());
 
         projectRepository.save(project);
@@ -47,9 +50,10 @@ public class AdminServiceImpl implements AdminService {
 
         validateProjectStatusChangeable(project);
 
-        project.setStatus(ProjectStatus.FAILED);
+        project.setLifecycleStatus(ProjectLifecycleStatus.ENDED);   //종료됨
+        project.setReviewStatus(ProjectReviewStatus.REJECTED);      //반려됨
         project.setRejectedAt(LocalDateTime.now());
-        project.setRejectionReason(reason);
+        project.setRejectedReason(reason);
 
         projectRepository.save(project);
 
@@ -58,22 +62,37 @@ public class AdminServiceImpl implements AdminService {
 
     //프로젝트 승인대기 조회
     @Override
-    public List<ProjectResponse> getDraftProjects() {
-        return projectRepository.findByStatus(ProjectStatus.DRAFT)
+    public List<CreateProjectResponse> getReviewProjects() {
+        return projectRepository.findByLifecycleStatusAndReviewStatus(
+                ProjectLifecycleStatus.DRAFT,
+                ProjectReviewStatus.REVIEW
+                )
                 .stream()
-                .map(ProjectResponse::from)
+                .map(CreateProjectResponse::from)
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public ProjectDetailResponse getProjectDetailsReview(Long projectId) {
+        Project project = projectRepository.findByIdAndLifecycleStatusAndReviewStatus(
+                        projectId,
+                        ProjectLifecycleStatus.DRAFT,
+                        ProjectReviewStatus.REVIEW
+                )
+                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
+
+        return ProjectDetailResponse.from(project);
+    }
+
     private void validateProjectStatusChangeable(Project project) {
-        if (project.getStatus() == ProjectStatus.FUNDING) {
+        if (project.getLifecycleStatus() == ProjectLifecycleStatus.LIVE) {
             throw new AppException(ErrorCode.PROJECT_ALREADY_FUNDING);
         }
-        if (project.getStatus() == ProjectStatus.SUCCESS) {
+        if (project.getLifecycleStatus() == ProjectLifecycleStatus.SCHEDULED) {
             throw new AppException(ErrorCode.PROJECT_ALREADY_SUCCESS);
         }
-        if (project.getStatus() == ProjectStatus.FAILED) {
-            throw new AppException(ErrorCode.PROJECT_ALREADY_FAILED);
+        if (project.getLifecycleStatus() == ProjectLifecycleStatus.ENDED) {
+            throw new AppException(ErrorCode.PROJECT_ALREADY_ENDED);
         }
     }
 }
