@@ -32,7 +32,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     Optional<Project> findByIdAndLifecycleStatusAndReviewStatus(Long id, ProjectLifecycleStatus lifecycleStatus, ProjectReviewStatus reviewStatus);
 
-    List<Project> findByReviewStatus(ProjectReviewStatus reviewStatus);
+    List<Project> findAllByMakerIdAndLifecycleStatusAndReviewStatus(Long id, ProjectLifecycleStatus lifecycleStatus, ProjectReviewStatus reviewStatus);
 
     Optional<Project> findByIdAndMaker_Id(Long projectId, Long makerId);
+
+    long countByMakerIdAndLifecycleStatusAndReviewStatus(Long userId, ProjectLifecycleStatus lifecycleStatus, ProjectReviewStatus reviewStatus);
 }

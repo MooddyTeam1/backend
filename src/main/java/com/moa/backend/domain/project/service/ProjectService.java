@@ -1,8 +1,7 @@
 package com.moa.backend.domain.project.service;
 
 import com.moa.backend.domain.project.dto.*;
-import com.moa.backend.domain.project.entity.Category;
-import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
+import com.moa.backend.domain.project.entity.*;
 
 import java.util.List;
 
@@ -20,8 +19,6 @@ public interface ProjectService {
     //제목으로 검색
     List<ProjectDetailResponse> searchByTitle(String keyword);
 
-    //상태별 조회
-    List<ProjectDetailResponse> getByStatus(ProjectLifecycleStatus status);
 
     //카테고리별 조회
     List<ProjectDetailResponse> getByCategory(Category category);
@@ -29,10 +26,12 @@ public interface ProjectService {
     //프로젝트 임시저장
     TempProjectResponse saveTemp(Long userId, TempProjectRequest request);
 
-    //프로젝트 임시저장 조회
-    TempProjectResponse getTempProject(Long userId, Long projectId);
-
     //프로젝트 임시저장 수정
     TempProjectResponse updateTemp(Long userId, Long projectId, TempProjectRequest request);
 
+    //프로젝트 상태별 요약
+    StatusSummaryResponse getProjectSummary(Long userId);
+
+    //특정 상태 프로젝트 필요한데이터만 조회
+    List<?> getProjectByStatus(Long userId, ProjectLifecycleStatus lifecycle, ProjectReviewStatus review);
 }
