@@ -7,9 +7,6 @@ import java.util.List;
 
 public interface ProjectService {
 
-    //프로젝트 등록
-    CreateProjectResponse createProject(Long userId, CreateProjectRequest request);
-
     //전체 조회
     List<ProjectDetailResponse> getAll();
 
@@ -23,11 +20,6 @@ public interface ProjectService {
     //카테고리별 조회
     List<ProjectDetailResponse> getByCategory(Category category);
 
-    //프로젝트 임시저장
-    TempProjectResponse saveTemp(Long userId, TempProjectRequest request);
-
-    //프로젝트 임시저장 수정
-    TempProjectResponse updateTemp(Long userId, Long projectId, TempProjectRequest request);
 
     //프로젝트 상태별 요약
     StatusSummaryResponse getProjectSummary(Long userId);
