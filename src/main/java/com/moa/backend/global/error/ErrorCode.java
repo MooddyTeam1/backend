@@ -20,7 +20,6 @@ public enum ErrorCode {
 
     ORDER_NOT_FOUND("ORD-404", HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."),
     ORDER_ALREADY_PAID("ORD-409", HttpStatus.CONFLICT, "이미 결제 완료된 주문입니다."),
-    ORDER_ALREADY_EXISTS("ORD-409B", HttpStatus.CONFLICT, "해당 프로젝트에 이미 주문이 존재합니다."),
 
     PAYMENT_NOT_FOUND("PAY-404", HttpStatus.NOT_FOUND, "결제를 찾을 수 없습니다."),
     PAYMENT_AMOUNT_MISMATCH("PAY-400", HttpStatus.BAD_REQUEST, "결제 금액이 주문 금액과 일치하지 않습니다."),
