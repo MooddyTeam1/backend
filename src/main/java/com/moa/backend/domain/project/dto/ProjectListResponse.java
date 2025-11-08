@@ -5,6 +5,7 @@ import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
+import com.moa.backend.domain.reward.dto.RewardResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,6 +41,8 @@ public class ProjectListResponse {
     private String rejectedReason;
     private LocalDateTime liveStartAt;
     private LocalDateTime liveEndAt;
+
+    private List<RewardResponse> rewards;
 
     public static ProjectListResponse fromDraft(Project project) {
         return base(project)
@@ -101,6 +104,7 @@ public class ProjectListResponse {
                 .coverImageUrl(project.getCoverImageUrl())
                 .coverGallery(project.getCoverGallery())
                 .lifecycleStatus(project.getLifecycleStatus())
-                .reviewStatus(project.getReviewStatus());
+                .reviewStatus(project.getReviewStatus())
+                .rewards(project.getRewards().stream().map(RewardResponse::from).toList());
     }
 }

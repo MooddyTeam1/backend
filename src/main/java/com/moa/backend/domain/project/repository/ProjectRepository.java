@@ -13,8 +13,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
-    
-    Optional<Project> findByIdAndLifecycleStatus(Long projectId, ProjectLifecycleStatus status);
 
     boolean existsByTitle(String title);
 
