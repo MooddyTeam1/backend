@@ -4,6 +4,7 @@ import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
+import com.moa.backend.domain.reward.dto.RewardResponse;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -39,6 +40,8 @@ public class ProjectDetailResponse {
     private LocalDateTime liveStartAt;
     private LocalDateTime liveEndAt;
 
+    private List<RewardResponse> rewards;
+
     public static ProjectDetailResponse from(Project project) {
         return ProjectDetailResponse.builder()
                 .id(project.getId())
@@ -63,6 +66,8 @@ public class ProjectDetailResponse {
                 .rejectedReason(project.getRejectedReason())
                 .liveStartAt(project.getLiveStartAt())
                 .liveEndAt(project.getLiveEndAt())
+                .rewards(project.getRewards().stream()
+                        .map(RewardResponse::from).toList())
                 .build();
     }
 }

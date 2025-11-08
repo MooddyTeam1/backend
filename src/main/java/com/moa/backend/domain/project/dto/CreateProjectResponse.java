@@ -2,9 +2,11 @@ package com.moa.backend.domain.project.dto;
 
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
+import com.moa.backend.domain.reward.entity.Reward;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -18,6 +20,8 @@ public class CreateProjectResponse {
     private LocalDateTime requestAt;
     private ProjectReviewStatus reviewStatus;
 
+    private List<String> rewardNames;
+
     public static CreateProjectResponse from(Project project) {
         return CreateProjectResponse.builder()
                 .projectId(project.getId())
@@ -25,6 +29,7 @@ public class CreateProjectResponse {
                 .title(project.getTitle())
                 .requestAt(project.getRequestAt())
                 .reviewStatus(project.getReviewStatus())
+                .rewardNames(project.getRewards().stream().map(Reward::getName).toList())
                 .build();
     }
 }
