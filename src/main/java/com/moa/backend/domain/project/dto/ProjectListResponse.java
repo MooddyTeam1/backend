@@ -30,8 +30,6 @@ public class ProjectListResponse {
     private Long goalAmount;
     private LocalDate endDate;
     private Category category;
-    private ProjectLifecycleStatus lifecycleStatus;
-    private ProjectReviewStatus reviewStatus;
     private String coverImageUrl;
     private List<String> coverGallery;
     private List<String> tags;
@@ -43,6 +41,16 @@ public class ProjectListResponse {
     private LocalDateTime liveEndAt;
 
     private List<RewardResponse> rewards;
+
+    public static ProjectListResponse searchProjects(Project project) {
+        return  ProjectListResponse.builder()
+                .id(project.getId())
+                .title(project.getTitle())
+                .summary(project.getSummary())
+                .coverImageUrl(project.getCoverImageUrl())
+                .category(project.getCategory())
+                .build();
+    }
 
     public static ProjectListResponse fromDraft(Project project) {
         return base(project)
@@ -103,8 +111,6 @@ public class ProjectListResponse {
                 .category(project.getCategory())
                 .coverImageUrl(project.getCoverImageUrl())
                 .coverGallery(project.getCoverGallery())
-                .lifecycleStatus(project.getLifecycleStatus())
-                .reviewStatus(project.getReviewStatus())
                 .rewards(project.getRewards().stream().map(RewardResponse::from).toList());
     }
 }

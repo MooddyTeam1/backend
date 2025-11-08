@@ -26,7 +26,7 @@ public class ProjectController {
     private final ProjectTempService projectTempService;
 
     //프로젝트 생성
-    @PostMapping
+    @PostMapping("/request")
     public ResponseEntity<CreateProjectResponse> createProject(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @Valid @RequestBody CreateProjectRequest request,
@@ -46,25 +46,25 @@ public class ProjectController {
     }
 
     //단일 조회
-    @GetMapping("/{id}")
+    @GetMapping("/{projectId}")
     public ResponseEntity<ProjectDetailResponse> getProjectById(
-            @PathVariable Long id
+            @PathVariable Long projectId
     ) {
-        return ResponseEntity.ok(projectService.getById(id));
+        return ResponseEntity.ok(projectService.getById(projectId));
     }
 
     //제목 검색
     @GetMapping("/search")
-    public ResponseEntity<List<ProjectDetailResponse>> searchProjects(
+    public ResponseEntity<List<ProjectListResponse>> searchProjects(
             @RequestParam String keyword
     ) {
         return ResponseEntity.ok(projectService.searchByTitle(keyword));
     }
 
-    //카테고리별 조회
-    @GetMapping("/category/{category}")
-    public ResponseEntity<List<ProjectDetailResponse>> getProjectsByCategory(
-            @PathVariable Category category
+    //카테고리로 검색
+    @GetMapping("/category")
+    public ResponseEntity<List<ProjectListResponse>> getProjectsByCategory(
+            @RequestParam Category category
     ) {
         return ResponseEntity.ok(projectService.getByCategory(category));
     }
@@ -75,7 +75,7 @@ public class ProjectController {
         @AuthenticationPrincipal JwtUserPrincipal principal,
         @RequestBody TempProjectRequest request
     ) {
-        return ResponseEntity.ok(projectTempService.saveTemp(principal.getId(), request));
+        return ResponseEntity.ok(projectTempService.saveTemp(principal.getId(),null, request));
     }
 
     //프로젝트 임시저장 수정
@@ -85,7 +85,7 @@ public class ProjectController {
             @PathVariable Long projectId,
             @RequestBody TempProjectRequest request
     ) {
-        return ResponseEntity.ok(projectTempService.updateTemp(principal.getId(), projectId, request));
+        return ResponseEntity.ok(projectTempService.saveTemp(principal.getId(), projectId, request));
     }
 
     //프로젝트 상태별 요약

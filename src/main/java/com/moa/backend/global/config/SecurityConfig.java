@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers(
                        HttpMethod.GET,
-                        "/api/projects/**"
+                        "/api/project/**"
                 ).permitAll()
 
                 .requestMatchers(
@@ -52,7 +52,7 @@ public class SecurityConfig {
                     "/api/auth/refresh",
                     "/actuator/health",
                     "/api/health",
-                    "/h2-console/**"  // H2 콘솔 접근 허용
+                    "/h2-console/**" // H2 콘솔 접근 허용
                 ).permitAll()
                 .anyRequest().authenticated()
             )

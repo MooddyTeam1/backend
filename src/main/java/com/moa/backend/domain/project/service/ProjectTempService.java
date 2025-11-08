@@ -8,10 +8,7 @@ import com.moa.backend.domain.project.dto.TempProjectResponse;
 public interface ProjectTempService {
 
     //프로젝트 임시저장
-    TempProjectResponse saveTemp(Long userId, TempProjectRequest request);
-
-    //프로젝트 임시저장 수정
-    TempProjectResponse updateTemp(Long userId, Long projectId, TempProjectRequest request);
+    TempProjectResponse saveTemp(Long userId, Long projectId, TempProjectRequest request);
 
     //임시저장된 프로젝트 심사요청
     CreateProjectResponse requestTemp(Long userId, Long projectId, CreateProjectRequest request);

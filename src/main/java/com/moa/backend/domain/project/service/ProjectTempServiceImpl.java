@@ -1,6 +1,5 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.project.dto.CreateProjectRequest;
 import com.moa.backend.domain.project.dto.CreateProjectResponse;
@@ -29,60 +28,45 @@ public class ProjectTempServiceImpl implements  ProjectTempService {
     //프로젝트 임시 저장
     @Override
     @Transactional
-    public TempProjectResponse saveTemp(Long userId, TempProjectRequest request) {
+    public TempProjectResponse saveTemp(Long userId, Long projectId, TempProjectRequest request) {
+        Project project;
 
-        Maker maker = makerRepository.findByOwner_Id(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "메이커 정보를 찾을 수 없습니다."));
-        
-        Project project = Project.builder()
-                .title(request.getTitle())
-                .summary(request.getSummary())
-                .storyMarkdown(request.getStoryMarkdown())
-                .goalAmount(request.getGoalAmount())
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
-                .category(request.getCategory())
-                .lifecycleStatus(ProjectLifecycleStatus.DRAFT)
-                .reviewStatus(ProjectReviewStatus.NONE)
-                .coverImageUrl(request.getCoverImageUrl())
-                .coverGallery(request.getCoverGallery())
-                .tags(request.getTags())
-                .maker(maker)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        if (projectId != null) {
+            // 기존 임시저장 수정
+            project = projectRepository.findByIdAndMaker_Id(projectId, userId)
+                    .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
 
-        Project temp = projectRepository.save(project);
-        return TempProjectResponse.from(temp);
-    }
-
-    //프로젝트 임시저장 수정
-    @Override
-    @Transactional
-    public TempProjectResponse updateTemp(Long userId, Long projectId, TempProjectRequest request) {
-        Project project = projectRepository.findByIdAndMaker_Id(projectId, userId)
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
-
-        if(!(project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
-                (project.getReviewStatus() == ProjectReviewStatus.NONE ||
-                        project.getReviewStatus() == ProjectReviewStatus.REJECTED))){
-            throw new AppException(ErrorCode.PROJECT_NOT_EDITABLE);
+            // 상태 검증
+            if (!(project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
+                    (project.getReviewStatus() == ProjectReviewStatus.NONE ||
+                            project.getReviewStatus() == ProjectReviewStatus.REJECTED))) {
+                throw new AppException(ErrorCode.PROJECT_NOT_EDITABLE);
+            }
+        } else {
+            // 새로 생성
+            project = Project.builder()
+                    .maker(makerRepository.findByOwner_Id(userId)
+                            .orElseThrow(() -> new AppException(ErrorCode.FORBIDDEN)))
+                    .lifecycleStatus(ProjectLifecycleStatus.DRAFT)
+                    .reviewStatus(ProjectReviewStatus.NONE)
+                    .build();
         }
 
+        // 입력된 필드만 업데이트 (null 이면 기존값 유지)
         if (request.getTitle() != null) project.setTitle(request.getTitle());
         if (request.getSummary() != null) project.setSummary(request.getSummary());
-        if (request.getStoryMarkdown() != null) project.setStoryMarkdown(request.getStoryMarkdown());
         if (request.getGoalAmount() != null) project.setGoalAmount(request.getGoalAmount());
+        if (request.getCategory() != null) project.setCategory(request.getCategory());
         if (request.getStartDate() != null) project.setStartDate(request.getStartDate());
         if (request.getEndDate() != null) project.setEndDate(request.getEndDate());
-        if (request.getCategory() != null) project.setCategory(request.getCategory());
+        if (request.getStoryMarkdown() != null) project.setStoryMarkdown(request.getStoryMarkdown());
         if (request.getCoverImageUrl() != null) project.setCoverImageUrl(request.getCoverImageUrl());
-        if (request.getCoverGallery() != null) project.setCoverGallery(request.getCoverGallery());
-        if (request.getTags() != null) project.setTags(request.getTags());
 
-        Project temp = projectRepository.save(project);
-        return TempProjectResponse.from(temp);
+        projectRepository.save(project);
+
+        return TempProjectResponse.from(project);
     }
+
 
     // 심사 요청
     @Override

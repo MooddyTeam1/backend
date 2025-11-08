@@ -1,7 +1,6 @@
 package com.moa.backend.domain.reward.dto.set;
 
 import com.moa.backend.domain.reward.dto.select.OptionGroupRequest;
-import com.moa.backend.domain.reward.entity.OptionGroup;
 import lombok.*;
 
 import java.util.List;
@@ -11,7 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SetRewardRequest {
+public class RewardSetRequest {
 
     private String setName;
 

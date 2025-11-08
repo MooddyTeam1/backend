@@ -3,7 +3,7 @@ package com.moa.backend.domain.reward.factory;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.reward.dto.RewardRequest;
 import com.moa.backend.domain.reward.dto.select.OptionGroupRequest;
-import com.moa.backend.domain.reward.dto.set.SetRewardRequest;
+import com.moa.backend.domain.reward.dto.set.RewardSetRequest;
 import com.moa.backend.domain.reward.entity.OptionGroup;
 import com.moa.backend.domain.reward.entity.OptionValue;
 import com.moa.backend.domain.reward.entity.Reward;
@@ -38,14 +38,14 @@ public class RewardFactory {
                 .active(r.isActive())
                 .build();
 
-        // 옵션 그룹 처리
+        // 옵션 처리
         if (!CollectionUtils.isEmpty(r.getOptionGroups())) {
             r.getOptionGroups().forEach(g -> reward.addOptionGroup(toOptionGroup(g)));
         }
 
-        // 세트 리워드 처리
-        if (!CollectionUtils.isEmpty(r.getSetRewards())) {
-            r.getSetRewards().forEach(s -> reward.addRewardSet(toRewardSet(s)));
+        // 세트 처리
+        if (!CollectionUtils.isEmpty(r.getRewardSets())) {
+            r.getRewardSets().forEach(s -> reward.addRewardSet(toRewardSet(s)));
         }
 
         return reward;
@@ -69,7 +69,7 @@ public class RewardFactory {
         return group;
     }
 
-    private RewardSet toRewardSet(SetRewardRequest s) {
+    private RewardSet toRewardSet(RewardSetRequest s) {
         RewardSet rewardSet = RewardSet.builder()
                 .setName(s.getSetName())
                 .stockQuantity(s.getStockQuantity())
