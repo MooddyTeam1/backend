@@ -9,19 +9,12 @@ import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.reward.dto.RewardRequest;
-import com.moa.backend.domain.reward.dto.select.OptionGroupRequest;
-import com.moa.backend.domain.reward.dto.set.SetRewardRequest;
-import com.moa.backend.domain.reward.entity.OptionGroup;
-import com.moa.backend.domain.reward.entity.OptionValue;
-import com.moa.backend.domain.reward.entity.Reward;
-import com.moa.backend.domain.reward.entity.RewardSet;
 import com.moa.backend.domain.reward.factory.RewardFactory;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 

@@ -29,10 +29,14 @@ public class ProjectController {
     @PostMapping
     public ResponseEntity<CreateProjectResponse> createProject(
             @AuthenticationPrincipal JwtUserPrincipal principal,
-            @Valid @RequestBody CreateProjectRequest request
+            @Valid @RequestBody CreateProjectRequest request,
+            @RequestParam(required = false) Long projectId
     ) {
-        CreateProjectResponse response = projectCommandService.createProject(principal.getId(), request);
-        return ResponseEntity.ok(response);
+        if (projectId == null) {
+            return ResponseEntity.ok(projectCommandService.createProject(principal.getId(), request));
+        } else {
+            return ResponseEntity.ok(projectTempService.requestTemp(principal.getId(), projectId, request));
+        }
     }
 
     //전체 조회
