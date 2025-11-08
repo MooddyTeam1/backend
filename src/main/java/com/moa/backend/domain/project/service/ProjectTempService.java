@@ -1,5 +1,7 @@
 package com.moa.backend.domain.project.service;
 
+import com.moa.backend.domain.project.dto.CreateProjectRequest;
+import com.moa.backend.domain.project.dto.CreateProjectResponse;
 import com.moa.backend.domain.project.dto.TempProjectRequest;
 import com.moa.backend.domain.project.dto.TempProjectResponse;
 
@@ -10,4 +12,7 @@ public interface ProjectTempService {
 
     //프로젝트 임시저장 수정
     TempProjectResponse updateTemp(Long userId, Long projectId, TempProjectRequest request);
+
+    //임시저장된 프로젝트 심사요청
+    CreateProjectResponse requestTemp(Long userId, Long projectId, CreateProjectRequest request);
 }

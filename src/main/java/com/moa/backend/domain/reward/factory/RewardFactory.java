@@ -8,6 +8,8 @@ import com.moa.backend.domain.reward.entity.OptionGroup;
 import com.moa.backend.domain.reward.entity.OptionValue;
 import com.moa.backend.domain.reward.entity.Reward;
 import com.moa.backend.domain.reward.entity.RewardSet;
+import com.moa.backend.global.error.AppException;
+import com.moa.backend.global.error.ErrorCode;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -15,6 +17,17 @@ import org.springframework.util.CollectionUtils;
 public class RewardFactory {
 
     public Reward createReward(Project project, RewardRequest r) {
+
+        if (r.getName() == null || r.getName().isBlank()) {
+            throw new AppException(ErrorCode.INVALID_REWARD_NAME);
+        }
+        if (r.getPrice() == null || r.getPrice() <= 0) {
+            throw new AppException(ErrorCode.INVALID_REWARD_PRICE);
+        }
+        if (r.getStockQuantity() == null || r.getStockQuantity() <= 0) {
+            throw new AppException(ErrorCode.INVALID_REWARD_QUANTITY);
+        }
+
         Reward reward = Reward.builder()
                 .project(project)
                 .name(r.getName())

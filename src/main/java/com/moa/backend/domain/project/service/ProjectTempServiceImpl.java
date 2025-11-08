@@ -2,6 +2,8 @@ package com.moa.backend.domain.project.service;
 
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
+import com.moa.backend.domain.project.dto.CreateProjectRequest;
+import com.moa.backend.domain.project.dto.CreateProjectResponse;
 import com.moa.backend.domain.project.dto.TempProjectRequest;
 import com.moa.backend.domain.project.dto.TempProjectResponse;
 import com.moa.backend.domain.project.entity.Project;
@@ -80,5 +82,36 @@ public class ProjectTempServiceImpl implements  ProjectTempService {
 
         Project temp = projectRepository.save(project);
         return TempProjectResponse.from(temp);
+    }
+
+    // 심사 요청
+    @Override
+    @Transactional
+    public CreateProjectResponse requestTemp(Long userId, Long projectId, CreateProjectRequest request) {
+        Project project = projectRepository.findByIdAndMaker_Id(projectId, userId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
+
+        // 상태 검증
+        if (!(project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
+                (project.getReviewStatus() == ProjectReviewStatus.NONE ||
+                        project.getReviewStatus() == ProjectReviewStatus.REJECTED))) {
+            throw new AppException(ErrorCode.PROJECT_NOT_EDITABLE);
+        }
+
+        // 빈칸 검증
+        if (project.getTitle() == null || project.getTitle().trim().isEmpty() ||
+                project.getSummary() == null || project.getSummary().trim().isEmpty() ||
+                project.getGoalAmount() == null || project.getGoalAmount() <= 0 ||
+                project.getStartDate() == null ||
+                project.getEndDate() == null ||
+                project.getCategory() == null) {
+            throw new AppException(ErrorCode.PROJECT_NOT_REQUEST);
+        }
+
+        // 상태 전환
+        project.setReviewStatus(ProjectReviewStatus.REVIEW);
+        project.setRequestAt(LocalDateTime.now());
+
+        return CreateProjectResponse.from(project);
     }
 }
