@@ -3,6 +3,7 @@ package com.moa.backend.domain.project.controller;
 import com.moa.backend.domain.project.dto.*;
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
+import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.service.ProjectService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import jakarta.validation.Valid;
@@ -52,14 +53,6 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.searchByTitle(keyword));
     }
 
-    //상태별 조회
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<ProjectDetailResponse>> getProjectsByStatus(
-            @PathVariable ProjectLifecycleStatus status
-    ) {
-        return ResponseEntity.ok(projectService.getByStatus(status));
-    }
-
     //카테고리별 조회
     @GetMapping("/category/{category}")
     public ResponseEntity<List<ProjectDetailResponse>> getProjectsByCategory(
@@ -77,15 +70,6 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.saveTemp(principal.getId(), request));
     }
 
-    //프로젝트 임시저장 조회
-    @GetMapping("/temp/{projectId}")
-    public ResponseEntity<TempProjectResponse> getTempProjectById(
-            @AuthenticationPrincipal JwtUserPrincipal principal,
-            @PathVariable Long projectId
-    ) {
-        return ResponseEntity.ok(projectService.getTempProject(principal.getId(), projectId));
-    }
-
     //프로젝트 임시저장 수정
     @PatchMapping("/temp/{projectId}")
     public ResponseEntity<TempProjectResponse> updateTempProject(
@@ -94,5 +78,23 @@ public class ProjectController {
             @RequestBody TempProjectRequest request
     ) {
         return ResponseEntity.ok(projectService.updateTemp(principal.getId(), projectId, request));
+    }
+
+    //프로젝트 상태별 요약
+    @GetMapping("/summary")
+    public ResponseEntity<StatusSummaryResponse> getProjectSummary(
+            @AuthenticationPrincipal JwtUserPrincipal principal
+    ) {
+        return ResponseEntity.ok(projectService.getProjectSummary(principal.getId()));
+    }
+
+    //특정 상태 프로젝트 필요한데이터만 조회 (탭눌러서)
+    @GetMapping("/me/status")
+    public ResponseEntity<List<?>> getProjectByStatus(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @RequestParam("lifecycle") ProjectLifecycleStatus lifecycleStatus,
+            @RequestParam("review") ProjectReviewStatus reviewStatus
+    ) {
+        return ResponseEntity.ok(projectService.getProjectByStatus(principal.getId(), lifecycleStatus, reviewStatus));
     }
 }

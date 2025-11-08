@@ -50,7 +50,7 @@ public class AdminServiceImpl implements AdminService {
 
         validateProjectStatusChangeable(project);
 
-        project.setLifecycleStatus(ProjectLifecycleStatus.ENDED);   //종료됨
+        project.setLifecycleStatus(ProjectLifecycleStatus.DRAFT);   //종료됨
         project.setReviewStatus(ProjectReviewStatus.REJECTED);      //반려됨
         project.setRejectedAt(LocalDateTime.now());
         project.setRejectedReason(reason);

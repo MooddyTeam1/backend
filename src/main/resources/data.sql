@@ -12,17 +12,23 @@ VALUES (1, 'user@test.com', '$2a$10$PIyfq3OWrbkLwkCmxY2yoe7XDCCUXGYeiz6uVn1QVie.
 -- ===================================
 -- Maker specific data (for user_id = 2)
 -- ===================================
-INSERT INTO maker_business_profile (id, user_id, bank_name, account_number, account_holder, business_number,
-                                    business_name, created_at, updated_at)
-VALUES (1, 2, '카카오뱅크', '3333-12-1234567', '메이커', '123-45-67890', '메이커 스튜디오', NOW(), NOW());
+INSERT INTO makers (id, owner_user_id, name, business_name, business_number, representative, established_at, industry_type,
+    location, product_intro, core_competencies, image_url, contact_email, contact_phone, tech_stack_json, created_at,updated_at)
+VALUES (
+           2, 2,'메이커 스튜디오','메이커 스튜디오','123-45-67890','홍길동',
+           DATE '2020-05-20','식품 제조업','서울특별시 마포구 독막로 12길 34',
+           '수제 과일청을 만드는 건강한 브랜드입니다.', '자체 생산 및 지역 농가 협업',
+           'https://example.com/maker.jpg','maker@example.com',
+           '010-1234-5678','{"skills": ["Branding", "FoodTech", "Design"]}',
+           NOW(), NOW());
 
-INSERT INTO maker_wallet (id, user_id, available_balance, pending_balance, total_earned, total_withdrawn, updated_at)
+INSERT INTO maker_wallets (id, maker_id, available_balance, pending_balance, total_earned, total_withdrawn, updated_at)
 VALUES (1, 2, 0, 0, 0, 0, NOW());
 
 -- ===================================
--- Projects (both by maker_user_id = 2)
+-- Projects (both by maker_id = 2)
 -- ===================================
-INSERT INTO project (id, maker_user_id, title, summary, story_markdown, goal_amount, category, start_at, end_at,
+INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount, category, start_at, end_at,
                      lifecycle_status, review_status, rejected_reason, approved_at, rejected_at, cover_image_url,
                      cover_gallery, created_at, updated_at, live_start_at, live_end_at)
 VALUES (1, 2, '수제 도자기 머그컵 만들기',
@@ -60,7 +66,7 @@ VALUES (1, '핸드메이드'),
 -- ===================================
 -- Rewards (for project_id = 1)
 -- ===================================
-INSERT INTO reward (id, project_id, name, price, is_active, stock_quantity)
+INSERT INTO rewards (id, project_id, name, price, is_active, stock_quantity)
 VALUES (1, 1, '머그컵 - 화이트', 15000, true, 100),
        (2, 1, '머그컵 - 민트', 15000, true, 100),
        (3, 1, '머그컵 - 핑크', 17000, true, 80),
