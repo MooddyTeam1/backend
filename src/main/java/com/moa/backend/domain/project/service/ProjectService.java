@@ -11,15 +11,13 @@ public interface ProjectService {
     List<ProjectDetailResponse> getAll();
 
     //단일 조회
-    ProjectDetailResponse getById(Long id);
+    ProjectDetailResponse getById(Long projectId);
 
     //제목으로 검색
-    List<ProjectDetailResponse> searchByTitle(String keyword);
+    List<ProjectListResponse> searchByTitle(String keyword);
 
-
-    //카테고리별 조회
-    List<ProjectDetailResponse> getByCategory(Category category);
-
+    //카테고리로 검색
+    List<ProjectListResponse> getByCategory(Category category);
 
     //프로젝트 상태별 요약
     StatusSummaryResponse getProjectSummary(Long userId);

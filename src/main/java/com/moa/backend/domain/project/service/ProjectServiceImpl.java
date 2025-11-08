@@ -32,27 +32,27 @@ public class ProjectServiceImpl implements ProjectService{
 
     //프로젝트 단일 조회
     @Override
-    public ProjectDetailResponse getById(Long id) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("프로젝트을 찾을 수없습니다. id=" + id));
+    public ProjectDetailResponse getById(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("프로젝트을 찾을 수없습니다. id=" + projectId));
 
         return ProjectDetailResponse.from(project);
     }
 
     //제목 검색
     @Override
-    public List<ProjectDetailResponse> searchByTitle(String keyword) {
+    public List<ProjectListResponse> searchByTitle(String keyword) {
         return projectRepository.searchByTitle(keyword).stream()
-                .map(ProjectDetailResponse::from)
-                .collect(Collectors.toList());
+                .map(ProjectListResponse::searchProjects)
+                .toList();
     }
 
-    //카테고리별 조회
+    //카테고리로 검색
     @Override
-    public List<ProjectDetailResponse> getByCategory(Category category) {
+    public List<ProjectListResponse> getByCategory(Category category) {
         return projectRepository.findByCategory(category).stream()
-                .map(ProjectDetailResponse::from)
-                .collect(Collectors.toList());
+                .map(ProjectListResponse::searchProjects)
+                .toList();
     }
 
     //프로젝트 상태별 요약

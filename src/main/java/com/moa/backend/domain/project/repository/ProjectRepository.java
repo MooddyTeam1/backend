@@ -23,7 +23,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     //특정 카테고리별 프로젝트 조회
     List<Project> findByCategory(Category category);
 
-    //특정 상태 프로젝트 조회
     List<Project> findByLifecycleStatus(ProjectLifecycleStatus status);
 
     List<Project> findByLifecycleStatusAndReviewStatus(ProjectLifecycleStatus status, ProjectReviewStatus reviewStatus);

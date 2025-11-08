@@ -1,7 +1,7 @@
 package com.moa.backend.domain.reward.dto;
 
 import com.moa.backend.domain.reward.dto.select.OptionGroupRequest;
-import com.moa.backend.domain.reward.dto.set.SetRewardRequest;
+import com.moa.backend.domain.reward.dto.set.RewardSetRequest;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 
@@ -30,5 +30,5 @@ public class RewardRequest {
     private boolean active=true;
 
     private List<OptionGroupRequest> optionGroups;
-    private List<SetRewardRequest> setRewards;
+    private List<RewardSetRequest> rewardSets;
 }
