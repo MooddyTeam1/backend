@@ -4,7 +4,9 @@ import com.moa.backend.domain.project.dto.*;
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
+import com.moa.backend.domain.project.service.ProjectCommandService;
 import com.moa.backend.domain.project.service.ProjectService;
+import com.moa.backend.domain.project.service.ProjectTempService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,8 @@ import java.util.List;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final ProjectCommandService projectCommandService;
+    private final ProjectTempService projectTempService;
 
     //프로젝트 생성
     @PostMapping
@@ -27,7 +31,7 @@ public class ProjectController {
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @Valid @RequestBody CreateProjectRequest request
     ) {
-        CreateProjectResponse response = projectService.createProject(principal.getId(), request);
+        CreateProjectResponse response = projectCommandService.createProject(principal.getId(), request);
         return ResponseEntity.ok(response);
     }
 
@@ -67,7 +71,7 @@ public class ProjectController {
         @AuthenticationPrincipal JwtUserPrincipal principal,
         @RequestBody TempProjectRequest request
     ) {
-        return ResponseEntity.ok(projectService.saveTemp(principal.getId(), request));
+        return ResponseEntity.ok(projectTempService.saveTemp(principal.getId(), request));
     }
 
     //프로젝트 임시저장 수정
@@ -77,7 +81,7 @@ public class ProjectController {
             @PathVariable Long projectId,
             @RequestBody TempProjectRequest request
     ) {
-        return ResponseEntity.ok(projectService.updateTemp(principal.getId(), projectId, request));
+        return ResponseEntity.ok(projectTempService.updateTemp(principal.getId(), projectId, request));
     }
 
     //프로젝트 상태별 요약
