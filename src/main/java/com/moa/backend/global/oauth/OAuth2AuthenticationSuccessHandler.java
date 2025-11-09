@@ -6,8 +6,6 @@ import com.moa.backend.domain.user.service.AuthService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,33 +15,21 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 /**
  * ✅ OAuth2AuthenticationSuccessHandler
  *
- * 🔹 역할:
- *   - 카카오, 구글 등 OAuth2 소셜 로그인 성공 시 동작하는 Success Handler.
- *   - Spring Security의 OAuth2 로그인 흐름에서 마지막 단계(성공 시점)에 호출됨.
- *   - 로그인한 사용자의 이메일을 기반으로 JWT AccessToken / RefreshToken을 발급.
- *   - 발급된 토큰을 JSON 형식으로 프론트엔드에 직접 응답함.
- *
- * 🔹 등록 위치:
- *   - SecurityConfig.java → oauth2Login().successHandler(...)
- *
- * 🔹 동작 시나리오:
- *   1. 사용자가 카카오 로그인 동의창에서 승인
- *   2. 카카오가 redirect_uri 로 인가 코드 전달
- *   3. Spring Security가 인가 코드로 Access Token 교환 후 OAuth2User 생성
- *   4. 이 SuccessHandler가 호출되어 JWT 발급 및 JSON 응답 반환
+ * 소셜 로그인 성공 후 호출되는 핸들러.
+ * 로그인 성공 시 AccessToken / RefreshToken 발급 후 JSON 형태로 응답.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    // ✅ JWT 발급 및 RefreshToken 저장을 담당하는 서비스
     private final AuthService authService;
-
-    // ✅ 객체 → JSON 변환을 위한 Jackson ObjectMapper
     private final ObjectMapper objectMapper;
 
     /**
@@ -67,19 +53,19 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             return;
         }
 
-        // 2️⃣ OAuth2User 객체에서 이메일 추출
+        // 2️⃣ OAuth2User 객체에서 사용자 식별 정보 추출
         String email = oauth2User.getAttribute("email");
+        Long userId = extractUserId(oauth2User.getAttribute("userId"));
 
-        // 3️⃣ 이메일이 없을 경우 → 카카오 정책에 따라 제공되지 않았거나 동의 안 됨
-        if (email == null) {
-            log.error("❌ OAuth2 인증 성공 후 이메일 정보를 찾을 수 없습니다. attributes={}", oauth2User.getAttributes());
-            response.sendError(HttpStatus.BAD_REQUEST.value(), "OAuth2 사용자 이메일 정보를 찾을 수 없습니다.");
+        // 3️⃣ 이메일과 userId 둘 다 없을 경우 → 오류 처리
+        if (userId == null && email == null) {
+            log.error("❌ OAuth2 인증 성공 후 사용자 식별 정보를 찾을 수 없습니다. attributes={}", oauth2User.getAttributes());
+            response.sendError(HttpStatus.BAD_REQUEST.value(), "OAuth2 사용자 정보를 찾을 수 없습니다.");
             return;
         }
 
-        // 4️⃣ 이메일 기반으로 JWT AccessToken / RefreshToken 발급
-        // AuthService 내부에서 User 조회 → JWT 생성 → RefreshToken DB 저장 처리
-        LoginResponse tokenResponse = authService.issueTokensForOAuthLogin(email);
+        // 4️⃣ 사용자 식별 정보 기반으로 JWT AccessToken / RefreshToken 발급
+        LoginResponse tokenResponse = authService.issueTokensForOAuthLogin(userId, email);
 
         // 5️⃣ 응답 헤더 및 바디 설정 (JSON 반환)
         response.setStatus(HttpStatus.OK.value());
@@ -89,6 +75,23 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // 6️⃣ 프론트엔드로 JWT 정보를 JSON 형태로 응답
         objectMapper.writeValue(response.getWriter(), tokenResponse);
 
-        log.info("✅ OAuth2 로그인 성공 - JWT 발급 완료: {}", email);
+        log.info("✅ OAuth2 로그인 성공 - JWT 발급 완료: userId={}, email={}", userId, email);
+    }
+
+    /**
+     * ✅ userId 속성 안전 변환 유틸리티
+     */
+    private Long extractUserId(Object attribute) {
+        if (attribute instanceof Number number) {
+            return number.longValue();
+        }
+        if (attribute instanceof String value) {
+            try {
+                return Long.parseLong(value);
+            } catch (NumberFormatException ignored) {
+                log.warn("⚠️ OAuth2 userId 속성을 Long으로 변환할 수 없습니다: {}", value);
+            }
+        }
+        return null;
     }
 }

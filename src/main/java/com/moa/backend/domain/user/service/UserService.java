@@ -154,6 +154,11 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<User> findById(Long userId) {
+        return userRepository.findById(userId);
+    }
+
     /**
      * ✅ 마지막 로그인 시간 갱신
      * (이 메서드는 기존 코드와 동일합니다)

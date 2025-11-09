@@ -15,6 +15,20 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+/**
+ * ✅ AuthService
+ *
+ * 인증(Authentication)과 JWT 토큰 발급 관련 핵심 로직을 담당하는 서비스 클래스입니다.
+ *
+ * 주요 기능:
+ *  - 회원가입 (signUp)
+ *  - 일반 로그인 (login)
+ *  - 토큰 재발급 (refresh)
+ *  - 소셜 로그인 성공 시 토큰 발급 (issueTokensForOAuthLogin)
+ *
+ * 모든 경우에서 AccessToken / RefreshToken 발급 로직은
+ * 공통 메서드 issueTokens() 에서 처리됩니다.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -28,7 +42,7 @@ public class AuthService {
      * ✅ 회원가입
      * - 이메일 중복 검증
      * - 비밀번호 암호화 후 User 엔티티 생성 및 저장
-     * - 프로필/지갑 자동 초기화 (UserService 내부에서 Cascade로 처리)
+     * - 프로필 자동 초기화 (UserService 내부에서 수행)
      */
     @Transactional
     public SignUpResponse signUp(SignUpRequest request) {
@@ -36,18 +50,18 @@ public class AuthService {
             throw new AppException(ErrorCode.BUSINESS_CONFLICT, "이미 가입된 이메일입니다.");
         }
 
-        // ✅ UserService 내부에서만 save() 호출 (SupporterProfile 중복 save 금지)
         User saved = userService.registerUser(
                 request.email(),
                 passwordEncoder.encode(request.password()),
                 request.name()
         );
-
         return new SignUpResponse(saved.getId(), saved.getEmail(), saved.getName());
     }
 
     /**
-     * ✅ 로그인 (이메일/비밀번호 검증 후 JWT 발급)
+     * ✅ 기본 로그인
+     * - 이메일/비밀번호 검증
+     * - 성공 시 AccessToken, RefreshToken 발급 및 저장
      */
     @Transactional
     public LoginResponse login(LoginRequest request) {
@@ -62,7 +76,10 @@ public class AuthService {
     }
 
     /**
-     * ✅ Refresh Token 재발급
+     * ✅ Refresh Token을 통한 Access/Refresh 재발급
+     * - DB에 저장된 RefreshToken의 유효성 및 만료 여부 검사
+     * - 토큰이 만료/폐기되었을 경우 삭제 및 예외 발생
+     * - 새 토큰을 발급하고 기존 토큰 제거
      */
     @Transactional
     public LoginResponse refresh(RefreshTokenRequest request) {
@@ -89,11 +106,23 @@ public class AuthService {
 
     /**
      * ✅ OAuth2 로그인 시 JWT 발급
+     * - userId 또는 email 기준으로 사용자 조회
      */
     @Transactional
-    public LoginResponse issueTokensForOAuthLogin(String email) {
-        User user = userService.findByEmail(email)
-                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED, "사용자를 찾을 수 없습니다."));
+    public LoginResponse issueTokensForOAuthLogin(Long userId, String email) {
+        User user = null;
+
+        if (userId != null) {
+            user = userService.findById(userId).orElse(null);
+        }
+
+        if (user == null && email != null) {
+            user = userService.findByEmail(email).orElse(null);
+        }
+
+        if (user == null) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "사용자를 찾을 수 없습니다.");
+        }
 
         return issueTokens(user.getId(), user.getEmail(), user.getRole().name());
     }
