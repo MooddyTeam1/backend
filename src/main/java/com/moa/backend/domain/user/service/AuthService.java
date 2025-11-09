@@ -4,7 +4,6 @@ import com.moa.backend.domain.user.dto.*;
 import com.moa.backend.domain.user.entity.RefreshToken;
 import com.moa.backend.domain.user.entity.User;
 import com.moa.backend.domain.user.repository.RefreshTokenRepository;
-import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import com.moa.backend.global.security.jwt.JwtTokenProvider;
@@ -34,7 +33,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -43,17 +42,15 @@ public class AuthService {
      * ✅ 회원가입
      * - 이메일 중복 검증
      * - 비밀번호 암호화 후 User 엔티티 생성 및 저장
+     * - 프로필 자동 초기화 (UserService 내부에서 수행)
      */
     @Transactional
     public SignUpResponse signUp(SignUpRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
+        if (userService.findByEmail(request.email()).isPresent()) {
             throw new AppException(ErrorCode.BUSINESS_CONFLICT, "이미 가입된 이메일입니다.");
         }
 
-        String encodedPassword = passwordEncoder.encode(request.password());
-        User user = User.createUser(request.email(), encodedPassword, request.name());
-        User saved = userRepository.save(user);
-
+        User saved = userService.registerUser(request.email(), request.password(), request.name());
         return new SignUpResponse(saved.getId(), saved.getEmail(), saved.getName());
     }
 
@@ -64,14 +61,13 @@ public class AuthService {
      */
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        User user = userService.findByEmail(request.email())
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        // 토큰 발급 (공통 로직 사용)
         return issueTokens(user.getId(), user.getEmail(), user.getRole().name());
     }
 
@@ -88,22 +84,18 @@ public class AuthService {
         RefreshToken storedToken = refreshTokenRepository.findByToken(request.refreshToken())
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED, "리프레시 토큰이 유효하지 않습니다."));
 
-        // 만료 또는 폐기된 토큰 처리
         if (storedToken.isExpired(now) || storedToken.isRevoked()) {
             refreshTokenRepository.delete(storedToken);
             throw new AppException(ErrorCode.UNAUTHORIZED, "리프레시 토큰이 만료되었습니다.");
         }
 
-        // RefreshToken 에서 사용자 정보 추출
         JwtUserPrincipal principal = jwtTokenProvider.getPrincipalFromRefreshToken(request.refreshToken());
 
-        // RefreshToken 주인과 실제 사용자 불일치 시 탈취 의심
         if (!storedToken.getUserId().equals(principal.getId())) {
             refreshTokenRepository.delete(storedToken);
             throw new AppException(ErrorCode.UNAUTHORIZED, "리프레시 토큰이 유효하지 않습니다.");
         }
 
-        // 기존 토큰 삭제 후 새 토큰 발급
         refreshTokenRepository.delete(storedToken);
         return issueTokens(principal.getId(), principal.getUsername(), principal.getRole());
     }
@@ -116,7 +108,7 @@ public class AuthService {
      */
     @Transactional
     public LoginResponse issueTokensForOAuthLogin(String email) {
-        User user = userRepository.findByEmail(email)
+        User user = userService.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED, "사용자를 찾을 수 없습니다."));
 
         return issueTokens(user.getId(), user.getEmail(), user.getRole().name());
@@ -130,23 +122,15 @@ public class AuthService {
      */
     private LoginResponse issueTokens(Long userId, String email, String role) {
         // AccessToken 생성
-        String accessToken = jwtTokenProvider.generateAccessToken(
-                userId,
-                email,
-                role
-        );
+        String accessToken = jwtTokenProvider.generateAccessToken(userId, email, role);
 
         // RefreshToken 생성
-        String refreshToken = jwtTokenProvider.generateRefreshToken(
-                userId,
-                email,
-                role
-        );
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userId, email, role);
 
-        // 기존 RefreshToken 삭제 (보안 정책상 유저당 1개만 유지)
+        // 기존 RefreshToken 삭제 (보안상 1유저 1개만 유지)
         refreshTokenRepository.deleteAllByUserId(userId);
 
-        // 새 RefreshToken 엔티티 저장
+        // 새 RefreshToken 저장
         RefreshToken refreshTokenEntity = RefreshToken.issue(
                 userId,
                 refreshToken,
@@ -154,7 +138,6 @@ public class AuthService {
         );
         refreshTokenRepository.save(refreshTokenEntity);
 
-        // 최종 JWT 응답 반환
         return new LoginResponse(
                 userId,
                 email,
