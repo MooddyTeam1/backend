@@ -57,7 +57,7 @@ public class SupporterProfile {
 
     private SupporterProfile(User user) {
         this.user = user;
-        this.userId = user.getId();
+        //this.userId = user.getId();
     }
 
     public static SupporterProfile createEmpty(User user) {

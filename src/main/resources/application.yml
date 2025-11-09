@@ -62,7 +62,3 @@ spring:
       hibernate:
         format_sql: true   # SQL 포맷팅
     defer-datasource-initialization: true  # data.sql을 Hibernate 테이블 생성 후 실행
-
-  sql:
-    init:
-      mode: always         # 항상 data.sql 실행
