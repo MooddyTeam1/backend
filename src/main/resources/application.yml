@@ -1,13 +1,13 @@
 jwt:
   secret: change-me-to-secure-key-change-this-in-prod
-  access-token-validity-in-seconds: 3600
-  refresh-token-validity-in-seconds: 1209600
+  access-token-validity-in-seconds: 3600        # 1시간
+  refresh-token-validity-in-seconds: 1209600    # 2주
   issuer: moa-backend
 
 toss:
   enabled: false
-  client-key: ${TOSS_CLIENT_KEY}  # 토스페이먼츠 샌드박스 클라이언트 키
-  secret-key: ${TOSS_SECRET_KEY}  # 토스페이먼츠 샌드박스 시크릿 키
+  client-key: ${TOSS_CLIENT_KEY}     # 토스페이먼츠 샌드박스 클라이언트 키
+  secret-key: ${TOSS_SECRET_KEY}     # 토스페이먼츠 샌드박스 시크릿 키
 
 spring:
   application:
@@ -17,18 +17,33 @@ spring:
     oauth2:
       client:
         registration:
-          google:    # 제약 없음
+          google:        # ✅ 구글 OAuth2 설정
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - profile
+              - email
 
-            kakao: # 개인 개발자 사용 가능
-              client-id: ${KAKAO_CLIENT_ID}
-              client-secret: ${KAKAO_CLIENT_SECRET}
-              authorization-grant-type: authorization_code
-              redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          kakao:         # ✅ 카카오 OAuth2 설정
+            client-id: 115236ef8d3e18caae1fd7269a7e8a2f
+            client-secret: ${KAKAO_CLIENT_SECRET}  # 대부분 비워도 무방
+            client-authentication-method: POST
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - profile_nickname
+              - account_email
+            provider: kakao
 
-  # H2 Database
-  datasource:
+        provider:
+          kakao:         # ✅ 카카오 OAuth2 Provider 엔드포인트 지정
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+  datasource:             # ✅ H2 Database 설정
     url: jdbc:h2:mem:moaDB
     driver-class-name: org.h2.Driver
     username: sa
@@ -36,20 +51,18 @@ spring:
 
   h2:
     console:
-      enabled: true  # H2 콘솔 활성화 (http://localhost:8080/h2-console)
+      enabled: true        # H2 콘솔 활성화 (http://localhost:8080/h2-console)
       path: /h2-console
 
-  # JPA 설정
-  jpa:
+  jpa:                     # ✅ JPA 설정
     hibernate:
-      ddl-auto: create  # 서버 시작 시 테이블 자동 생성 (개발용)
-    show-sql: true      # SQL 로그 출력
+      ddl-auto: create     # 서버 시작 시 테이블 자동 생성 (개발용)
+    show-sql: true         # SQL 로그 출력
     properties:
       hibernate:
-        format_sql: true  # SQL 포맷팅
-    defer-datasource-initialization: true  # ⭐ data.sql을 Hibernate 테이블 생성 후에 실행
+        format_sql: true   # SQL 포맷팅
+    defer-datasource-initialization: true  # data.sql을 Hibernate 테이블 생성 후 실행
 
-  # data.sql 자동 실행
   sql:
     init:
-      mode: always  # 항상 data.sql 실행
+      mode: always         # 항상 data.sql 실행
