@@ -1,53 +1,65 @@
 package com.moa.backend.domain.project.entity;
 
-import com.moa.backend.domain.user.entity.User;
+import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.reward.entity.Reward;
 import com.moa.backend.global.converter.StringListConverter;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.*;
-
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Entity
-@Table(name = "project")
+@Table(name = "projects")
 @Builder
 public class Project {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //임시 Mock 데이터 때문에 충돌날수 있어서 10번부터 만들어지게 함
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "project_id_seq")
+    @jakarta.persistence.SequenceGenerator(name = "project_id_seq", sequenceName = "project_id_seq", initialValue = 10, allocationSize = 1)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "maker_user_id", nullable = false)
-    private User maker;
+    @JoinColumn(name = "maker_id", nullable = false)
+    private Maker maker;
 
-    @Column(name = "title", nullable = false, length = 200)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Reward> rewards = new ArrayList<>();
+
+    @Column(name = "title", nullable = true, length = 200)
     private String title;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = true)
     private String summary;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = true)
     private String storyMarkdown;
 
-    @Column(name = "goal_amount", nullable = false)
+    @Column(name = "goal_amount", nullable = true)
     private Long goalAmount;
 
-    @Column(name = "start_at", nullable = false)
+    @Column(name = "start_at", nullable = true)
     private LocalDate startDate;    //날짜만
 
-    @Column(name = "end_at", nullable = false)
+    @Column(name = "end_at", nullable = true)
     private LocalDate endDate;      //날짜만
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Category category;
 
     // 날짜 기반 자동 업데이트
@@ -102,5 +114,10 @@ public class Project {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void addReward(Reward reward) {
+        rewards.add(reward);
+        reward.setProject(this);
     }
 }

@@ -1,6 +1,6 @@
 package com.moa.backend.domain.wallet.entity;
 
-import com.moa.backend.domain.user.entity.User;
+import com.moa.backend.domain.maker.entity.Maker;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "maker_wallet")
+@Table(name = "maker_wallets")
 public class MakerWallet {
 
     @Id
@@ -28,8 +28,8 @@ public class MakerWallet {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    @JoinColumn(name = "maker_id", nullable = false, unique = true)
+    private Maker maker;
 
     @Column(name = "available_balance", nullable = false)
     private Long availableBalance = 0L;

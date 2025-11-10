@@ -13,8 +13,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
-    
-    Optional<Project> findByIdAndLifecycleStatus(Long projectId, ProjectLifecycleStatus status);
 
     boolean existsByTitle(String title);
 
@@ -25,14 +23,15 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     //특정 카테고리별 프로젝트 조회
     List<Project> findByCategory(Category category);
 
-    //특정 상태 프로젝트 조회
     List<Project> findByLifecycleStatus(ProjectLifecycleStatus status);
 
     List<Project> findByLifecycleStatusAndReviewStatus(ProjectLifecycleStatus status, ProjectReviewStatus reviewStatus);
 
     Optional<Project> findByIdAndLifecycleStatusAndReviewStatus(Long id, ProjectLifecycleStatus lifecycleStatus, ProjectReviewStatus reviewStatus);
 
-    List<Project> findByReviewStatus(ProjectReviewStatus reviewStatus);
+    List<Project> findAllByMakerIdAndLifecycleStatusAndReviewStatus(Long id, ProjectLifecycleStatus lifecycleStatus, ProjectReviewStatus reviewStatus);
 
+    Optional<Project> findByIdAndMaker_Id(Long projectId, Long makerId);
+
+    long countByMakerIdAndLifecycleStatusAndReviewStatus(Long userId, ProjectLifecycleStatus lifecycleStatus, ProjectReviewStatus reviewStatus);
 }
-

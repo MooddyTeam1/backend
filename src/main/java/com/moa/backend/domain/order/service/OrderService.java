@@ -54,11 +54,6 @@ public class OrderService {
             throw new AppException(ErrorCode.VALIDATION_FAILED, "주문할 리워드를 선택해주세요.");
         }
 
-        boolean alreadyPaid = orderRepository.existsByProjectIdAndUserIdAndStatus(project.getId(), userId, OrderStatus.PAID);
-        if (alreadyPaid) {
-            throw new AppException(ErrorCode.ORDER_ALREADY_EXISTS, "해당 프로젝트에 이미 결제 완료한 주문이 있습니다.");
-        }
-
         Map<Long, OrderCreateRequest.Item> requestedItems = request.getItems().stream()
                 .collect(Collectors.toMap(
                         OrderCreateRequest.Item::getRewardId,

@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MakerWalletRepository extends JpaRepository<MakerWallet, Long> {
 
-    Optional<MakerWallet> findByUser_Id(Long userId);
+    Optional<MakerWallet> findByMaker_Id(Long makerId);
 }
