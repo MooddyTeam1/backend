@@ -41,7 +41,7 @@ public class AuthService {
     /**
      * ✅ 회원가입
      * - 이메일 중복 검증
-     * - 비밀번호 암호화 후 User 엔티티 생성 및 저장
+     * - 비밀번호 암호화 후 User 엔티티 생성 및 저장 (암호화는 UserService에서 담당)
      * - 프로필 자동 초기화 (UserService 내부에서 수행)
      */
     @Transactional
@@ -52,7 +52,7 @@ public class AuthService {
 
         User saved = userService.registerUser(
                 request.email(),
-                passwordEncoder.encode(request.password()),
+                request.password(), // 🔹 원문 비밀번호 전달 (UserService에서 암호화 처리)
                 request.name()
         );
         return new SignUpResponse(saved.getId(), saved.getEmail(), saved.getName());
