@@ -16,5 +16,3 @@ public record LoginRequest(
         return email;
     }
 }
-
-
