@@ -1,6 +1,5 @@
 package com.moa.backend.domain.admin.dto;
 
-import com.moa.backend.domain.user.entity.CreatorStatus;
 import com.moa.backend.domain.user.entity.User;
 import com.moa.backend.domain.user.entity.UserRole;
 import lombok.*;
@@ -15,7 +14,6 @@ public class UserResponse {
     private String email;
     private String name;
     private UserRole role;
-    private CreatorStatus creatorStatus;
 
     public static UserResponse from(User user) {
         return UserResponse.builder()
@@ -23,7 +21,6 @@ public class UserResponse {
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole())
-                .creatorStatus(user.getCreatorStatus())
                 .build();
     }
 }

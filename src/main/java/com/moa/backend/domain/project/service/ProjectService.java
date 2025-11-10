@@ -1,33 +1,27 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.project.dto.ProjectRequest;
-import com.moa.backend.domain.project.dto.ProjectResponse;
-import com.moa.backend.domain.project.entity.Category;
-import com.moa.backend.domain.project.entity.ProjectStatus;
-import com.moa.backend.domain.user.entity.User;
+import com.moa.backend.domain.project.dto.*;
+import com.moa.backend.domain.project.entity.*;
 
 import java.util.List;
 
 public interface ProjectService {
 
-    //프로젝트 등록
-    ProjectResponse createProject(Long userId, ProjectRequest request);
-
     //전체 조회
-    List<ProjectResponse> getAll();
+    List<ProjectDetailResponse> getAll();
 
     //단일 조회
-    ProjectResponse getById(Long id);
+    ProjectDetailResponse getById(Long projectId);
 
     //제목으로 검색
-    List<ProjectResponse> searchByTitle(String keyword);
+    List<ProjectListResponse> searchByTitle(String keyword);
 
-    //상태별 조회
-    List<ProjectResponse> getByStatus(ProjectStatus status);
+    //카테고리로 검색
+    List<ProjectListResponse> getByCategory(Category category);
 
-    //카테고리별 조회
-    List<ProjectResponse> getByCategory(Category category);
+    //프로젝트 상태별 요약
+    StatusSummaryResponse getProjectSummary(Long userId);
 
-    //프로젝트 삭제
-    ProjectResponse deleteProject(Long userid, Long projectId);
+    //특정 상태 프로젝트 필요한데이터만 조회
+    List<?> getProjectByStatus(Long userId, ProjectLifecycleStatus lifecycle, ProjectReviewStatus review);
 }

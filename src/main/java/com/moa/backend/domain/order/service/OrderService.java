@@ -8,7 +8,7 @@ import com.moa.backend.domain.order.entity.OrderItem;
 import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.order.repository.OrderRepository;
 import com.moa.backend.domain.project.entity.Project;
-import com.moa.backend.domain.project.entity.ProjectStatus;
+import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.reward.entity.Reward;
 import com.moa.backend.domain.reward.repository.RewardRepository;
@@ -46,17 +46,12 @@ public class OrderService {
 
         Project project = projectRepository.findById(request.getProjectId())
                 .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
-        if (project.getStatus() != ProjectStatus.FUNDING) {
+        if (project.getLifecycleStatus() != ProjectLifecycleStatus.LIVE) {
             throw new AppException(ErrorCode.PROJECT_NOT_FUNDING);
         }
 
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new AppException(ErrorCode.VALIDATION_FAILED, "주문할 리워드를 선택해주세요.");
-        }
-
-        boolean alreadyPaid = orderRepository.existsByProjectIdAndUserIdAndStatus(project.getId(), userId, OrderStatus.PAID);
-        if (alreadyPaid) {
-            throw new AppException(ErrorCode.ORDER_ALREADY_EXISTS, "해당 프로젝트에 이미 결제 완료한 주문이 있습니다.");
         }
 
         Map<Long, OrderCreateRequest.Item> requestedItems = request.getItems().stream()

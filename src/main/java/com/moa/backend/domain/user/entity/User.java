@@ -42,10 +42,6 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     private UserRole role;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "creator_status", nullable = false, length = 20)
-    private CreatorStatus creatorStatus = CreatorStatus.NONE;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -57,31 +53,12 @@ public class User {
         this.password = password;
         this.name = name;
         this.role = role;
-        this.creatorStatus = CreatorStatus.NONE;
     }
 
     public static User createUser(String email, String encodedPassword, String name) {
-        return new User(email, encodedPassword, name, UserRole.BACKER);
+        return new User(email, encodedPassword, name, UserRole.USER);
     }
 
-    //Creator 신청
-    public void applyCreator() {
-        if (this.role != UserRole.BACKER) {
-            throw new IllegalArgumentException("이미 CREATOR 이거나 ADMIN 입니다");
-        }
-        this.creatorStatus = CreatorStatus.PENDING;
-    }
-
-    //승인됨
-    public void approveCreator() {
-        this.role = UserRole.CREATOR;
-        this.creatorStatus = CreatorStatus.APPROVED;
-    }
-
-    //반려됨
-    public void rejectCreator() {
-        this.creatorStatus = CreatorStatus.REJECTED;
-    }
 
     @PrePersist
     protected void onCreate() {

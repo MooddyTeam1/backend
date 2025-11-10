@@ -1,14 +1,10 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.project.dto.ProjectRequest;
-import com.moa.backend.domain.project.dto.ProjectResponse;
-import com.moa.backend.domain.project.entity.Category;
-import com.moa.backend.domain.project.entity.Project;
-import com.moa.backend.domain.project.entity.ProjectStatus;
+import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.maker.repository.MakerRepository;
+import com.moa.backend.domain.project.dto.*;
+import com.moa.backend.domain.project.entity.*;
 import com.moa.backend.domain.project.repository.ProjectRepository;
-import com.moa.backend.domain.user.entity.CreatorStatus;
-import com.moa.backend.domain.user.entity.User;
-import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -24,109 +20,90 @@ import java.util.stream.Collectors;
 public class ProjectServiceImpl implements ProjectService{
 
     private final ProjectRepository projectRepository;
-    private final UserRepository userRepository;
-
-    // 프로젝트 등록
-    @Override
-    @Transactional
-    public ProjectResponse createProject(Long userId, ProjectRequest request) {
-
-        if (userId == null) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
-
-        if (user.getCreatorStatus() != CreatorStatus.APPROVED) {
-            throw new AppException(ErrorCode.UNAUTHORIZED_CREATOR);
-        }
-
-        if (request.getGoalAmount() <=0) {
-            throw new AppException(ErrorCode.INVALID_AMOUNT);
-        }
-
-        if (request.getStartAt().isAfter(request.getEndAt())) {
-            throw new AppException(ErrorCode.INVALID_DATE);
-        }
-
-        if (projectRepository.existsByTitle(request.getTitle())) {
-            throw new AppException(ErrorCode.PROJECT_DUPLICATE_TITLE);
-        }
-
-        Project project = Project.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .goalAmount(request.getGoalAmount())
-                .startAt(request.getStartAt())
-                .endAt(request.getEndAt())
-                .category(request.getCategory())
-                .thumbnailUrl(request.getThumbnailUrl())
-                .creator(user)
-                .build();
-
-        Project save = projectRepository.save(project);
-        return ProjectResponse.from(save);
-    }
+    private final MakerRepository makerRepository;
 
     //프로젝트 전체조회
     @Override
-    public List<ProjectResponse> getAll() {
+    public List<ProjectDetailResponse> getAll() {
         return projectRepository.findAll().stream()
-                .map(ProjectResponse::from)
+                .map(ProjectDetailResponse::from)
                 .collect(Collectors.toList());
     }
 
     //프로젝트 단일 조회
     @Override
-    public ProjectResponse getById(Long id) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("프로젝트을 찾을 수없습니다. id=" + id));
+    public ProjectDetailResponse getById(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("프로젝트을 찾을 수없습니다. id=" + projectId));
 
-        return ProjectResponse.from(project);
+        return ProjectDetailResponse.from(project);
     }
 
     //제목 검색
     @Override
-    public List<ProjectResponse> searchByTitle(String keyword) {
+    public List<ProjectListResponse> searchByTitle(String keyword) {
         return projectRepository.searchByTitle(keyword).stream()
-                .map(ProjectResponse::from)
-                .collect(Collectors.toList());
+                .map(ProjectListResponse::searchProjects)
+                .toList();
     }
 
-    //상태별 조회
+    //카테고리로 검색
     @Override
-    public List<ProjectResponse> getByStatus(ProjectStatus status) {
-        return projectRepository.findByStatus(status).stream()
-                .map(ProjectResponse::from)
-                .collect(Collectors.toList());
-    }
-
-    //카테고리별 조회
-    @Override
-    public List<ProjectResponse> getByCategory(Category category) {
+    public List<ProjectListResponse> getByCategory(Category category) {
         return projectRepository.findByCategory(category).stream()
-                .map(ProjectResponse::from)
-                .collect(Collectors.toList());
+                .map(ProjectListResponse::searchProjects)
+                .toList();
     }
 
-    //프로젝트 삭제
+    //프로젝트 상태별 요약
     @Override
-    @Transactional
-    public ProjectResponse deleteProject(Long userId, Long projectId) {
+    @Transactional(readOnly = true)
+    public StatusSummaryResponse getProjectSummary(Long userId) {
+        return StatusSummaryResponse.builder()
+                .draftCount(count(userId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.NONE))            //작성 중
+                .reviewCount(count(userId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.REVIEW))          //심사 중
+                .approvedCount(count(userId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.APPROVED))        //승인 됨
+                .scheduledCount(count(userId, ProjectLifecycleStatus.SCHEDULED, ProjectReviewStatus.APPROVED))    //공개 예정
+                .liveCount(count(userId, ProjectLifecycleStatus.LIVE, ProjectReviewStatus.APPROVED))         //진행 중
+                .endCount(count(userId, ProjectLifecycleStatus.ENDED, ProjectReviewStatus.APPROVED))        //종료
+                .rejectedCount(count(userId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.REJECTED))        //반려됨
+                .build();
+    }
 
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
+    //특정 상태 프로젝트 필요한데이터만 조회
+    @Override
+    public List<?> getProjectByStatus(Long userId, ProjectLifecycleStatus lifecycle, ProjectReviewStatus review) {
+        List<Project> projects = projectRepository.findAllByMakerIdAndLifecycleStatusAndReviewStatus(userId, lifecycle, review);
 
-        if (!project.getCreator().getId().equals(userId)) {
-            throw new AppException(ErrorCode.FORBIDDEN);
+        // 작성중 상태
+        if (lifecycle == ProjectLifecycleStatus.DRAFT && review == ProjectReviewStatus.NONE) {
+            return projects.stream()
+                    .map(TempProjectResponse::from)
+                    .toList();
         }
 
-        if (project.isInProgress()) {
-            throw new AppException(ErrorCode.PROJECT_CANNOT_DELETE_IN_PROGRESS);
-        }
+        // 나머지 상태
+        return projects.stream()
+                .map(project -> switch (project.getReviewStatus()) {
+                    case REVIEW -> ProjectListResponse.fromReview(project);
+                    case APPROVED -> switch (project.getLifecycleStatus()) {
+                        case SCHEDULED -> ProjectListResponse.fromScheduled(project);
+                        case LIVE -> ProjectListResponse.fromLive(project);
+                        case ENDED -> ProjectListResponse.fromEnded(project);
+                        default -> ProjectListResponse.fromApproved(project);
+                    };
+                    case REJECTED -> ProjectListResponse.fromRejected(project);
+                    default -> ProjectListResponse.fromDraft(project); // 위에서 이미 작성중 처리됨(실행안됨)
+                })
+                .toList();
+    }
 
-        projectRepository.delete(project);
-        return ProjectResponse.from(project);
+    private long count(Long userId, ProjectLifecycleStatus lifecycle, ProjectReviewStatus review) {
+        return projectRepository.countByMakerIdAndLifecycleStatusAndReviewStatus(userId, lifecycle, review);
+    }
+
+    private Maker findMakerByOwnerId(Long ownerUserId) {
+        return makerRepository.findByOwner_Id(ownerUserId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "메이커 정보를 찾을 수 없습니다."));
     }
 }
