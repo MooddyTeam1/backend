@@ -17,5 +17,10 @@ public record SignUpRequest(
     @Size(max = 50, message = "이름은 50자 이하로 입력해주세요.")
     String name
 ) {
+    // AuthController에서 JSON 직렬화된 DTO를 사용할 때 명시적인 getter가 없어 발생한 컴파일 오류 해결
+    public String getEmail() {
+        return email;
+    }
 }
+
 
