@@ -97,4 +97,55 @@ public class Maker {
     void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updateBusinessNumber(String businessNumber) {
+        this.businessNumber = businessNumber;
+    }
+
+    public void updateBusinessName(String businessName) {
+        this.businessName = businessName;
+    }
+
+    public void updateEstablishedAt(LocalDate establishedAt) {
+        this.establishedAt = establishedAt;
+    }
+
+    public void updateIndustryType(String industryType) {
+        this.industryType = industryType;
+    }
+
+    public void updateRepresentative(String representative) {
+        this.representative = representative;
+    }
+
+    public void updateLocation(String location) {
+        this.location = location;
+    }
+
+    public void updateProductIntro(String productIntro) {
+        this.productIntro = productIntro;
+    }
+
+    public void updateCoreCompetencies(String coreCompetencies) {
+        this.coreCompetencies = coreCompetencies;
+    }
+
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public void updateContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
+    public void updateContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
+
+    public void updateTechStackJson(String techStackJson) {
+        this.techStackJson = techStackJson;
+    }
 }

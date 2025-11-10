@@ -86,4 +86,16 @@ public class SupporterProfile {
     public void updateBio(String bio) {
         this.bio = bio;
     }
+
+    public void updatePhone(String phone) {
+        this.phone = phone;
+    }
+
+    public void updateAddress(String address) {
+        this.address = address;
+    }
+
+    public void updatePostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
 }
