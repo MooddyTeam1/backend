@@ -45,8 +45,13 @@ public class User {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    @Column(name = "picture")
-    private String picture;
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    // ✅ enum 이름 그대로 문자열로 저장 (LOCAL / GOOGLE / KAKAO)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider", nullable = false)
+    private AuthProvider provider;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<SocialConnection> socialConnections = new HashSet<>();
@@ -54,26 +59,31 @@ public class User {
     // 기존에는 onUpdate 메서드 내부에 선언되어 라이프사이클 메서드와 겹치던 socialConnections 필드를
     // 클래스 레벨로 이동시켜 JPA 매핑과 컬렉션 초기화가 정상 동작하도록 수정했습니다.
 
-    private User(String email, String password, String name, UserRole role) {
+    // 🔥 provider 추가된 생성자들
+    private User(String email, String password, String name, UserRole role, AuthProvider provider) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.role = role;
+        this.provider = provider;
     }
 
-    private User(String email, String name, UserRole role) {
+    private User(String email, String name, UserRole role, AuthProvider provider) {
         this.email = email;
         this.name = name;
         this.role = role;
+        this.provider = provider;
     }
 
+    // 🔥 일반 회원가입: 항상 LOCAL
     public static User createUser(String email, String encodedPassword, String name) {
-        return new User(email, encodedPassword, name, UserRole.USER);
+        return new User(email, encodedPassword, name, UserRole.USER, AuthProvider.LOCAL);
     }
 
-    public static User createSocialUser(String email, String name, String picture) {
-        User user = new User(email, name, UserRole.USER);
-        user.setPicture(picture);
+    // 🔥 소셜 회원가입: 어떤 provider인지 외부에서 넘겨주도록 변경
+    public static User createSocialUser(String email, String name, String imageUrl, AuthProvider provider) {
+        User user = new User(email, name, UserRole.USER, provider);
+        user.setImageUrl(imageUrl);
         return user;
     }
 
@@ -110,4 +120,5 @@ public class User {
         return socialConnections.stream()
                 .anyMatch(conn -> conn.getProvider().equals(provider));
     }
+
 }

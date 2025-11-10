@@ -6,5 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MakerRepository extends JpaRepository<Maker, Long> {
 
-    Optional<Maker> findByOwner_Id(Long ownerId);
+    boolean existsByOwner_Id(Long ownerUserId);
+
+    Optional<Maker> findByOwner_Id(Long ownerUserId);
 }

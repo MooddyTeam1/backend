@@ -14,7 +14,7 @@ public class SocialUser {
     private String provider;
     private String name;
     private String email;
-    private String picture;
+    private String imageUrl;
     private boolean emailVerified;
     private Map<String, Object> attributes;
 
@@ -34,7 +34,7 @@ public class SocialUser {
                 .provider("google")
                 .name((String) attributes.get("name"))
                 .email((String) attributes.get("email"))
-                .picture((String) attributes.get("picture"))
+                .imageUrl((String) attributes.get("imageUrl"))
                 .emailVerified(Boolean.TRUE.equals(attributes.get("email_verified")))
                 .attributes(attributes)
                 .build();
@@ -49,14 +49,14 @@ public class SocialUser {
 
         String email = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
         String name = profile != null ? (String) profile.get("nickname") : null;
-        String picture = profile != null ? (String) profile.get("profile_image_url") : null;
+        String imageUrl = profile != null ? (String) profile.get("profile_image_url") : null;
 
         return SocialUser.builder()
                 .providerId(String.valueOf(attributes.get("id")))
                 .provider("kakao")
                 .name(name)
                 .email(email)
-                .picture(picture)
+                .imageUrl(imageUrl)
                 .emailVerified(true)
                 .attributes(attributes)
                 .build();

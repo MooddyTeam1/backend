@@ -1,8 +1,8 @@
-package com.moa.backend.domain.user.controller;
+package com.moa.backend.domain.maker.controller;
 
-import com.moa.backend.domain.user.dto.MakerProfileResponse;
-import com.moa.backend.domain.user.dto.MakerProfileUpdateRequest;
-import com.moa.backend.domain.user.service.MakerProfileService;
+import com.moa.backend.domain.maker.dto.MakerProfileResponse;
+import com.moa.backend.domain.maker.dto.MakerProfileUpdateRequest;
+import com.moa.backend.domain.maker.service.MakerProfileService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
