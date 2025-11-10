@@ -74,6 +74,9 @@ public class Project {
     @Column(name = "review_status", nullable = false, length = 20)
     private ProjectReviewStatus reviewStatus = ProjectReviewStatus.NONE;
 
+    @Enumerated(EnumType.STRING)
+    private ProjectResultStatus resultStatus = ProjectResultStatus.NONE;
+
     private LocalDateTime requestAt;
     private LocalDateTime approvedAt;
     private LocalDateTime rejectedAt;
