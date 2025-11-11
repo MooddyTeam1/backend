@@ -1,7 +1,7 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.user.entity.Maker;
-import com.moa.backend.domain.user.repository.MakerRepository;
+import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.project.dto.CreateProjectRequest;
 import com.moa.backend.domain.project.dto.CreateProjectResponse;
 import com.moa.backend.domain.project.entity.Project;
@@ -20,8 +20,8 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly=true)
-public class ProjectCommandServiceImpl implements ProjectCommandService{
+@Transactional(readOnly = true)
+public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     private final ProjectRepository projectRepository;
     private final MakerRepository makerRepository;

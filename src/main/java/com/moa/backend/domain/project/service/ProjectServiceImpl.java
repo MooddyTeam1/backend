@@ -1,9 +1,15 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.user.entity.Maker;
-import com.moa.backend.domain.user.repository.MakerRepository;
-import com.moa.backend.domain.project.dto.*;
-import com.moa.backend.domain.project.entity.*;
+import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.maker.repository.MakerRepository;
+import com.moa.backend.domain.project.dto.ProjectDetailResponse;
+import com.moa.backend.domain.project.dto.ProjectListResponse;
+import com.moa.backend.domain.project.dto.StatusSummaryResponse;
+import com.moa.backend.domain.project.dto.TempProjectResponse;
+import com.moa.backend.domain.project.entity.Category;
+import com.moa.backend.domain.project.entity.Project;
+import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
+import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
@@ -16,8 +22,8 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly=true)
-public class ProjectServiceImpl implements ProjectService{
+@Transactional(readOnly = true)
+public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final MakerRepository makerRepository;
