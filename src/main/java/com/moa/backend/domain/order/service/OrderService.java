@@ -1,11 +1,10 @@
 package com.moa.backend.domain.order.service;
 
-import com.moa.backend.domain.order.dto.request.OrderCreateRequest;
-import com.moa.backend.domain.order.dto.response.OrderDetailResponse;
-import com.moa.backend.domain.order.dto.response.OrderSummaryResponse;
+import com.moa.backend.domain.order.dto.OrderCreateRequest;
+import com.moa.backend.domain.order.dto.OrderDetailResponse;
+import com.moa.backend.domain.order.dto.OrderSummaryResponse;
 import com.moa.backend.domain.order.entity.Order;
 import com.moa.backend.domain.order.entity.OrderItem;
-import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.order.repository.OrderRepository;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
@@ -17,6 +16,9 @@ import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -25,9 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
+/**
+ * 주문 생성/조회 비즈니스 로직을 담당한다.
+ * 재고 차감, 주문 코드 생성, 배송지/아이템 조립을 처리한다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -40,6 +44,9 @@ public class OrderService {
     private final RewardRepository rewardRepository;
     private final UserRepository userRepository;
 
+    /**
+     * 서포터 주문을 생성하고 상세 응답을 반환한다.
+     */
     public OrderDetailResponse createOrder(Long userId, OrderCreateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -124,6 +131,9 @@ public class OrderService {
         return OrderDetailResponse.from(savedOrder);
     }
 
+    /**
+     * 사용자 소유 주문을 상세 조회한다.
+     */
     @Transactional(Transactional.TxType.SUPPORTS)
     public OrderDetailResponse getOrder(Long userId, Long orderId) {
         Order order = orderRepository.findWithItemsByIdAndUserId(orderId, userId)
@@ -131,6 +141,9 @@ public class OrderService {
         return OrderDetailResponse.from(order);
     }
 
+    /**
+     * 사용자 주문 목록을 최신순으로 조회한다.
+     */
     @Transactional(Transactional.TxType.SUPPORTS)
     public List<OrderSummaryResponse> getOrders(Long userId) {
         return orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
@@ -139,12 +152,18 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 날짜 + 랜덤 문자열 기반 주문 코드 생성.
+     */
     private String generateOrderCode() {
         String datePart = ORDER_CODE_DATE_FORMAT.format(LocalDate.now());
         String randomPart = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         return "ORD-" + datePart + "-" + randomPart;
     }
 
+    /**
+     * 대표 리워드명 기반 주문명 생성.
+     */
     private String buildOrderName(List<OrderItem> orderItems) {
         if (orderItems.isEmpty()) {
             return "주문";
