@@ -28,6 +28,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
 
+                // ✅ CORS 설정 활성화 (아래 corsConfigurationSource() Bean 사용)
+                .cors(cors -> {})  //
+
                 // ✅ CSRF 및 H2 콘솔 설정
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/h2-console/**")
@@ -48,7 +51,7 @@ public class SecurityConfig {
                 // ✅ 요청별 인가 정책
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/auth/**",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/actuator/health",
@@ -75,5 +78,51 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtTokenProvider);
+    }
+
+    /**
+     * ✅ CORS 설정
+     * - 프론트엔드 개발 서버: http://localhost:5173 허용
+     * - Credential(JWT 쿠키/Authorization 헤더) 포함 요청 허용
+     * - 모든 HTTP 메서드/헤더 허용
+     */
+    @Bean
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+
+        // ✅ 프론트엔드 주소(Origin) 허용 (Vite dev server)
+        config.setAllowedOriginPatterns(java.util.List.of(
+                "http://localhost:5173",
+                "https://frontend-97n5meqb9-jinhyuns-projects-6d19dc50.vercel.app/"
+                // "https://moa-frontend.vercel.app"  // 나중에 실제 도메인 나오면 이렇게 명시적으로 추가해도 됨
+        ));
+
+        // ✅ 인증 정보(쿠키, Authorization 헤더) 포함한 요청 허용
+        config.setAllowCredentials(true);
+
+        // ✅ 허용할 HTTP 메서드
+        config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+
+        // ✅ 허용할 요청 헤더 (프론트에서 보내는 헤더들)
+        config.setAllowedHeaders(java.util.List.of(
+                "Authorization",
+                "Cache-Control",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept",
+                "Origin"
+        ));
+
+        // ✅ 프론트에서 읽을 수 있는 응답 헤더
+        config.setExposedHeaders(java.util.List.of(
+                "Authorization",
+                "Location"
+        ));
+
+        // ✅ 모든 경로에 대해 위 설정 적용
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
+                new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

@@ -1,9 +1,9 @@
-package com.moa.backend.domain.user.service;
+package com.moa.backend.domain.maker.service;
 
-import com.moa.backend.domain.user.dto.MakerProfileResponse;
-import com.moa.backend.domain.user.dto.MakerProfileUpdateRequest;
-import com.moa.backend.domain.user.entity.Maker;
-import com.moa.backend.domain.user.repository.MakerRepository;
+import com.moa.backend.domain.maker.dto.MakerProfileResponse;
+import com.moa.backend.domain.maker.dto.MakerProfileUpdateRequest;
+import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.maker.repository.MakerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

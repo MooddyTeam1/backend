@@ -1,4 +1,4 @@
-package com.moa.backend.domain.user.dto;
+package com.moa.backend.domain.maker.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;

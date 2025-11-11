@@ -1,10 +1,10 @@
 package com.moa.backend.domain.user.service;
 
 
-import com.moa.backend.domain.user.entity.Maker;
+import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.user.entity.SupporterProfile;
 import com.moa.backend.domain.user.entity.User;
-import com.moa.backend.domain.user.repository.MakerRepository;
+import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.user.repository.SupporterProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,7 +28,7 @@ public class UserProfileInitializer {
         }
 
         if (!makerRepository.existsByOwner_Id(user.getId())) {
-            makerRepository.save(Maker.createDefault(user));
+            makerRepository.save(Maker.create(user, user.getEmail()));
         }
     }
 }

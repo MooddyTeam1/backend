@@ -1,9 +1,7 @@
-package com.moa.backend.domain.user.repository;
+package com.moa.backend.domain.maker.repository;
 
-
+import com.moa.backend.domain.maker.entity.Maker;
 import java.util.Optional;
-
-import com.moa.backend.domain.user.entity.Maker;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MakerRepository extends JpaRepository<Maker, Long> {

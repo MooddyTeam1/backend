@@ -43,9 +43,6 @@ public class SupporterProfile {
     @Column(name = "phone")
     private String phone;
 
-    @Column(name = "address")
-    private String address;
-
     @Column(name = "postal_code")
     private String postalCode;
 
@@ -54,6 +51,15 @@ public class SupporterProfile {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "address1")
+    private String address1;
+
+    @Column(name = "address2")
+    private String address2;
+
+    @Column(name = "interests", columnDefinition = "TEXT")
+    private String interests; // ["React", "Node.js"] 같은 JSON 문자열
 
     private SupporterProfile(User user) {
         this.user = user;
@@ -91,11 +97,10 @@ public class SupporterProfile {
         this.phone = phone;
     }
 
-    public void updateAddress(String address) {
-        this.address = address;
-    }
-
     public void updatePostalCode(String postalCode) {
         this.postalCode = postalCode;
     }
+    public void updateAddress1(String address1) { this.address1 = address1; }
+    public void updateAddress2(String address2) { this.address2 = address2; }
+    public void updateInterests(String interests) { this.interests = interests; }
 }

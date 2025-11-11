@@ -1,4 +1,4 @@
-package com.moa.backend.domain.user.dto;
+package com.moa.backend.domain.maker.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
