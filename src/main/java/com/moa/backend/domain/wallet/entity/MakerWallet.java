@@ -18,6 +18,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * 메이커 개인의 정산 지갑.
+ * 선지급/잔금/출금 흐름을 기록하며 가용 잔액·대기 잔액을 관리한다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -32,15 +36,19 @@ public class MakerWallet {
     @JoinColumn(name = "maker_id", nullable = false, unique = true)
     private Maker maker;
 
+    // 출금 가능한 가용 잔액
     @Column(name = "available_balance", nullable = false)
     private Long availableBalance = 0L;
 
+    // 잔금 지급 대기 중인 금액
     @Column(name = "pending_balance", nullable = false)
     private Long pendingBalance = 0L;
 
+    // 누적 적립 금액(선지급+잔금)
     @Column(name = "total_earned", nullable = false)
     private Long totalEarned = 0L;
 
+    // 메이커가 실제 출금한 누적 금액
     @Column(name = "total_withdrawn", nullable = false)
     private Long totalWithdrawn = 0L;
 
