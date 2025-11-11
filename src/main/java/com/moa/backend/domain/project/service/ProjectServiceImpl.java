@@ -1,7 +1,7 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.maker.entity.Maker;
-import com.moa.backend.domain.maker.repository.MakerRepository;
+import com.moa.backend.domain.user.entity.Maker;
+import com.moa.backend.domain.user.repository.MakerRepository;
 import com.moa.backend.domain.project.dto.*;
 import com.moa.backend.domain.project.entity.*;
 import com.moa.backend.domain.project.repository.ProjectRepository;
