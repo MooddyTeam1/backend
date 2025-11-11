@@ -1,6 +1,6 @@
 package com.moa.backend.domain.wallet.entity;
 
-import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.user.entity.Maker;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
