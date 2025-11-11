@@ -24,6 +24,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 서포터가 프로젝트 리워드를 구매할 때 생성되는 주문 엔티티.
+ * 결제/배송/확정 상태와 배송지 정보를 모두 보관한다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -34,17 +38,21 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 노출용 주문 코드 (중복 불가)
     @Column(name = "order_id", nullable = false, unique = true, length = 64)
     private String orderCode;
 
+    // 주문한 서포터
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-   private User user;
+    private User user;
 
+    // 연결된 프로젝트
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
+    // 주문 총 금액
     @Column(name = "total_amount", nullable = false)
     private Long totalAmount;
 
@@ -52,21 +60,25 @@ public class Order {
     @Column(name = "status", nullable = false, length = 20)
     private OrderStatus status;
 
+    // 주문/배송명 (수령인 표시용)
     @Column(name = "order_name", nullable = false, length = 200)
     private String orderName;
 
+    // 수령인 정보
     @Column(name = "receiver_name", nullable = false, length = 100)
     private String receiverName;
 
     @Column(name = "receiver_phone", nullable = false, length = 50)
     private String receiverPhone;
 
+    // 배송지 주소
     @Column(name = "address_line1", nullable = false, length = 255)
     private String addressLine1;
 
     @Column(name = "address_line2", length = 255)
     private String addressLine2;
 
+    // 우편번호
     @Column(name = "zip_code", nullable = false, length = 20)
     private String zipCode;
 
@@ -74,6 +86,7 @@ public class Order {
     @Column(name = "delivery_status", length = 20)
     private DeliveryStatus deliveryStatus;
 
+    // 배송 진행 타임라인
     @Column(name = "delivery_started_at")
     private LocalDateTime deliveryStartedAt;
 
@@ -83,6 +96,7 @@ public class Order {
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
+    // 주문에 포함된 리워드 항목들
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
@@ -103,6 +117,9 @@ public class Order {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * 주문을 초기 상태(PENDING)로 생성한다.
+     */
     public static Order create(
             User user,
             Project project,
@@ -130,6 +147,9 @@ public class Order {
         return order;
     }
 
+    /**
+     * 주문 품목을 추가하고 양방향 연관관계를 고정한다.
+     */
     public void addItem(OrderItem orderItem) {
         this.orderItems.add(orderItem);
         orderItem.assignOrder(this);
@@ -143,14 +163,19 @@ public class Order {
         this.orderName = orderName;
     }
 
+    /** 결제 완료 처리 */
     public void markPaid() {
         this.status = OrderStatus.PAID;
     }
 
+    /** 주문 취소 처리 */
     public void cancel() {
         this.status = OrderStatus.CANCELED;
     }
 
+    /**
+     * 결제 완료 이후 배송을 시작한다.
+     */
     public void startDelivery() {
         if (this.status != OrderStatus.PAID) {
             throw new IllegalStateException("Only paid orders can start delivery");
@@ -159,6 +184,9 @@ public class Order {
         this.deliveryStartedAt = LocalDateTime.now();
     }
 
+    /**
+     * 배송 완료 처리.
+     */
     public void completeDelivery() {
         if (this.deliveryStatus != DeliveryStatus.SHIPPING) {
             throw new IllegalStateException("Delivery can be completed only from SHIPPING status");
@@ -167,6 +195,9 @@ public class Order {
         this.deliveryCompletedAt = LocalDateTime.now();
     }
 
+    /**
+     * 구매자 확정을 기록한다.
+     */
     public void confirm() {
         if (this.deliveryStatus != DeliveryStatus.DELIVERED) {
             throw new IllegalStateException("Confirmation is allowed only after delivery is completed");

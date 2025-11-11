@@ -19,6 +19,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 프로젝트 지갑의 입출 내역을 저장하는 엔티티.
+ * 주문/정산 레퍼런스를 함께 저장해 감사 추적이 가능하도록 한다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -29,24 +33,30 @@ public class ProjectWalletTransaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 거래가 반영된 프로젝트 지갑
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "project_wallet_id", nullable = false)
     private ProjectWallet wallet;
 
+    // 거래 종류 (입금/환불 등)
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 30)
     private ProjectWalletTransactionType type;
 
+    // 변동 금액
     @Column(name = "amount", nullable = false)
     private Long amount;
 
+    // 거래 이후 에스크로 잔액
     @Column(name = "balance_after", nullable = false)
     private Long balanceAfter;
 
+    // 주문 기반 거래일 경우 연결
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private Order order;
 
+    // 정산 기반 거래일 경우 연결
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "settlement_id")
     private Settlement settlement;
@@ -57,6 +67,9 @@ public class ProjectWalletTransaction {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * 거래 로그를 생성하는 팩토리 메서드.
+     */
     public static ProjectWalletTransaction of(
             ProjectWallet wallet,
             ProjectWalletTransactionType type,
