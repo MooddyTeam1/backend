@@ -3,6 +3,8 @@ package com.moa.backend.domain.user.controller;
 import com.moa.backend.domain.user.dto.SupporterProfileResponse;
 import com.moa.backend.domain.user.dto.SupporterProfileUpdateRequest;
 import com.moa.backend.domain.user.service.SupporterProfileService;
+import com.moa.backend.global.error.AppException;
+import com.moa.backend.global.error.ErrorCode;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +35,13 @@ public class SupporterProfileController {
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestBody SupporterProfileUpdateRequest request
     ) {
-        SupporterProfileResponse response = supporterProfileService.updateProfile(principal.getId(), request);
+        if (principal == null) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+
+        SupporterProfileResponse response =
+                supporterProfileService.updateProfile(principal.getId(), request);
+
         return ResponseEntity.ok(response);
     }
 }
