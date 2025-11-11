@@ -2,7 +2,6 @@ package com.moa.backend.domain.order.repository;
 
 import com.moa.backend.domain.order.entity.DeliveryStatus;
 import com.moa.backend.domain.order.entity.Order;
-import com.moa.backend.domain.order.entity.OrderStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
