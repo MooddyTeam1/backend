@@ -1,6 +1,6 @@
 package com.moa.backend.domain.settlement.entity;
 
-import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.user.entity.Maker;
 import com.moa.backend.domain.project.entity.Project;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
