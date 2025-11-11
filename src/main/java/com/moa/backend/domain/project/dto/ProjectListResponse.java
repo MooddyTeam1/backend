@@ -1,10 +1,7 @@
 package com.moa.backend.domain.project.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.moa.backend.domain.project.entity.Category;
-import com.moa.backend.domain.project.entity.Project;
-import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
-import com.moa.backend.domain.project.entity.ProjectReviewStatus;
+import com.moa.backend.domain.project.entity.*;
 import com.moa.backend.domain.reward.dto.RewardResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +30,7 @@ public class ProjectListResponse {
     private String coverImageUrl;
     private List<String> coverGallery;
     private List<String> tags;
+    private ProjectResultStatus resultStatus;
     private LocalDateTime requestAt;
     private LocalDateTime approvedAt;
     private LocalDateTime rejectedAt;
@@ -89,6 +87,7 @@ public class ProjectListResponse {
         return base(project)
                 .liveStartAt(project.getLiveStartAt())
                 .liveEndAt(project.getLiveEndAt())
+                .resultStatus(project.getResultStatus())
                 .build();
     }
 
