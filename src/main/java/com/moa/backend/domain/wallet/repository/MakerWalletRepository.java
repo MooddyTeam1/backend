@@ -9,9 +9,15 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
+/**
+ * MakerWallet 행을 조회/잠그는 레포지토리.
+ */
 public interface MakerWalletRepository extends JpaRepository<MakerWallet, Long> {
 
-    Optional<MakerWallet> findByMaker_Id(Long makerId);
+    /**
+     * 특정 메이커의 지갑을 읽기 전용으로 조회.
+     */
+    Optional<MakerWallet> findByMakerId(Long makerId);
 
     /**
      * 메이커 지갑 잔액을 갱신하기 직전에 행 단위 비관적 락을 건다.

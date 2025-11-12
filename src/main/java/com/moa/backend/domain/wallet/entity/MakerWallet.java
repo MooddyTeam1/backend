@@ -1,6 +1,8 @@
 package com.moa.backend.domain.wallet.entity;
 
 import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.global.error.AppException;
+import com.moa.backend.global.error.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,11 +14,10 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * 메이커 개인의 정산 지갑.
@@ -54,6 +55,74 @@ public class MakerWallet {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public static MakerWallet of(Maker maker) {
+        MakerWallet wallet = new MakerWallet();
+        wallet.maker = maker;
+        wallet.availableBalance = 0L;
+        wallet.pendingBalance = 0L;
+        wallet.totalEarned = 0L;
+        wallet.totalWithdrawn = 0L;
+        wallet.updatedAt = LocalDateTime.now();
+        return wallet;
+    }
+
+    /**
+     * 잔금 지급 대기 금액(pending) 적립.
+     */
+    public void addPending(long amount) {
+        this.pendingBalance += amount;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 선지급 등 즉시 사용 가능한 금액 적립.
+     */
+    public void creditAvailable(long amount) {
+        this.availableBalance += amount;
+        this.totalEarned += amount;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 잔금 지급 시 pending → available 이동.
+     */
+    public void releasePendingToAvailable(long amount) {
+        if (this.pendingBalance < amount) {
+            throw new AppException(
+                    ErrorCode.INSUFFICIENT_AVAILABLE_BALANCE,
+                    "대기 잔액 부족: 현재=" + this.pendingBalance + ", 요청=" + amount
+            );
+        }
+        this.pendingBalance -= amount;
+        this.availableBalance += amount;
+        this.totalEarned += amount;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 환불 등으로 이미 지급된 금액 회수.
+     */
+    public void refundDebit(long amount) {
+        if (this.availableBalance < amount) {
+            throw new AppException(ErrorCode.INSUFFICIENT_AVAILABLE_BALANCE);
+        }
+        this.availableBalance -= amount;
+        this.totalEarned -= amount;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 메이커 출금 처리.
+     */
+    public void withdraw(long amount) {
+        if (this.availableBalance < amount) {
+            throw new AppException(ErrorCode.INSUFFICIENT_AVAILABLE_BALANCE);
+        }
+        this.availableBalance -= amount;
+        this.totalWithdrawn += amount;
+        this.updatedAt = LocalDateTime.now();
+    }
 
     @PrePersist
     protected void onCreate() {
