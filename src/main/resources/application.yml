@@ -65,3 +65,7 @@ logging:
   level:
     org.springframework.security.oauth2.client: DEBUG
     org.springframework.web.client.RestTemplate: DEBUG
+app:
+  file-storage:
+    root-dir: ./uploads        # ✅ 실제 파일이 저장될 루트 디렉터리 (프로젝트 기준 상대경로)
+    image-dir: images          # ✅ 이미지 하위 디렉터리 (/uploads/images)
