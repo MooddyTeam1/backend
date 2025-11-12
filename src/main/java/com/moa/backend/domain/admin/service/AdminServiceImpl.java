@@ -33,7 +33,7 @@ public class AdminServiceImpl implements AdminService {
 
         validateProjectStatusChangeable(project);
 
-        project.setLifecycleStatus(ProjectLifecycleStatus.SCHEDULED);   //공개예정
+        project.setLifecycleStatus(ProjectLifecycleStatus.DRAFT);
         project.setReviewStatus(ProjectReviewStatus.APPROVED);          //승인됨
         project.setApprovedAt(LocalDateTime.now());
 

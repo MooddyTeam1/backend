@@ -16,11 +16,16 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
+/**
+ * 프로젝트 단위 정산 정보를 보관하는 엔티티.
+ * 총 주문금액, 수수료, 선지급/잔금 지급 상태를 한 번에 추적한다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -31,50 +36,64 @@ public class Settlement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 대상 프로젝트 (1:1)
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "project_id", nullable = false, unique = true)
     private Project project;
 
+    // 정산 받을 메이커
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "maker_id", nullable = false)
     private Maker maker;
 
+    // 총 주문 금액
     @Column(name = "total_order_amount", nullable = false)
     private Long totalOrderAmount;
 
+    // PG(토스) 수수료
     @Column(name = "toss_fee_amount", nullable = false)
     private Long tossFeeAmount;
 
+    // 플랫폼 수수료
     @Column(name = "platform_fee_amount", nullable = false)
     private Long platformFeeAmount;
 
+    // 메이커에게 지급 가능한 금액 (총액 - 수수료)
     @Column(name = "net_amount", nullable = false)
     private Long netAmount;
 
+    // 선지급 금액
     @Column(name = "first_payment_amount", nullable = false)
     private Long firstPaymentAmount;
 
+    // 선지급 상태
     @Enumerated(EnumType.STRING)
     @Column(name = "first_payment_status", nullable = false, length = 20)
     private SettlementPayoutStatus firstPaymentStatus;
 
+    // 선지급 완료 시각
     @Column(name = "first_payment_at")
     private LocalDateTime firstPaymentAt;
 
+    // 잔금 금액
     @Column(name = "final_payment_amount", nullable = false)
     private Long finalPaymentAmount;
 
+    // 잔금 상태
     @Enumerated(EnumType.STRING)
     @Column(name = "final_payment_status", nullable = false, length = 20)
     private SettlementPayoutStatus finalPaymentStatus;
 
+    // 잔금 완료 시각
     @Column(name = "final_payment_at")
     private LocalDateTime finalPaymentAt;
 
+    // 전체 정산 상태 (선지급/잔금 프로세스)
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private SettlementStatus status;
 
+    // 재시도 횟수(예: PG 통신 실패)
     @Column(name = "retry_count", nullable = false)
     private Integer retryCount = 0;
 

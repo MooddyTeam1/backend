@@ -1,9 +1,15 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.user.entity.Maker;
-import com.moa.backend.domain.user.repository.MakerRepository;
-import com.moa.backend.domain.project.dto.*;
-import com.moa.backend.domain.project.entity.*;
+import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.maker.repository.MakerRepository;
+import com.moa.backend.domain.project.dto.ProjectDetailResponse;
+import com.moa.backend.domain.project.dto.ProjectListResponse;
+import com.moa.backend.domain.project.dto.StatusSummaryResponse;
+import com.moa.backend.domain.project.dto.TempProjectResponse;
+import com.moa.backend.domain.project.entity.Category;
+import com.moa.backend.domain.project.entity.Project;
+import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
+import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
@@ -11,13 +17,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly=true)
-public class ProjectServiceImpl implements ProjectService{
+@Transactional(readOnly = true)
+public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final MakerRepository makerRepository;
@@ -52,6 +59,18 @@ public class ProjectServiceImpl implements ProjectService{
     public List<ProjectListResponse> getByCategory(Category category) {
         return projectRepository.findByCategory(category).stream()
                 .map(ProjectListResponse::searchProjects)
+                .toList();
+    }
+
+    //마감 임박(7일전)
+    @Override
+    public List<ProjectListResponse> getClosingSoon() {
+        return projectRepository.findByLifecycleStatusAndReviewStatusAndEndDateBetween(
+                        ProjectLifecycleStatus.LIVE,
+                        ProjectReviewStatus.APPROVED,
+                        LocalDate.now(),
+                        LocalDate.now().plusDays(7)
+                ).stream().map(ProjectListResponse::searchProjects)
                 .toList();
     }
 

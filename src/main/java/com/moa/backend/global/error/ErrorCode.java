@@ -47,6 +47,20 @@ public enum ErrorCode {
 
     REWARD_REQUIRED("RWD-400", HttpStatus.BAD_REQUEST, "프로젝트에는 최소 1개의 리워드가 필요합니다."),
 
+    // Wallet
+    PROJECT_WALLET_NOT_FOUND("WALT-404", HttpStatus.NOT_FOUND, "프로젝트 지갑을 찾을 수 없습니다."),
+    PLATFORM_WALLET_NOT_FOUND("WALT-405", HttpStatus.NOT_FOUND, "플랫폼 지갑을 찾을 수 없습니다."),
+    MAKER_WALLET_NOT_FOUND("WALT-406", HttpStatus.NOT_FOUND, "메이커 지갑을 찾을 수 없습니다."),
+    INSUFFICIENT_ESCROW("WALT-409", HttpStatus.CONFLICT, "프로젝트 에스크로 잔액이 부족합니다."),
+    INSUFFICIENT_PLATFORM_BALANCE("WALT-410", HttpStatus.CONFLICT, "플랫폼 잔액이 부족합니다."),
+    INSUFFICIENT_AVAILABLE_BALANCE("WALT-411", HttpStatus.CONFLICT, "출금 가능한 잔액이 부족합니다."),
+
+    // Settlement
+    SETTLEMENT_NOT_FOUND("SET-404", HttpStatus.NOT_FOUND, "정산 정보를 찾을 수 없습니다."),
+    SETTLEMENT_ALREADY_PROCESSED("SET-409", HttpStatus.CONFLICT, "이미 처리된 정산입니다."),
+    SETTLEMENT_NOT_READY("SET-410", HttpStatus.CONFLICT, "정산 상태가 요구 조건을 충족하지 않습니다."),
+    ALREADY_PROCESSED("COMM-409-02", HttpStatus.CONFLICT, "이미 처리된 요청입니다."),
+
     // 서버 내부 오류
     INTERNAL_ERROR("SYS-500", HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
 

@@ -13,6 +13,10 @@ spring:
   application:
     name: backend
 
+  sql:
+    init:
+      mode: never
+
   security:
     oauth2:
       client:
@@ -48,11 +52,6 @@ spring:
     driver-class-name: org.postgresql.Driver   # ✅ Postgres JDBC 드라이버
     username: moa                              # ✅ POSTGRES_USER와 동일
     password: moa1234                          # ✅ POSTGRES_PASSWORD와 동일
-
-  h2:
-    console:
-      enabled: true        # H2 콘솔 활성화 (http://localhost:8080/h2-console)
-      path: /h2-console
 
   jpa:
     hibernate:

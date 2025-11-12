@@ -7,10 +7,12 @@ import com.moa.backend.global.security.jwt.JwtAuthenticationFilter;
 import com.moa.backend.global.security.jwt.JwtTokenProvider;
 import com.moa.backend.domain.user.service.OAuth2UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -25,6 +27,8 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final OAuth2UserService oAuth2UserService; // ✅ 카카오/구글 사용자 정보 처리 서비스
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler; // ✅ 로그인 성공 시 JWT 발급 핸들러
+    @Value("${spring.h2.console.enabled:false}")
+    private boolean h2ConsoleEnabled;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,11 +37,20 @@ public class SecurityConfig {
                 // ✅ CORS 설정 활성화 (아래 corsConfigurationSource() Bean 사용)
                 .cors(cors -> {})  //
 
-                // ✅ CSRF 및 H2 콘솔 설정
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/h2-console/**")
-                        .disable())
-                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+                // ✅ CSRF 및 H2 콘솔 설정 (dev 프로필에서만 콘솔 전용 예외 적용)
+                .csrf(csrf -> {
+                    if (h2ConsoleEnabled) {
+                        csrf.ignoringRequestMatchers("/h2-console/**");
+                    }
+                    csrf.disable();
+                })
+                .headers(headers -> headers.frameOptions(frame -> {
+                    if (h2ConsoleEnabled) {
+                        frame.disable();
+                    } else {
+                        frame.sameOrigin();
+                    }
+                }))
 
                 // ✅ 기본 폼 로그인 및 세션 비활성화 (JWT 기반 인증)
                 .httpBasic(httpBasic -> httpBasic.disable())
@@ -65,7 +78,6 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-
                 // ✅ OAuth2 로그인 (카카오/구글)
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(user -> user.userService(oAuth2UserService))

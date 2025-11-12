@@ -1,6 +1,6 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.user.repository.MakerRepository;
+import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.project.dto.CreateProjectRequest;
 import com.moa.backend.domain.project.dto.CreateProjectResponse;
 import com.moa.backend.domain.project.dto.TempProjectRequest;
@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly=true)
-public class ProjectTempServiceImpl implements  ProjectTempService {
+@Transactional(readOnly = true)
+public class ProjectTempServiceImpl implements ProjectTempService {
 
     private final ProjectRepository projectRepository;
     private final MakerRepository makerRepository;

@@ -69,6 +69,12 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getByCategory(category));
     }
 
+    //마감 임박(7일전)
+    @GetMapping("/closing-soon")
+    public ResponseEntity<List<ProjectListResponse>> getProjectsByClosingSoon() {
+        return ResponseEntity.ok(projectService.getClosingSoon());
+    }
+
     //프로젝트 임시저장
     @PostMapping("/temp")
     public ResponseEntity<TempProjectResponse> saveTempProject(
