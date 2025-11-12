@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin/project")
+@RequestMapping("/admin/project")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class ProjectAdminController {
