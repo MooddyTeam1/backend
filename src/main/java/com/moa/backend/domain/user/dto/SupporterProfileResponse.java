@@ -2,12 +2,16 @@ package com.moa.backend.domain.user.dto;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.moa.backend.domain.user.entity.SupporterProfile;
+import com.moa.backend.domain.follow.dto.SimpleMakerSummary;
+import com.moa.backend.domain.follow.dto.SimpleSupporterSummary;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 서포터 프로필 + 팔로우 정보까지 포함하는 DTO
+ */
 public record SupporterProfileResponse(
         Long userId,
         String displayName,
@@ -19,11 +23,21 @@ public record SupporterProfileResponse(
         String postalCode,
         List<String> interests,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+
+        // ✅ 여기부터 추가된 팔로우 정보
+        long followingSupporterCount,
+        long followingMakerCount,
+        List<SimpleSupporterSummary> followingSupporters,
+        List<SimpleMakerSummary> followingMakers
 ) {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    /**
+     * 🔹 예전처럼 "프로필만" 필요할 때 쓰는 팩토리
+     *    팔로우 관련 필드는 0 / 빈 리스트로 채운다.
+     */
     public static SupporterProfileResponse of(
             Long userId,
             String displayName,
@@ -48,7 +62,11 @@ public record SupporterProfileResponse(
                 postalCode,
                 parseInterests(interestsJson),
                 createdAt,
-                updatedAt
+                updatedAt,
+                0L,
+                0L,
+                Collections.emptyList(),
+                Collections.emptyList()
         );
     }
 
