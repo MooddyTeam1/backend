@@ -7,8 +7,6 @@ import com.moa.backend.domain.wallet.entity.PlatformWalletTransaction;
 import com.moa.backend.domain.wallet.entity.PlatformWalletTransactionType;
 import com.moa.backend.domain.wallet.repository.PlatformWalletRepository;
 import com.moa.backend.domain.wallet.repository.PlatformWalletTransactionRepository;
-import com.moa.backend.global.error.AppException;
-import com.moa.backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +28,7 @@ public class PlatformWalletService {
      */
     @Transactional
     public PlatformWallet getOrCreate() {
-        return platformWalletRepository.findById(1L)
+        return platformWalletRepository.findTopByOrderByIdAsc()
                 .orElseGet(() -> platformWalletRepository.save(PlatformWallet.initialize()));
     }
 
@@ -39,8 +37,7 @@ public class PlatformWalletService {
      */
     @Transactional
     public void deposit(long netAmount, Payment payment) {
-        PlatformWallet wallet = platformWalletRepository.findSingletonForUpdate()
-                .orElseGet(this::getOrCreate);
+        PlatformWallet wallet = getOrCreateWithLock();
 
         wallet.deposit(netAmount);
         platformWalletRepository.save(wallet);
@@ -65,8 +62,7 @@ public class PlatformWalletService {
      */
     @Transactional
     public void recordMakerWithdrawal(Settlement settlement, long amount) {
-        PlatformWallet wallet = platformWalletRepository.findSingletonForUpdate()
-                .orElseThrow(() -> new AppException(ErrorCode.PLATFORM_WALLET_NOT_FOUND));
+        PlatformWallet wallet = getOrCreateWithLock();
 
         wallet.withdraw(amount);
         platformWalletRepository.save(wallet);
@@ -91,8 +87,7 @@ public class PlatformWalletService {
      */
     @Transactional
     public void recordRefund(Payment payment, long amount) {
-        PlatformWallet wallet = platformWalletRepository.findSingletonForUpdate()
-                .orElseThrow(() -> new AppException(ErrorCode.PLATFORM_WALLET_NOT_FOUND));
+        PlatformWallet wallet = getOrCreateWithLock();
 
         wallet.refundOut(amount);
         platformWalletRepository.save(wallet);
@@ -110,5 +105,10 @@ public class PlatformWalletService {
 
         log.info("PlatformWallet 환불: amount={}, balance={}",
                 amount, wallet.getTotalBalance());
+    }
+
+    private PlatformWallet getOrCreateWithLock() {
+        return platformWalletRepository.findFirstByOrderByIdAsc()
+                .orElseGet(() -> platformWalletRepository.save(PlatformWallet.initialize()));
     }
 }

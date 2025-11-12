@@ -5,7 +5,6 @@ import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
 
 /**
  * 플랫폼 전체 자금 장부(싱글턴)를 다루는 레포지토리.
@@ -15,12 +14,14 @@ import org.springframework.data.jpa.repository.Query;
 public interface PlatformWalletRepository extends JpaRepository<PlatformWallet, Long> {
 
     /**
-     * 플랫폼 지갑은 항상 하나만 존재하며 초기화 시 id=1로 고정 저장한다.
-     * 따라서 잔액을 조작하기 전에는 해당 행을 PESSIMISTIC_WRITE로 잠가
-     * 동시 송금/환불 배치가 서로 잔액을 덮어쓰는 상황을 막는다.
-     * (DB 수준에서 `SELECT ... FOR UPDATE`가 실행된다고 보면 된다)
+     * 플랫폼 지갑 목록 중 가장 오래된 행을 잠근다.
+     * DB마다 다른 id 정책을 쓰더라도 첫 번째 행만 사용하도록 통일한다.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select pw from PlatformWallet pw where pw.id = 1L")
-    Optional<PlatformWallet> findSingletonForUpdate();
+    Optional<PlatformWallet> findFirstByOrderByIdAsc();
+
+    /**
+     * 잠금 없이 최초 행을 조회한다.
+     */
+    Optional<PlatformWallet> findTopByOrderByIdAsc();
 }
