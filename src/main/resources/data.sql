@@ -131,6 +131,10 @@ INSERT INTO project_tag (project_id, tag) VALUES
   (1203, '아웃도어'),
   (1203, '여행');
 
+-- 플랫폼 지갑 싱글턴 초기값
+INSERT INTO platform_wallets (id, total_balance, total_project_deposit, total_maker_payout, total_platform_fee, created_at, updated_at)
+VALUES (1, 0, 0, 0, 0, TIMESTAMP '2024-11-12 09:00:00', TIMESTAMP '2024-11-12 09:00:00');
+
 INSERT INTO rewards (id, project_id, name, description, price, estimated_delivery_date, is_active, stock_quantity) VALUES
   (1300, 1200, '오로라 얼리버드 세트', '본체 + 디퓨저 + 패브릭 케이블 구성', 120000,
    DATE '2026-02-15', TRUE, 200),
