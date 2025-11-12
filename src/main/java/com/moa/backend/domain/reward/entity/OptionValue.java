@@ -15,10 +15,8 @@ import lombok.*;
 public class OptionValue {
 
     @Id
-    //@GeneratedValue(strategy = GenerationType.IDENTITY)
-    //임시 Mock 데이터 때문에 충돌날수 있어서 10번부터 만들어지게 함
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "option_value_id_seq")
-    @jakarta.persistence.SequenceGenerator(name = "option_value_id_seq", sequenceName = "option_value_id_seq", initialValue = 10, allocationSize = 1)
+    @jakarta.persistence.SequenceGenerator(name = "option_value_id_seq", sequenceName = "option_value_id_seq", allocationSize = 1)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

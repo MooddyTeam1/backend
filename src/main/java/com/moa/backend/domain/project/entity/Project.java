@@ -43,10 +43,8 @@ import java.util.List;
 public class Project {
 
     @Id
-    //임시 Mock 데이터 때문에 충돌날수 있어서 10번부터 만들어지게 함
-    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "project_id_seq")
-    @jakarta.persistence.SequenceGenerator(name = "project_id_seq", sequenceName = "project_id_seq", initialValue = 10, allocationSize = 1)
+    @jakarta.persistence.SequenceGenerator(name = "project_id_seq", sequenceName = "project_id_seq", allocationSize = 1)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

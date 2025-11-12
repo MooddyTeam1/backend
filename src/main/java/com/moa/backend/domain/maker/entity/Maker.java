@@ -28,10 +28,8 @@ import java.time.LocalDateTime;
 public class Maker {
 
     @Id
-    //Mock 데이터와 충돌을 방지하기 위해 임시로 10번부터 생성
-    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "maker_id_seq")
-    @SequenceGenerator(name = "maker_id_seq", sequenceName = "maker_id_seq", initialValue = 10, allocationSize = 1)
+    @SequenceGenerator(name = "maker_id_seq", sequenceName = "maker_id_seq", allocationSize = 1)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)

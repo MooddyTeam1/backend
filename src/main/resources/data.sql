@@ -1,5 +1,7 @@
 -- 개발용 H2 시드 데이터입니다.
 -- 자동 생성 ID는 1부터 시작하므로, 충돌을 피하기 위해 모든 PK를 1000 이상으로 지정했습니다.
+-- 시드 적재 이후 주요 시퀀스를 2000번대로 재시작해 런타임 생성 데이터와 구분합니다.
+-- 일부 데이터는 시퀀스 수정을 하지않아 1번부터 시작합니다. (나중에 수정 예정)
 
 SET REFERENTIAL_INTEGRITY FALSE;
 TRUNCATE TABLE project_tag;
@@ -56,7 +58,7 @@ INSERT INTO supporter_profiles (user_id, display_name, bio, image_url, phone, po
    '010-9999-0001', '04524', TIMESTAMP '2024-11-08 08:40:00', TIMESTAMP '2024-11-12 09:05:00',
    '서울시 중구 을지로 15', '본사 10층', '["플랫폼","운영"]');
 
-INSERT INTO makers (id, owner_user_id, name, business_name, business_number, representative, established_at, industry_type, location, product_intro, core_competencies, image_url, contact_email, contact_phone, tech_stack_json, created_at, updated_at) VALUES
+INSERT INTO makers (id, owner_user_id, name, business_name, business_number, representative, established_at, industry_type, location, product_intro, core_competencies, image_url, contact_email, contact_phone, tech_stack, created_at, updated_at) VALUES
   (1100, 1003, '메이커원 스튜디오', '메이커원 스튜디오', '110-22-334455', '박알리스', DATE '2021-03-15',
    '스마트 하드웨어', '서울시 강남구', '일상에서 쓰는 웨어러블 로봇을 연구합니다.',
    '하이브리드 제조, 임베디드 펌웨어, 산업 디자인',
@@ -138,3 +140,12 @@ INSERT INTO rewards (id, project_id, name, description, price, estimated_deliver
    DATE '2025-12-05', FALSE, 0),
   (1303, 1203, '지오트레일 얼리버드', '태양광 패널과 비상 비컨을 포함한 백팩', 180000,
    DATE '2025-12-15', TRUE, 180);
+
+-- 런타임에서 생성되는 ID가 2000번대부터 시작되도록 시퀀스를 재시작합니다.
+ALTER SEQUENCE user_id_seq RESTART WITH 2000;
+ALTER SEQUENCE maker_id_seq RESTART WITH 2000;
+ALTER SEQUENCE project_id_seq RESTART WITH 2000;
+ALTER SEQUENCE reward_id_seq RESTART WITH 2000;
+ALTER SEQUENCE reward_set_id_seq RESTART WITH 2000;
+ALTER SEQUENCE option_group_id_seq RESTART WITH 2000;
+ALTER SEQUENCE option_value_id_seq RESTART WITH 2000;

@@ -17,10 +17,8 @@ import java.util.Set;
 public class User {
 
     @Id
-    // @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // 임시 Mock 데이터 때문에 충돌날 수 있어서 10번부터 만들어지게 함
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_id_seq")
-    @SequenceGenerator(name = "user_id_seq", sequenceName = "user_id_seq", initialValue = 10, allocationSize = 1)
+    @SequenceGenerator(name = "user_id_seq", sequenceName = "user_id_seq", allocationSize = 1)
     private Long id;
 
     @Column(name = "email", nullable = false, unique = true, length = 100)
