@@ -68,7 +68,10 @@ public class SecurityConfig {
                             "/oauth2/**",
                             "/login/oauth2/**",
                             "/actuator/health",
-                            "/api/health"
+                            "/api/health",
+                            "/api/project/search",
+                            "/api/project/category",
+                            "/api/project/closing-soon"
                     ).permitAll();
                     if (h2ConsoleEnabled) {
                         auth.requestMatchers("/h2-console/**").permitAll();
