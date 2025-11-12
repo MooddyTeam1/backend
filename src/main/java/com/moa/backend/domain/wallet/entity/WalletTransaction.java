@@ -13,10 +13,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 /**
  * 메이커 지갑의 입출 로그.
@@ -63,8 +64,27 @@ public class WalletTransaction {
     private LocalDateTime createdAt;
 
     /**
-     * 생성 시각 자동 기록.
+     * 거래 로그 생성을 위한 팩토리.
      */
+    public static WalletTransaction of(
+            MakerWallet wallet,
+            WalletTransactionType type,
+            long amount,
+            long balanceAfter,
+            Settlement settlement,
+            String description
+    ) {
+        WalletTransaction transaction = new WalletTransaction();
+        transaction.wallet = wallet;
+        transaction.type = type;
+        transaction.amount = amount;
+        transaction.balanceAfter = balanceAfter;
+        transaction.settlement = settlement;
+        transaction.description = description;
+        transaction.createdAt = LocalDateTime.now();
+        return transaction;
+    }
+    
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
