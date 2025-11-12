@@ -77,7 +77,8 @@ public class SecurityConfig {
                                 "/auth/**",
                                 "/project/search",
                                 "/project/category",
-                                "/project/closing-soon"
+                                "/project/closing-soon",
+                                "/uploads/**"
 
                         ).permitAll()
                         .anyRequest().authenticated()
