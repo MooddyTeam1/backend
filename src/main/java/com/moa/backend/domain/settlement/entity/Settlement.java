@@ -16,11 +16,10 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * 프로젝트 단위 정산 정보를 보관하는 엔티티.
@@ -102,6 +101,87 @@ public class Settlement {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public static Settlement create(
+            Project project,
+            Maker maker,
+            long totalOrderAmount,
+            long tossFeeAmount,
+            long platformFeeAmount,
+            long netAmount,
+            long firstPaymentAmount,
+            long finalPaymentAmount
+    ) {
+        Settlement settlement = new Settlement();
+        settlement.project = project;
+        settlement.maker = maker;
+        settlement.totalOrderAmount = totalOrderAmount;
+        settlement.tossFeeAmount = tossFeeAmount;
+        settlement.platformFeeAmount = platformFeeAmount;
+        settlement.netAmount = netAmount;
+        settlement.firstPaymentAmount = firstPaymentAmount;
+        settlement.finalPaymentAmount = finalPaymentAmount;
+        settlement.firstPaymentStatus = SettlementPayoutStatus.PENDING;
+        settlement.finalPaymentStatus = SettlementPayoutStatus.PENDING;
+        settlement.status = SettlementStatus.PENDING;
+        settlement.retryCount = 0;
+        settlement.createdAt = LocalDateTime.now();
+        settlement.updatedAt = settlement.createdAt;
+        return settlement;
+    }
+
+    /**
+     * 선지급 완료 처리.
+     */
+    public void markFirstPaymentDone() {
+        this.firstPaymentStatus = SettlementPayoutStatus.DONE;
+        this.firstPaymentAt = LocalDateTime.now();
+        this.status = SettlementStatus.FIRST_PAID;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 잔금 지급을 준비할 수 있는 상태로 전환.
+     */
+    public void markFinalReady() {
+        this.status = SettlementStatus.FINAL_READY;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 잔금 지급 완료 처리.
+     */
+    public void markFinalPaymentDone() {
+        this.finalPaymentStatus = SettlementPayoutStatus.DONE;
+        this.finalPaymentAt = LocalDateTime.now();
+        this.status = SettlementStatus.COMPLETED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 재시도 횟수 증가.
+     */
+    public void incrementRetryCount() {
+        this.retryCount++;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 재시도 카운트 초기화.
+     */
+    public void resetRetryCount() {
+        this.retryCount = 0;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 선지급 실패 처리.
+     */
+    public void markFirstPaymentFailed() {
+        this.firstPaymentStatus = SettlementPayoutStatus.FAILED;
+        this.status = SettlementStatus.FAILED;
+        this.updatedAt = LocalDateTime.now();
+    }
 
     @PrePersist
     protected void onCreate() {
