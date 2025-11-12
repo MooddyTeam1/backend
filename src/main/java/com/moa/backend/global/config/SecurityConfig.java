@@ -74,7 +74,11 @@ public class SecurityConfig {
                                 "/h2-console/**",
                                 "/login",        // 🔥 추가
                                 "/login/**",      // 🔥 필요하면 같이
-                                "/auth/**"
+                                "/auth/**",
+                                "/project/search",
+                                "/project/category",
+                                "/project/closing-soon"
+
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
