@@ -19,6 +19,9 @@ public interface ProjectService {
     //카테고리로 검색
     List<ProjectListResponse> getByCategory(Category category);
 
+    //마감임박(7일전)
+    List<ProjectListResponse> getClosingSoon();
+
     //프로젝트 상태별 요약
     StatusSummaryResponse getProjectSummary(Long userId);
 

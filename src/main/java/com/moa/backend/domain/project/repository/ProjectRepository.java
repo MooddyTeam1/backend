@@ -49,4 +49,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             ProjectReviewStatus reviewStatus,
             LocalDate date
     );
+
+    List<Project> findByLifecycleStatusAndReviewStatusAndEndDateBetween(
+            ProjectLifecycleStatus lifecycleStatus,
+            ProjectReviewStatus reviewStatus,
+            LocalDate start,
+            LocalDate end
+    );
 }

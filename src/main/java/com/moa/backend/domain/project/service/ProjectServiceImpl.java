@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,6 +59,18 @@ public class ProjectServiceImpl implements ProjectService {
     public List<ProjectListResponse> getByCategory(Category category) {
         return projectRepository.findByCategory(category).stream()
                 .map(ProjectListResponse::searchProjects)
+                .toList();
+    }
+
+    //마감 임박(7일전)
+    @Override
+    public List<ProjectListResponse> getClosingSoon() {
+        return projectRepository.findByLifecycleStatusAndReviewStatusAndEndDateBetween(
+                        ProjectLifecycleStatus.LIVE,
+                        ProjectReviewStatus.APPROVED,
+                        LocalDate.now(),
+                        LocalDate.now().plusDays(7)
+                ).stream().map(ProjectListResponse::searchProjects)
                 .toList();
     }
 

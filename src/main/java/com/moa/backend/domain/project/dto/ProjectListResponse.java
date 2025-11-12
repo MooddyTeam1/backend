@@ -47,6 +47,7 @@ public class ProjectListResponse {
                 .summary(project.getSummary())
                 .coverImageUrl(project.getCoverImageUrl())
                 .category(project.getCategory())
+                .endDate(project.getEndDate())
                 .build();
     }
 

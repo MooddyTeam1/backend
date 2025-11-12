@@ -36,6 +36,34 @@ INSERT INTO users (id, email, password, name, role, created_at, updated_at, last
    TIMESTAMP '2024-11-08 08:30:00', TIMESTAMP '2024-11-12 09:00:00', TIMESTAMP '2024-11-15 06:30:00',
    'https://cdn.moa.dev/avatars/admin.png', 'LOCAL');
 
+-- ===================================
+-- Projects (both by maker_id = 2)
+-- ===================================
+INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount, category, start_at, end_at,
+                     lifecycle_status, review_status, rejected_reason, approved_at, rejected_at, cover_image_url,
+                     cover_gallery, created_at, updated_at, live_start_at, live_end_at)
+VALUES (1, 2, '수제 도자기 머그컵 만들기',
+        '전문 도예가와 함께 나만의 머그컵을 만드는 워크숍입니다. 초보자도 쉽게 따라할 수 있습니다.',
+        '# 수제 도자기 머그컵 만들기 스토리\n\n초보자도 쉽게 참여할 수 있는 도자기 제작 클래스입니다.',
+        5000000, 'TECH',
+        DATEADD('DAY', -5, CURRENT_DATE), DATEADD('DAY', 5, CURRENT_DATE),
+        'LIVE', 'APPROVED',
+        NULL, NOW(), NULL,
+        'https://example.com/images/mug_main.jpg',
+        '["https://example.com/images/mug_1.jpg", "https://example.com/images/mug_2.jpg"]',
+        NOW(), NOW(), DATEADD('DAY', -5, CURRENT_TIMESTAMP), DATEADD('DAY', 25, CURRENT_TIMESTAMP)),
+       (2, 2, '수제 디저트 만들기 클래스',
+        '신선한 재료를 사용해 쿠키와 마카롱을 직접 만들어보는 클래스입니다. 초보자도 쉽게 따라 할 수 있으며, 완성된 디저트는 포장해서 선물할 수도 있습니다.',
+        '# 수제 디저트 클래스 스토리\n\n달콤한 향기 가득한 쿠키, 마카롱 만들기 체험.',
+        3000000, 'FOOD',
+        DATEADD('DAY', -2, CURRENT_DATE), DATEADD('DAY', 20, CURRENT_DATE),
+        'SCHEDULED', 'APPROVED',
+        NULL, NOW(), NULL,
+        'https://example.com/images/dessert_main.jpg',
+        '["https://example.com/images/dessert_1.jpg", "https://example.com/images/dessert_2.jpg"]',
+        NOW(), NOW(), DATEADD('DAY', -2, CURRENT_TIMESTAMP), DATEADD('DAY', 20, CURRENT_TIMESTAMP));
+
+
 INSERT INTO supporter_profiles (user_id, display_name, bio, image_url, phone, postal_code, created_at, updated_at, address1, address2, interests) VALUES
   (1000, '햇살 서포터', '생활형 하드웨어 스타트업을 꾸준히 응원합니다.', 'https://cdn.moa.dev/avatars/user1.png',
    '010-2000-0001', '06236', TIMESTAMP '2024-11-10 09:15:00', TIMESTAMP '2024-11-12 10:30:00',
