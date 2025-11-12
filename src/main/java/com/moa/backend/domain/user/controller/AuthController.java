@@ -24,7 +24,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
  * 2️⃣ 소셜 로그인 후 대시보드 표시 (OAuth2)
  */
 @Slf4j
-@Controller
+@RestController
 @RequestMapping
 @RequiredArgsConstructor
 public class AuthController {
@@ -58,41 +58,6 @@ public class AuthController {
         log.info("♻️ 토큰 재발급 요청");
         LoginResponse response = authService.refresh(request);
         return ResponseEntity.ok(response);
-    }
-
-    /* -----------------------------------------------------
-     * ✅ [2] 소셜 로그인 (OAuth2) + View 렌더링
-     * ----------------------------------------------------- */
-
-    // 홈 화면 (로그인 상태 여부 표시)
-    @GetMapping("/")
-    public String home(Authentication authentication, Model model) {
-        if (authentication != null && authentication.isAuthenticated()) {
-            model.addAttribute("isLoggedIn", true);
-            if (authentication.getPrincipal() instanceof OAuth2User oauth2User) {
-                model.addAttribute("name", oauth2User.getAttribute("name"));
-            }
-        } else {
-            model.addAttribute("isLoggedIn", false);
-        }
-        return "home"; // e.g. templates/home.html
-    }
-
-    // 로그인 페이지 (OAuth2 로그인 버튼 노출)
-    @GetMapping("/login")
-    public String loginPage() {
-        return "login"; // e.g. templates/login.html
-    }
-
-    // OAuth2 로그인 성공 후 대시보드 표시
-    @GetMapping("/dashboard")
-    public String dashboard(Authentication authentication, Model model) {
-        if (authentication != null && authentication.getPrincipal() instanceof OAuth2User oauth2User) {
-            model.addAttribute("user", oauth2User.getAttributes());
-            model.addAttribute("name", oauth2User.getAttribute("name"));
-            model.addAttribute("email", oauth2User.getAttribute("email"));
-        }
-        return "dashboard"; // e.g. templates/dashboard.html
     }
 
     @GetMapping("/profile/me")
