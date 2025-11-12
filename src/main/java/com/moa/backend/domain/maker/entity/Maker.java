@@ -74,8 +74,11 @@ public class Maker {
     @Column(name = "contact_phone", length = 30)
     private String contactPhone;
 
-    @Column(name = "tech_stack_json", columnDefinition = "TEXT")
+    @Column(name = "tech_stack", columnDefinition = "TEXT")
     private String techStackJson;
+
+    @Column(name = "keywords", columnDefinition = "TEXT")
+    private String keywords;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -114,6 +117,7 @@ public class Maker {
         this.contactEmail = contactEmail;
         this.contactPhone = contactPhone;
         this.techStackJson = techStackJson;
+        this.keywords=keywords;
     }
 
 
@@ -140,7 +144,8 @@ public class Maker {
             String imageUrl,
             String contactEmail,
             String contactPhone,
-            String techStackJson
+            String techStackJson,
+            String keywords
     ) {
         this.name = name;
         this.businessName = businessName;
@@ -155,6 +160,7 @@ public class Maker {
         this.contactEmail = contactEmail;
         this.contactPhone = contactPhone;
         this.techStackJson = techStackJson;
+        this.keywords=keywords;
     }
 
     @PrePersist
