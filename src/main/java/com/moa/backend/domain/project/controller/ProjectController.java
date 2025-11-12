@@ -46,7 +46,7 @@ public class ProjectController {
     }
 
     //단일 조회
-    @GetMapping("/{projectId}")
+    @GetMapping("/id/{projectId}")
     public ResponseEntity<ProjectDetailResponse> getProjectById(
             @PathVariable Long projectId
     ) {
