@@ -9,7 +9,10 @@ public enum SettlementStatus {
     PENDING,
 
     // 선지급 완료, 잔금 대기
-    PARTIAL,
+    FIRST_PAID,
+
+    // 잔금 지급 준비 완료
+    FINAL_READY,
 
     // 잔금까지 완료
     COMPLETED,
