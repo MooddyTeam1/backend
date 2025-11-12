@@ -10,4 +10,11 @@ public record LoginResponse(
     String refreshToken,
     long refreshTokenExpiresIn
 ) {
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
 }

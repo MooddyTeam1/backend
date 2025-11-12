@@ -14,7 +14,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -51,12 +53,15 @@ public class SecurityConfig {
                 // ✅ 요청별 인가 정책
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/auth/**",
+                                "/api/auth/**",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/actuator/health",
                                 "/api/health",
-                                "/h2-console/**"
+                                "/h2-console/**",
+                                "/login",        // 🔥 추가
+                                "/login/**",      // 🔥 필요하면 같이
+                                "/auth/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -65,6 +70,21 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(user -> user.userService(oAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler((request, response, exception) -> {
+                            // 🔥 여기서 에러 로그 찍기
+                            String message = exception.getMessage();
+                            log.error("❌ OAuth2 로그인 실패: {}", message, exception);
+
+                            String frontendUrl = "http://localhost:5173/login";
+                            String redirect = frontendUrl
+                                    + "?social=google&error="
+                                    + java.net.URLEncoder.encode(
+                                    message != null ? message : "OAuth2 login failed",
+                                    java.nio.charset.StandardCharsets.UTF_8
+                            );
+
+                            response.sendRedirect(redirect);
+                        })
                 )
 
                 // ✅ JWT 인증 필터 추가
