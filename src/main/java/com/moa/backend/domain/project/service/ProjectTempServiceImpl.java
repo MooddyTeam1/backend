@@ -1,6 +1,6 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.maker.repository.MakerRepository;
+import com.moa.backend.domain.user.repository.MakerRepository;
 import com.moa.backend.domain.project.dto.CreateProjectRequest;
 import com.moa.backend.domain.project.dto.CreateProjectResponse;
 import com.moa.backend.domain.project.dto.TempProjectRequest;

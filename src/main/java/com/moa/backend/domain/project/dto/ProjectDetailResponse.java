@@ -1,9 +1,6 @@
 package com.moa.backend.domain.project.dto;
 
-import com.moa.backend.domain.project.entity.Category;
-import com.moa.backend.domain.project.entity.Project;
-import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
-import com.moa.backend.domain.project.entity.ProjectReviewStatus;
+import com.moa.backend.domain.project.entity.*;
 import com.moa.backend.domain.reward.dto.RewardResponse;
 import lombok.*;
 
@@ -28,6 +25,7 @@ public class ProjectDetailResponse {
     private Category category;
     private ProjectLifecycleStatus lifecycleStatus;
     private ProjectReviewStatus reviewStatus;
+    private ProjectResultStatus resultStatus;
     private String coverImageUrl;
     private List<String> coverGallery;
     private List<String> tags;
@@ -55,6 +53,7 @@ public class ProjectDetailResponse {
                 .category(project.getCategory())
                 .lifecycleStatus(project.getLifecycleStatus())
                 .reviewStatus(project.getReviewStatus())
+                .resultStatus(project.getResultStatus())
                 .coverImageUrl(project.getCoverImageUrl())
                 .coverGallery(project.getCoverGallery())
                 .tags(project.getTags())

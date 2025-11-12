@@ -1,6 +1,6 @@
 package com.moa.backend.domain.project.entity;
 
-import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.user.entity.Maker;
 import com.moa.backend.domain.reward.entity.Reward;
 import com.moa.backend.global.converter.StringListConverter;
 import jakarta.persistence.*;
@@ -73,6 +73,9 @@ public class Project {
     @Enumerated(EnumType.STRING)
     @Column(name = "review_status", nullable = false, length = 20)
     private ProjectReviewStatus reviewStatus = ProjectReviewStatus.NONE;
+
+    @Enumerated(EnumType.STRING)
+    private ProjectResultStatus resultStatus = ProjectResultStatus.NONE;
 
     private LocalDateTime requestAt;
     private LocalDateTime approvedAt;
