@@ -16,3 +16,8 @@ spring:
   sql:
     init:
       mode: never
+
+toss:
+  enabled: false
+  client-key: test-client-key
+  secret-key: test-secret-key

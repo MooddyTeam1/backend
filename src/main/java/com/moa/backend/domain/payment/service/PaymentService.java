@@ -12,12 +12,15 @@ import com.moa.backend.external.tosspayments.dto.TossConfirmRequest;
 import com.moa.backend.external.tosspayments.dto.TossConfirmResponse;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
+import com.moa.backend.global.util.MoneyCalculator;
+import com.moa.backend.domain.wallet.service.PlatformWalletService;
+import com.moa.backend.domain.wallet.service.ProjectWalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-//@Service
+@Service
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentService {
@@ -25,6 +28,8 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final TossPaymentsClient tossClient;
+    private final ProjectWalletService projectWalletService;
+    private final PlatformWalletService platformWalletService;
 
     /**
      * 결제 승인 처리
@@ -73,7 +78,16 @@ public class PaymentService {
         order.markPaid();
         orderRepository.save(order);
 
-        log.info("결제 승인 완료: orderCode={}, paymentId={}", orderCode, payment.getId());
+        // Wallet 동기화
+        Long grossAmount = payment.getAmount();
+        Long pgFee = MoneyCalculator.percentageOf(grossAmount, 0.05);
+        Long netAmount = MoneyCalculator.subtract(grossAmount, pgFee);
+
+        projectWalletService.deposit(order.getProject().getId(), grossAmount, order);
+        platformWalletService.deposit(netAmount, payment);
+
+        log.info("결제 승인 완료 + Wallet 연동: orderCode={}, paymentId={}, gross={}, net={}",
+                orderCode, payment.getId(), grossAmount, netAmount);
         return payment;
     }
 
@@ -112,7 +126,16 @@ public class PaymentService {
         order.cancel();
         orderRepository.save(order);
 
-        log.info("결제 취소 완료: paymentId={}, reason={}", paymentId, reason);
+        // Wallet 동기화 (환불)
+        Long grossAmount = payment.getAmount();
+        Long pgFee = MoneyCalculator.percentageOf(grossAmount, 0.05);
+        Long netAmount = MoneyCalculator.subtract(grossAmount, pgFee);
+
+        projectWalletService.refund(order.getProject().getId(), grossAmount, order);
+        platformWalletService.recordRefund(payment, netAmount);
+
+        log.info("결제 취소 완료 + Wallet 연동: paymentId={}, reason={}, gross={}, net={}",
+                paymentId, reason, grossAmount, netAmount);
     }
 
     // Helper methods

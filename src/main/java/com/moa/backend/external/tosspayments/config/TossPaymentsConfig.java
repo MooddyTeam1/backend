@@ -10,13 +10,13 @@ import java.util.Base64;
 /**
  * 토스 API 호출할 때 인증 헤더용
  */
-//@Configuration
+@Configuration
 public class TossPaymentsConfig {
 
-    //@Value("${toss.secret-key}")
+    @Value("${toss.secret-key}")
     private String secretKey;
 
-    //@Value("${toss.client-key}")
+    @Value("${toss.client-key}")
     private String clientKey;
 
     public static final String BASE_URL = "https://api.tosspayments.com/v1/payments";
