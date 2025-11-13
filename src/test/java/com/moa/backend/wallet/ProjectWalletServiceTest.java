@@ -1,7 +1,5 @@
 package com.moa.backend.wallet;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.order.entity.Order;
@@ -19,12 +17,16 @@ import com.moa.backend.domain.wallet.repository.ProjectWalletRepository;
 import com.moa.backend.domain.wallet.repository.ProjectWalletTransactionRepository;
 import com.moa.backend.domain.wallet.service.ProjectWalletService;
 import jakarta.transaction.Transactional;
-import java.util.List;
-import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
@@ -49,15 +51,16 @@ class ProjectWalletServiceTest {
     private SettlementRepository settlementRepository;
 
     @Test
+    @DisplayName("결제 금액을 에스크로에 적립하면 잔액과 거래 로그가 기록된다")
     void deposit_정상동작() {
-        // given: 프로젝트와 주문을 만들고 지갑 생성
+        // given: 결제 완료 주문과 빈 ProjectWallet
         Order order = prepareOrder(100_000L);
         projectWalletService.createForProject(order.getProject());
 
         // when: 결제 금액을 에스크로에 적립
         projectWalletService.deposit(order.getProject().getId(), 100_000L, order);
 
-        // then: 잔액과 거래 로그가 기대값과 일치
+        // then: 잔액은 총액과 동일, 거래 로그는 DEPOSIT 1건
         ProjectWallet wallet = projectWalletRepository.findByProjectId(order.getProject().getId())
                 .orElseThrow();
         assertThat(wallet.getEscrowBalance()).isEqualTo(100_000L);
@@ -71,6 +74,7 @@ class ProjectWalletServiceTest {
     }
 
     @Test
+    @DisplayName("정산 hold 후 release 하면 pending→escrow 잔액이 기대대로 변한다")
     void hold와_release_흐름() {
         // given: 주문/정산 데이터를 준비하고 지갑 생성 및 입금
         Order order = prepareOrder(200_000L);
