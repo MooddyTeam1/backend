@@ -6,6 +6,7 @@ import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.settlement.entity.Settlement;
 import com.moa.backend.domain.settlement.entity.SettlementPayoutStatus;
+import com.moa.backend.domain.settlement.entity.SettlementStatus;
 import com.moa.backend.domain.settlement.repository.SettlementRepository;
 import com.moa.backend.domain.wallet.service.MakerWalletService;
 import com.moa.backend.domain.wallet.service.PlatformWalletService;
@@ -106,6 +107,34 @@ public class SettlementService {
         settlement.markFirstPaymentDone();
         log.info("Settlement 선지급 완료: settlementId={}, first={}, finalPending={}",
                 settlementId, firstAmount, finalAmount);
+        return settlement;
+    }
+
+    /**
+     * 잔금 처리: FINAL_READY 검증 후 Project/Maker/Platform Wallet을 마무리.
+     */
+    @Transactional
+    public Settlement payFinalPayout(Long settlementId) {
+        Settlement settlement = settlementRepository.findByIdForUpdate(settlementId)
+                .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
+
+        if (settlement.getFinalPaymentStatus() == SettlementPayoutStatus.DONE) {
+            throw new AppException(ErrorCode.ALREADY_PROCESSED, "이미 잔금이 완료되었습니다.");
+        }
+
+        if (settlement.getStatus() != SettlementStatus.FINAL_READY) {
+            throw new AppException(ErrorCode.SETTLEMENT_NOT_READY,
+                    "FINAL_READY 상태에서만 잔금을 지급할 수 있습니다.");
+        }
+
+        long finalAmount = settlement.getFinalPaymentAmount();
+
+        projectWalletService.releaseToMaker(settlement.getProject(), settlement, finalAmount);
+        makerWalletService.releasePendingToAvailable(settlement.getMaker(), finalAmount, settlement);
+        platformWalletService.recordMakerWithdrawal(settlement, finalAmount);
+
+        settlement.markFinalPaymentDone();
+        log.info("Settlement 잔금 완료: settlementId={}, amount={}", settlementId, finalAmount);
         return settlement;
     }
 }
