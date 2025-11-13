@@ -96,46 +96,21 @@ public class PaymentService {
      */
     @Transactional
     public void cancelPayment(Long paymentId, String reason) {
-        // 1. Payment 조회
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND, "결제를 찾을 수 없습니다: " + paymentId));
+                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND,
+                        "결제를 찾을 수 없습니다: " + paymentId));
+        executeCancel(payment, payment.getOrder(), reason);
+    }
 
-        // 2. 이미 취소되었는지 확인
-        if (payment.getStatus() == PaymentStatus.CANCELED) {
-            log.warn("이미 취소된 결제: paymentId={}", paymentId);
-            return;
-        }
-
-        // 3. 토스 취소 API 호출
-        TossCancelRequest tossRequest = TossCancelRequest.builder()
-                .cancelReason(reason)
-                .cancelAmount(null)  // 전액 취소
-                .build();
-
-        TossCancelResponse tossResponse = tossClient.cancelPayment(
-                payment.getPaymentKey(),
-                tossRequest
-        );
-
-        // 4. Payment 상태 업데이트
-        payment.cancel();
-        paymentRepository.save(payment);
-
-        // 5. Order 상태 업데이트
-        Order order = payment.getOrder();
-        order.cancel();
-        orderRepository.save(order);
-
-        // Wallet 동기화 (환불)
-        Long grossAmount = payment.getAmount();
-        Long pgFee = MoneyCalculator.percentageOf(grossAmount, 0.05);
-        Long netAmount = MoneyCalculator.subtract(grossAmount, pgFee);
-
-        projectWalletService.refund(order.getProject().getId(), grossAmount, order);
-        platformWalletService.recordRefund(payment, netAmount);
-
-        log.info("결제 취소 완료 + Wallet 연동: paymentId={}, reason={}, gross={}, net={}",
-                paymentId, reason, grossAmount, netAmount);
+    /**
+     * 주문 객체만 가지고 있는 배치/서비스에서 사용할 수 있는 취소 API.
+     */
+    @Transactional
+    public void cancelByOrder(Order order, String reason) {
+        Payment payment = paymentRepository.findByOrder(order)
+                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND,
+                        "주문에 연결된 결제를 찾을 수 없습니다: orderId=" + order.getId()));
+        executeCancel(payment, order, reason);
     }
 
     // Helper methods
@@ -151,5 +126,37 @@ public class PaymentService {
             return response.getReceipt().getUrl();
         }
         return null;
+    }
+
+    /**
+     * cancelPayment/cancelByOrder가 공유하는 실질 취소 처리 로직.
+     */
+    private void executeCancel(Payment payment, Order order, String reason) {
+        if (payment.getStatus() == PaymentStatus.CANCELED) {
+            log.warn("이미 취소된 결제: paymentId={}", payment.getId());
+            return;
+        }
+
+        TossCancelRequest tossRequest = TossCancelRequest.builder()
+                .cancelReason(reason)
+                .cancelAmount(null)
+                .build();
+        tossClient.cancelPayment(payment.getPaymentKey(), tossRequest);
+
+        payment.cancel();
+        paymentRepository.save(payment);
+
+        order.cancel();
+        orderRepository.save(order);
+
+        Long grossAmount = payment.getAmount();
+        Long pgFee = MoneyCalculator.percentageOf(grossAmount, 0.05);
+        Long netAmount = MoneyCalculator.subtract(grossAmount, pgFee);
+
+        projectWalletService.refund(order.getProject().getId(), grossAmount, order);
+        platformWalletService.recordRefund(payment, netAmount);
+
+        log.info("결제 취소 완료 + Wallet 연동: paymentId={}, reason={}, gross={}, net={}",
+                payment.getId(), reason, grossAmount, netAmount);
     }
 }
