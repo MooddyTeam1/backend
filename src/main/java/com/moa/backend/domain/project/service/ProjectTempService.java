@@ -12,4 +12,7 @@ public interface ProjectTempService {
 
     //임시저장된 프로젝트 심사요청
     CreateProjectResponse requestTemp(Long userId, Long projectId, CreateProjectRequest request);
+
+    //임시저장 프로젝트 삭제
+    void deleteTemp(Long userId, Long projectId);
 }

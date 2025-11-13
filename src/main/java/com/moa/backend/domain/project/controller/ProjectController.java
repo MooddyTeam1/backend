@@ -111,4 +111,14 @@ public class ProjectController {
     ) {
         return ResponseEntity.ok(projectService.getProjectByStatus(principal.getId(), lifecycleStatus, reviewStatus));
     }
+
+    //임시저장 프로젝트 삭제
+    @DeleteMapping("/temp/delete/{projectId}")
+    public ResponseEntity<Void> deleteTempProject(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId
+    ) {
+        projectTempService.deleteTemp(principal.getId(), projectId);
+        return ResponseEntity.noContent().build();
+    }
 }

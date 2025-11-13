@@ -1,4 +1,5 @@
 HELP.md
+PROJECT_STATUS_SCENARIOS.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar

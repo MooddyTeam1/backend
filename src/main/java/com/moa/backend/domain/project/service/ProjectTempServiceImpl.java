@@ -9,6 +9,8 @@ import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
+import com.moa.backend.domain.user.entity.User;
+import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class ProjectTempServiceImpl implements ProjectTempService {
 
     private final ProjectRepository projectRepository;
     private final MakerRepository makerRepository;
+    private final UserRepository userRepository;
 
     //프로젝트 임시 저장
     @Override
@@ -97,5 +100,22 @@ public class ProjectTempServiceImpl implements ProjectTempService {
         project.setRequestAt(LocalDateTime.now());
 
         return CreateProjectResponse.from(project);
+    }
+
+    //임시저장 프로젝트 삭제
+    @Override
+    @Transactional
+    public void deleteTemp(Long userId, Long projectId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_EDITABLE));
+
+        Project project = projectRepository.findByIdAndMaker_Id(projectId, userId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
+
+        if(!(project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
+                project.getReviewStatus() == ProjectReviewStatus.NONE)) {
+            throw new AppException(ErrorCode.PROJECT_NOT_DELETE);
+        }
+
+        projectRepository.delete(project);
     }
 }

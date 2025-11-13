@@ -42,6 +42,15 @@ public class ProjectStatusScheduler {
         });
         projectRepository.saveAll(live);
 
+        //시작일이 오늘인 프로젝트 LIVE로 전환 (공개예정 거치지 않고 바로 전환(전날승인했을경우))
+        List<Project> lived = projectRepository.findByLifecycleStatusAndReviewStatusAndStartDate(
+                ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.APPROVED, today
+        );
+        lived.forEach(project -> {
+            project.setLifecycleStatus(ProjectLifecycleStatus.LIVE);
+        });
+        projectRepository.saveAll(lived);
+
         //종료일이 오늘보다 전인 프로젝트 ENDED로 전환
         List<Project> ended = projectRepository.findByLifecycleStatusAndReviewStatusAndEndDateBefore(
                 ProjectLifecycleStatus.LIVE, ProjectReviewStatus.APPROVED, today
