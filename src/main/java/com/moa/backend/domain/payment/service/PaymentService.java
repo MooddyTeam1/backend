@@ -126,7 +126,16 @@ public class PaymentService {
         order.cancel();
         orderRepository.save(order);
 
-        log.info("결제 취소 완료: paymentId={}, reason={}", paymentId, reason);
+        // Wallet 동기화 (환불)
+        Long grossAmount = payment.getAmount();
+        Long pgFee = MoneyCalculator.percentageOf(grossAmount, 0.05);
+        Long netAmount = MoneyCalculator.subtract(grossAmount, pgFee);
+
+        projectWalletService.refund(order.getProject().getId(), grossAmount, order);
+        platformWalletService.recordRefund(payment, netAmount);
+
+        log.info("결제 취소 완료 + Wallet 연동: paymentId={}, reason={}, gross={}, net={}",
+                paymentId, reason, grossAmount, netAmount);
     }
 
     // Helper methods
