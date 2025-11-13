@@ -1,21 +1,25 @@
 package com.moa.backend.global.scheduler;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.Callable;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
  * 배치 작업 공통 로깅/메트릭/예외 처리를 담당한다.
- * Step 0에서 정의한 가이드에 맞춰 모든 스케줄러가 동일한 패턴으로 실행되도록 강제한다.
+ * Actuator가 없어도 동작하도록 SimpleMeterRegistry를 기본값으로 사용한다.
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class SchedulerSupport {
 
     private final MeterRegistry meterRegistry;
+
+    public SchedulerSupport(ObjectProvider<MeterRegistry> meterRegistryProvider) {
+        this.meterRegistry = meterRegistryProvider.getIfAvailable(SimpleMeterRegistry::new);
+    }
 
     /**
      * 스케줄러 작업을 안전하게 실행하고, 성공/실패 메트릭을 남긴다.
