@@ -27,6 +27,7 @@ jobs:
           source: "backend/backend/build/libs/*SNAPSHOT.jar,Dockerfile"
           target: "~/server/backend/"
 
+
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
