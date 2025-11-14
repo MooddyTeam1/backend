@@ -68,12 +68,17 @@ INSERT INTO makers (id, owner_user_id, name, business_name, business_number, rep
   (1004, 1004, '트레일랩스', 'Trail Labs Co.', '220-33-778899', '최브라이언', DATE '2020-05-20',
    '아웃도어 기어', '부산시 해운대구', '여행자와 하이커를 위한 스마트 액세서리를 만듭니다.',
    '내구성 원단, 저전력 IoT, 민첩한 공급망',
-   'https://cdn.moa.dev/makers/maker2.png', 'maker2@test.com', '010-1111-0002',
-   '["Kotlin","LoRa","AWS IoT"]',
-   TIMESTAMP '2024-11-08 11:10:00', TIMESTAMP '2024-11-12 13:50:00');
+    'https://cdn.moa.dev/makers/maker2.png', 'maker2@test.com', '010-1111-0002',
+    '["Kotlin","LoRa","AWS IoT"]',
+    TIMESTAMP '2024-11-08 11:10:00', TIMESTAMP '2024-11-12 13:50:00');
 
-INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount, start_at, end_at,
-                      category, lifecycle_status, review_status, result_status,
+-- 메이커 기본 지갑
+INSERT INTO maker_wallets (maker_id, available_balance, pending_balance, total_earned, total_withdrawn, updated_at) VALUES
+  (1003, 0, 0, 0, 0, TIMESTAMP '2024-11-12 13:45:00'),
+  (1004, 0, 0, 0, 0, TIMESTAMP '2024-11-12 13:50:00');
+
+  INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount, start_at, end_at,
+                        category, lifecycle_status, review_status, result_status,
                       request_at, approved_at, rejected_at, rejected_reason,
                       cover_image_url, cover_gallery, created_at, updated_at, live_start_at, live_end_at)
 VALUES
