@@ -5,20 +5,21 @@ import com.moa.backend.domain.order.repository.OrderRepository;
 import com.moa.backend.domain.payment.entity.Payment;
 import com.moa.backend.domain.payment.entity.PaymentStatus;
 import com.moa.backend.domain.payment.repository.PaymentRepository;
+import com.moa.backend.domain.wallet.service.PlatformWalletService;
+import com.moa.backend.domain.wallet.service.ProjectWalletService;
 import com.moa.backend.external.tosspayments.TossPaymentsClient;
 import com.moa.backend.external.tosspayments.dto.TossCancelRequest;
-import com.moa.backend.external.tosspayments.dto.TossCancelResponse;
 import com.moa.backend.external.tosspayments.dto.TossConfirmRequest;
 import com.moa.backend.external.tosspayments.dto.TossConfirmResponse;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import com.moa.backend.global.util.MoneyCalculator;
-import com.moa.backend.domain.wallet.service.PlatformWalletService;
-import com.moa.backend.domain.wallet.service.ProjectWalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -51,25 +52,42 @@ public class PaymentService {
             throw new AppException(ErrorCode.PAYMENT_ALREADY_APPROVED, "이미 승인된 주문입니다: " + orderCode);
         }
 
-        // 4. 토스 승인 API 호출
-        TossConfirmRequest tossRequest = TossConfirmRequest.builder()
-                .paymentKey(paymentKey)
-                .orderId(orderCode)
-                .amount(amount)
-                .build();
+        // 실제결제와 Mock 결제 분기처리(PostMan 테스트용)
+        boolean mockPayment = isMockPayment(paymentKey);
+        TossConfirmResponse tossResponse = null;
 
-        TossConfirmResponse tossResponse = tossClient.confirmPayment(tossRequest);
+        if (!mockPayment) {
+            // 4. 토스 승인 API 호출
+            TossConfirmRequest tossRequest = TossConfirmRequest.builder()
+                    .paymentKey(paymentKey)
+                    .orderId(orderCode)
+                    .amount(amount)
+                    .build();
+
+            tossResponse = tossClient.confirmPayment(tossRequest);
+        } else {
+            log.info("모의 결제 승인 처리: orderCode={}, mockPaymentKey={}", orderCode, paymentKey);
+        }
+
+        String resolvedPaymentKey = mockPayment ? paymentKey : tossResponse.getPaymentKey();
+        Long resolvedAmount = mockPayment ? amount : tossResponse.getTotalAmount();
+        String resolvedMethod = mockPayment ? "MOCK_CARD" : tossResponse.getMethod();
+        LocalDateTime resolvedApprovedAt = mockPayment ? LocalDateTime.now() : tossResponse.getApprovedAt();
+        String resolvedCardMasked = mockPayment ? "9999-****-****-0000" : extractCardNumber(tossResponse);
+        String resolvedReceiptUrl = mockPayment
+                ? "https://mock.tosspayments.com/receipt/" + paymentKey
+                : extractReceiptUrl(tossResponse);
 
         // 5. Payment 엔티티 생성
         Payment payment = Payment.builder()
                 .order(order)
-                .paymentKey(tossResponse.getPaymentKey())
-                .amount(tossResponse.getTotalAmount())
-                .method(tossResponse.getMethod())
+                .paymentKey(resolvedPaymentKey)
+                .amount(resolvedAmount)
+                .method(resolvedMethod)
                 .status(PaymentStatus.DONE)
-                .approvedAt(tossResponse.getApprovedAt())
-                .cardMasked(extractCardNumber(tossResponse))
-                .receiptUrl(extractReceiptUrl(tossResponse))
+                .approvedAt(resolvedApprovedAt)
+                .cardMasked(resolvedCardMasked)
+                .receiptUrl(resolvedReceiptUrl)
                 .build();
 
         paymentRepository.save(payment);
@@ -128,6 +146,10 @@ public class PaymentService {
         return null;
     }
 
+    private boolean isMockPayment(String paymentKey) {
+        return paymentKey != null && paymentKey.startsWith("MOCK-");
+    }
+
     /**
      * cancelPayment/cancelByOrder가 공유하는 실질 취소 처리 로직.
      */
@@ -137,11 +159,15 @@ public class PaymentService {
             return;
         }
 
-        TossCancelRequest tossRequest = TossCancelRequest.builder()
-                .cancelReason(reason)
-                .cancelAmount(null)
-                .build();
-        tossClient.cancelPayment(payment.getPaymentKey(), tossRequest);
+        if (!isMockPayment(payment.getPaymentKey())) {
+            TossCancelRequest tossRequest = TossCancelRequest.builder()
+                    .cancelReason(reason)
+                    .cancelAmount(null)
+                    .build();
+            tossClient.cancelPayment(payment.getPaymentKey(), tossRequest);
+        } else {
+            log.info("모의 결제 취소 처리: paymentId={}, mockPaymentKey={}", payment.getId(), payment.getPaymentKey());
+        }
 
         payment.cancel();
         paymentRepository.save(payment);
@@ -159,4 +185,26 @@ public class PaymentService {
         log.info("결제 취소 완료 + Wallet 연동: paymentId={}, reason={}, gross={}, net={}",
                 payment.getId(), reason, grossAmount, netAmount);
     }
+
+//    // 4. 토스 승인 API 호출
+//    TossConfirmRequest tossRequest = TossConfirmRequest.builder()
+//            .paymentKey(paymentKey)
+//            .orderId(orderCode)
+//            .amount(amount)
+//            .build();
+//
+//    TossConfirmResponse tossResponse = tossClient.confirmPayment(tossRequest);
+//
+//    // 5. Payment 엔티티 생성
+//    Payment payment = Payment.builder()
+//            .order(order)
+//            .paymentKey(tossResponse.getPaymentKey())
+//            .amount(tossResponse.getTotalAmount())
+//            .method(tossResponse.getMethod())
+//            .status(PaymentStatus.DONE)
+//            .approvedAt(tossResponse.getApprovedAt())
+//            .cardMasked(extractCardNumber(tossResponse))
+//            .receiptUrl(extractReceiptUrl(tossResponse))
+//            .build();
+
 }
