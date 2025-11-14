@@ -34,7 +34,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ubuntu
           key: ${{ secrets.PRIVATE_KEY }}
-          source: "build/libs/*.jar,Dockerfile"
+          source: "build/libs/*SNAPSHOT.jar,Dockerfile"
           target: "~/server/backend/"
 
 
