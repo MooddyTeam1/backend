@@ -15,6 +15,7 @@ import java.util.List;
 @Builder
 public class RewardResponse {
 
+    private Long id;
     private String name;
     private String description;
     private Integer stockQuantity;
@@ -27,6 +28,7 @@ public class RewardResponse {
 
     public static RewardResponse from(Reward reward) {
         return RewardResponse.builder()
+                .id(reward.getId())
                 .name(reward.getName())
                 .description(reward.getDescription())
                 .stockQuantity(reward.getStockQuantity())
