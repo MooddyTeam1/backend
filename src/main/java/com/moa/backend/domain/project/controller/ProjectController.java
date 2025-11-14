@@ -1,5 +1,7 @@
 package com.moa.backend.domain.project.controller;
 
+import com.moa.backend.domain.project.dto.ProjectBookmarkResponse; // 🔥 북마크 응답 DTO
+import com.moa.backend.domain.follow.service.SupporterProjectBookmarkService;
 import com.moa.backend.domain.project.dto.*;
 import com.moa.backend.domain.project.dto.CreateProject.CreateProjectRequest;
 import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
@@ -29,6 +31,11 @@ public class ProjectController {
     private final ProjectCommandService projectCommandService;
     private final ProjectTempService projectTempService;
 
+    // 한글 설명: 서포터 → 프로젝트 찜/해제 로직을 담당하는 서비스(follow 도메인).
+    private final SupporterProjectBookmarkService supporterProjectBookmarkService;
+
+    // ====================== 프로젝트 생성 / 조회 ======================
+
     //프로젝트 생성
     @PostMapping("/request")
     public ResponseEntity<CreateProjectResponse> createProject(
@@ -49,12 +56,23 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getAll());
     }
 
-    //단일 조회
+    //단일 조회 + 북마크 상태 포함
     @GetMapping("/id/{projectId}")
     public ResponseEntity<ProjectDetailResponse> getProjectById(
-            @PathVariable Long projectId
+            @PathVariable Long projectId,
+            @AuthenticationPrincipal JwtUserPrincipal principal
     ) {
-        return ResponseEntity.ok(projectService.getById(projectId));
+        // 한글 설명: 기본 프로젝트 상세 정보 조회
+        ProjectDetailResponse response = projectService.getById(projectId);
+
+        // 한글 설명: 로그인 유저가 있으면 북마크 상태 조회, 없으면 userId = null 처리
+        Long userId = (principal != null) ? principal.getId() : null;
+        var bookmarkStatus = supporterProjectBookmarkService.getStatus(userId, projectId);
+
+        response.setBookmarked(bookmarkStatus.bookmarked());
+        response.setBookmarkCount(bookmarkStatus.bookmarkCount());
+
+        return ResponseEntity.ok(response);
     }
 
     //제목 검색
@@ -79,13 +97,15 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getClosingSoon());
     }
 
+    // ====================== 임시저장 프로젝트 ======================
+
     //프로젝트 임시저장
     @PostMapping("/temp")
     public ResponseEntity<TempProjectResponse> saveTempProject(
-        @AuthenticationPrincipal JwtUserPrincipal principal,
-        @RequestBody TempProjectRequest request
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @RequestBody TempProjectRequest request
     ) {
-        return ResponseEntity.ok(projectTempService.saveTemp(principal.getId(),null, request));
+        return ResponseEntity.ok(projectTempService.saveTemp(principal.getId(), null, request));
     }
 
     //프로젝트 임시저장 수정
@@ -98,25 +118,7 @@ public class ProjectController {
         return ResponseEntity.ok(projectTempService.saveTemp(principal.getId(), projectId, request));
     }
 
-    //프로젝트 상태별 요약
-    @GetMapping("/summary")
-    public ResponseEntity<StatusSummaryResponse> getProjectSummary(
-            @AuthenticationPrincipal JwtUserPrincipal principal
-    ) {
-        return ResponseEntity.ok(projectService.getProjectSummary(principal.getId()));
-    }
-
-    //특정 상태 프로젝트 필요한데이터만 조회 (탭눌러서)
-    @GetMapping("/me/status")
-    public ResponseEntity<List<?>> getProjectByStatus(
-            @AuthenticationPrincipal JwtUserPrincipal principal,
-            @RequestParam("lifecycle") ProjectLifecycleStatus lifecycleStatus,
-            @RequestParam("review") ProjectReviewStatus reviewStatus
-    ) {
-        return ResponseEntity.ok(projectService.getProjectByStatus(principal.getId(), lifecycleStatus, reviewStatus));
-    }
-
-    //임시저장 프로젝트 삭제
+    //임시저장 프로젝트 삭제  🔥(develop 쪽 매핑 유지)
     @DeleteMapping("/temp/delete/{projectId}")
     public ResponseEntity<Void> deleteTempProject(
             @AuthenticationPrincipal JwtUserPrincipal principal,
@@ -126,13 +128,69 @@ public class ProjectController {
         return ResponseEntity.noContent().build();
     }
 
-    //프로젝트 취소(심사중, 승인됨, 공개예정)
+    // ====================== 프로젝트 상태 관련 ======================
+
+    //프로젝트 상태별 요약
+    @GetMapping("/summary")
+    public ResponseEntity<StatusSummaryResponse> getProjectSummary(
+            @AuthenticationPrincipal JwtUserPrincipal principal
+    ) {
+        return ResponseEntity.ok(projectService.getProjectSummary(principal.getId()));
+    }
+
+    //특정 상태 프로젝트 필요한데이터만 조회 (탭 눌러서)
+    @GetMapping("/me/status")
+    public ResponseEntity<List<?>> getProjectByStatus(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @RequestParam("lifecycle") ProjectLifecycleStatus lifecycleStatus,
+            @RequestParam("review") ProjectReviewStatus reviewStatus
+    ) {
+        return ResponseEntity.ok(projectService.getProjectByStatus(principal.getId(), lifecycleStatus, reviewStatus));
+    }
+
+    //프로젝트 취소(심사중, 승인됨, 공개예정) 🔥(develop 쪽 매핑 유지)
     @PatchMapping("/cancel/{projectId}")
     public ResponseEntity<ProjectListResponse> cancelProject(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long projectId
     ) {
         ProjectListResponse response = projectCommandService.canceledProject(principal.getId(), projectId);
+        return ResponseEntity.ok(response);
+    }
+
+    // ====================== 프로젝트 찜하기 / 찜 해제 ======================
+
+    // 한글 설명: 서포터 → 프로젝트 찜하기. (feature/follow 쪽 매핑 유지)
+    @PostMapping("/{projectId}/bookmark")
+    public ResponseEntity<ProjectBookmarkResponse> bookmarkProject(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId
+    ) {
+        Long userId = principal.getId();
+        var status = supporterProjectBookmarkService.bookmark(userId, projectId);
+
+        ProjectBookmarkResponse response = new ProjectBookmarkResponse(
+                projectId,
+                status.bookmarked(),
+                status.bookmarkCount()
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    // 한글 설명: 서포터 → 프로젝트 찜 해제. (feature/follow 쪽 매핑 유지)
+    @DeleteMapping("/{projectId}/bookmark")
+    public ResponseEntity<ProjectBookmarkResponse> unbookmarkProject(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId
+    ) {
+        Long userId = principal.getId();
+        var status = supporterProjectBookmarkService.unbookmark(userId, projectId);
+
+        ProjectBookmarkResponse response = new ProjectBookmarkResponse(
+                projectId,
+                status.bookmarked(),
+                status.bookmarkCount()
+        );
         return ResponseEntity.ok(response);
     }
 }

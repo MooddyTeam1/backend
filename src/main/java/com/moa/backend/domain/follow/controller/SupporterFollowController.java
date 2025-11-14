@@ -1,8 +1,12 @@
 package com.moa.backend.domain.follow.controller;
 
 import com.moa.backend.domain.follow.service.SupporterFollowService;
+import com.moa.backend.domain.follow.service.SupporterProjectBookmarkService;
+import com.moa.backend.domain.project.dto.ProjectBookmarkResponse;
+import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -16,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class SupporterFollowController {
 
     private final SupporterFollowService supporterFollowService;
-
+    private final SupporterProjectBookmarkService supporterProjectBookmarkService;
     // ===== 서포터 ↔ 서포터 팔로우 =====
 
     @PostMapping("/supporters/{targetSupporterUserId}")
@@ -43,5 +47,39 @@ public class SupporterFollowController {
     public ResponseEntity<Void> unfollowMaker(@PathVariable Long makerId) {
         supporterFollowService.unfollowMaker(makerId);
         return ResponseEntity.ok().build();
+    }
+
+    // 한글 설명: 프로젝트 찜하기 (서포터 → 프로젝트).
+    @PostMapping("/project/{projectId}/bookmark")
+    public ResponseEntity<ProjectBookmarkResponse> bookmarkProject(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId
+    ) {
+        Long userId = principal.getId();
+        var status = supporterProjectBookmarkService.bookmark(userId, projectId);
+
+        ProjectBookmarkResponse response = new ProjectBookmarkResponse(
+                projectId,
+                status.bookmarked(),
+                status.bookmarkCount()
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    // 한글 설명: 프로젝트 찜 해제.
+    @DeleteMapping("/project/{projectId}/bookmark")
+    public ResponseEntity<ProjectBookmarkResponse> unbookmarkProject(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId
+    ) {
+        Long userId = principal.getId();
+        var status = supporterProjectBookmarkService.unbookmark(userId, projectId);
+
+        ProjectBookmarkResponse response = new ProjectBookmarkResponse(
+                projectId,
+                status.bookmarked(),
+                status.bookmarkCount()
+        );
+        return ResponseEntity.ok(response);
     }
 }

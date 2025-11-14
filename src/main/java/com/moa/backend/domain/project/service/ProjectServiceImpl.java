@@ -1,5 +1,6 @@
 package com.moa.backend.domain.project.service;
 
+import com.moa.backend.domain.follow.service.SupporterProjectBookmarkService;
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.project.dto.ProjectDetailResponse;
@@ -17,8 +18,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.image.PixelGrabber;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +31,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final MakerRepository makerRepository;
-
+    private final SupporterProjectBookmarkService supporterProjectBookmarkService;
     //프로젝트 전체조회
     @Override
     public List<ProjectDetailResponse> getAll() {
@@ -125,4 +128,22 @@ public class ProjectServiceImpl implements ProjectService {
         return makerRepository.findByOwner_Id(ownerUserId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "메이커 정보를 찾을 수 없습니다."));
     }
+    @Override
+    @Transactional(readOnly = true)
+    public ProjectDetailResponse getById(Long projectId, Long userId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new NoSuchElementException("프로젝트를 찾을 수 없습니다."));
+
+        ProjectDetailResponse response = ProjectDetailResponse.from(project);
+
+        // ✔ follow 도메인에 있는 북마크 서비스 사용
+        SupporterProjectBookmarkService.BookmarkStatus status =
+                supporterProjectBookmarkService.getStatus(userId, projectId);
+
+        response.setBookmarked(status.bookmarked());
+        response.setBookmarkCount(status.bookmarkCount());
+
+        return response;
+    }
+
 }

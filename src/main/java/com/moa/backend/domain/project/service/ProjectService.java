@@ -13,6 +13,13 @@ public interface ProjectService {
     //단일 조회
     ProjectDetailResponse getById(Long projectId);
 
+    //단일 조회 (로그인 유저 기준 찜 상태 포함)
+    default ProjectDetailResponse getById(Long projectId, Long userId) {
+        // 한글 설명: 기본 구현은 기존 메서드를 그대로 사용하는데,
+        // 구현체에서 userId를 사용하는 버전으로 오버라이드해도 된다.
+        return getById(projectId);
+    }
+
     //제목으로 검색
     List<ProjectListResponse> searchByTitle(String keyword);
 
