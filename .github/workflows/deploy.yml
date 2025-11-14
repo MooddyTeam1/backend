@@ -23,9 +23,11 @@ jobs:
 
       - name: Build JAR
         run: |
+          cd backend/
           cd backend
           chmod +x ./gradlew
           ./gradlew clean build -x test
+      
       
       
 
@@ -36,9 +38,10 @@ jobs:
           username: ubuntu
           key: ${{ secrets.PRIVATE_KEY }}
           source: |
-            backend/build/libs/*.jar
-            backend/Dockerfile
+            backend/backend/build/libs/*.jar
+            backend/backend/Dockerfile
           target: "~/server/backend/"
+
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
