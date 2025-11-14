@@ -2,6 +2,7 @@ package com.moa.backend.domain.settlement.repository;
 
 import com.moa.backend.domain.settlement.entity.Settlement;
 import com.moa.backend.domain.settlement.entity.SettlementPayoutStatus;
+import com.moa.backend.domain.settlement.entity.SettlementStatus;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,5 +34,10 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
             LocalDateTime createdAt,
             int retryCount
     );
+
+    /**
+     * 특정 Settlement 상태 목록 조회 (예: FIRST_PAID).
+     */
+    List<Settlement> findAllByStatus(SettlementStatus status);
 }
 

@@ -48,6 +48,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByProjectIdAndStatus(Long projectId, OrderStatus status);
 
     /**
+     * 배송 완료 후 일정 시간이 지난 주문 조회(자동 구매확정 대상).
+     */
+    List<Order> findAllByDeliveryStatusAndDeliveryCompletedAtBefore(
+            DeliveryStatus deliveryStatus,
+            java.time.LocalDateTime deliveryCompletedAt
+    );
+
+    /**
      * 프로젝트/주문 상태 조건으로 총 주문금액 합산
      */
     @Query("SELECT SUM(o.totalAmount) FROM Order o " +
