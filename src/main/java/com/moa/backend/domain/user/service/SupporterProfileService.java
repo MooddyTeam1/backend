@@ -3,13 +3,16 @@ package com.moa.backend.domain.user.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moa.backend.domain.follow.dto.SimpleMakerSummary;
+import com.moa.backend.domain.follow.dto.SimpleSupporterSummary;
+import com.moa.backend.domain.follow.entity.SupporterBookmarkProject;
 import com.moa.backend.domain.follow.entity.SupporterFollowMaker;
 import com.moa.backend.domain.follow.entity.SupporterFollowSupporter;
+import com.moa.backend.domain.follow.repository.SupporterBookmarkProjectRepository;
 import com.moa.backend.domain.follow.repository.SupporterFollowMakerRepository;
 import com.moa.backend.domain.follow.repository.SupporterFollowSupporterRepository;
 import com.moa.backend.domain.maker.entity.Maker;
-import com.moa.backend.domain.follow.dto.SimpleMakerSummary;
-import com.moa.backend.domain.follow.dto.SimpleSupporterSummary;
+import com.moa.backend.domain.project.dto.ProjectListResponse;
 import com.moa.backend.domain.user.dto.SupporterProfileResponse;
 import com.moa.backend.domain.user.dto.SupporterProfileUpdateRequest;
 import com.moa.backend.domain.user.entity.SupporterProfile;
@@ -20,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,8 +36,14 @@ public class SupporterProfileService {
     private final SupporterFollowSupporterRepository supporterFollowSupporterRepository;
     private final SupporterFollowMakerRepository supporterFollowMakerRepository;
 
+    // ✅ 내가 찜한 프로젝트 조회용
+    private final SupporterBookmarkProjectRepository supporterBookmarkProjectRepository;
+
     /**
-     * 내 서포터 프로필 조회 (+ 내가 팔로우한 서포터/메이커 정보까지 포함)
+     * 내 서포터 프로필 조회
+     * - 기본 프로필 정보
+     * - 내가 팔로우한 서포터/메이커 정보
+     * - 내가 찜한 프로젝트 목록
      */
     @Transactional(readOnly = true)
     public SupporterProfileResponse getProfile(Long userId) {
@@ -46,7 +54,7 @@ public class SupporterProfileService {
     }
 
     /**
-     * 내 서포터 프로필 수정 (+ 수정 후 최신 팔로우 정보까지 포함해서 반환)
+     * 내 서포터 프로필 수정 (+ 수정 후 최신 팔로우 / 찜 정보까지 포함해서 반환)
      */
     @Transactional
     public SupporterProfileResponse updateProfile(Long userId, SupporterProfileUpdateRequest request) {
@@ -82,7 +90,7 @@ public class SupporterProfileService {
     }
 
     /**
-     * 서포터 프로필 + 팔로우 카운트/리스트까지 포함한 DTO로 변환
+     * 서포터 프로필 + 팔로우 카운트/리스트 + 찜한 프로젝트 리스트까지 포함한 DTO로 변환
      */
     private SupporterProfileResponse toResponseWithFollows(SupporterProfile profile) {
 
@@ -120,10 +128,19 @@ public class SupporterProfileService {
                 })
                 .collect(Collectors.toList());
 
-        // 4) interests(JSON 문자열 → List<String>) 파싱
+        // 4) 나의 관심사(interests) JSON 문자열 → List<String>
         List<String> interests = parseInterests(profile.getInterests());
 
-        // 5) 최종 응답 DTO 생성
+        // 5) ✅ 내가 찜한 프로젝트들 조회
+        List<SupporterBookmarkProject> bookmarkRelations =
+                supporterBookmarkProjectRepository.findBySupporter(profile);
+
+        // 한글 설명: 각 북마크 관계에서 project 꺼내서 리스트용 DTO로 변환.
+        List<ProjectListResponse> bookmarkedProjects = bookmarkRelations.stream()
+                .map(rel -> ProjectListResponse.base(rel.getProject()).build())
+                .toList();
+
+        // 6) 최종 응답 DTO 생성
         return new SupporterProfileResponse(
                 profile.getUserId(),
                 profile.getDisplayName(),
@@ -139,7 +156,8 @@ public class SupporterProfileService {
                 followingSupporterCount,
                 followingMakerCount,
                 followingSupporters,
-                followingMakers
+                followingMakers,
+                bookmarkedProjects          // ✅ 내가 찜한 프로젝트들
         );
     }
 

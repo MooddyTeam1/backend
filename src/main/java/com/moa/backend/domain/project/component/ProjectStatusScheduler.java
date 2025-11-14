@@ -18,7 +18,7 @@ public class ProjectStatusScheduler {
 
     private final ProjectRepository projectRepository;
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0/20 * * * * *")
     @Transactional
     public void updateProjectStatus(){
         LocalDate today = LocalDate.now();

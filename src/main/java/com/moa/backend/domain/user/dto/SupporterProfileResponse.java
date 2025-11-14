@@ -4,13 +4,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moa.backend.domain.follow.dto.SimpleMakerSummary;
 import com.moa.backend.domain.follow.dto.SimpleSupporterSummary;
+import com.moa.backend.domain.project.dto.ProjectListResponse;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * 서포터 프로필 + 팔로우 정보까지 포함하는 DTO
+ * 서포터 프로필 + 팔로우 정보 + 찜한 프로젝트 정보까지 포함하는 DTO
  */
 public record SupporterProfileResponse(
         Long userId,
@@ -25,18 +26,21 @@ public record SupporterProfileResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
 
-        // ✅ 여기부터 추가된 팔로우 정보
+        // ✅ 팔로우 관련 정보
         long followingSupporterCount,
         long followingMakerCount,
         List<SimpleSupporterSummary> followingSupporters,
-        List<SimpleMakerSummary> followingMakers
+        List<SimpleMakerSummary> followingMakers,
+
+        // ✅ 내가 찜한 프로젝트들 (간단 리스트)
+        List<ProjectListResponse> bookmarkedProjects
 ) {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
      * 🔹 예전처럼 "프로필만" 필요할 때 쓰는 팩토리
-     *    팔로우 관련 필드는 0 / 빈 리스트로 채운다.
+     *    팔로우 / 찜 정보는 0 / 빈 리스트로 채운다.
      */
     public static SupporterProfileResponse of(
             Long userId,
@@ -66,7 +70,8 @@ public record SupporterProfileResponse(
                 0L,
                 0L,
                 Collections.emptyList(),
-                Collections.emptyList()
+                Collections.emptyList(),
+                Collections.emptyList()   // 🔸 bookmarkedProjects 기본값
         );
     }
 

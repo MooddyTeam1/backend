@@ -78,6 +78,7 @@ public class SecurityConfig {
                                 "/project/search",
                                 "/project/category",
                                 "/project/closing-soon",
+                                "/project/id/**",
                                 "/uploads/**"
 
                         ).permitAll()
