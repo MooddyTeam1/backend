@@ -56,6 +56,15 @@ public class SettlementAdminController {
     }
 
     /**
+     * 잔금 준비 상태(FINAL_READY)로 수동으로 전환한다.
+     */
+    @PostMapping("/{settlementId}/final-ready")
+    public ResponseEntity<SettlementResponse> markFinalReady(@PathVariable Long settlementId) {
+        Settlement settlement = settlementService.markFinalReady(settlementId);
+        return ResponseEntity.ok(SettlementResponse.from(settlement));
+    }
+
+    /**
      * 정산 단건 상세를 조회한다.
      */
     @GetMapping("/{settlementId}")

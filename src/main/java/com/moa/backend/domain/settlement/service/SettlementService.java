@@ -111,6 +111,30 @@ public class SettlementService {
     }
 
     /**
+     * 선지급이 끝난 정산을 잔금 준비 상태로 전환한다.
+     */
+    @Transactional
+    public Settlement markFinalReady(Long settlementId) {
+        Settlement settlement = settlementRepository.findByIdForUpdate(settlementId)
+                .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
+
+        if (settlement.getStatus() == SettlementStatus.FINAL_READY) {
+            throw new AppException(ErrorCode.ALREADY_PROCESSED, "이미 FINAL_READY 상태입니다.");
+        }
+        if (settlement.getStatus() == SettlementStatus.COMPLETED) {
+            throw new AppException(ErrorCode.ALREADY_PROCESSED, "이미 잔금이 완료된 정산입니다.");
+        }
+        if (settlement.getFirstPaymentStatus() != SettlementPayoutStatus.DONE) {
+            throw new AppException(ErrorCode.SETTLEMENT_NOT_READY,
+                    "선지급이 완료된 이후에만 FINAL_READY 상태로 전환할 수 있습니다.");
+        }
+
+        settlement.markFinalReady();
+        log.info("Settlement FINAL_READY: settlementId={}", settlementId);
+        return settlement;
+    }
+
+    /**
      * 잔금 처리: FINAL_READY 검증 후 Project/Maker/Platform Wallet을 마무리.
      */
     @Transactional
