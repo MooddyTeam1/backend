@@ -22,14 +22,11 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build JAR
-        run: |
-          cd backend/
-          cd backend
-          chmod +x ./gradlew
-          ./gradlew clean build -x test
-      
-      
-      
+        run: ./gradlew clean build -x test
+
+
+
+
 
       - name: Upload JAR & Dockerfile to EC2
         uses: appleboy/scp-action@v0.1.4
@@ -37,10 +34,9 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ubuntu
           key: ${{ secrets.PRIVATE_KEY }}
-          source: |
-            backend/backend/build/libs/*.jar
-            backend/backend/Dockerfile
+          source: "build/libs/*.jar,Dockerfile"
           target: "~/server/backend/"
+
 
 
       - name: Deploy on EC2
