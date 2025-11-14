@@ -37,6 +37,7 @@ public class ProjectListResponse {
     private String rejectedReason;
     private LocalDateTime liveStartAt;
     private LocalDateTime liveEndAt;
+    private LocalDateTime canceledAt;
 
     private List<RewardResponse> rewards;
 
@@ -96,6 +97,12 @@ public class ProjectListResponse {
         return base(project)
                 .rejectedReason(project.getRejectedReason())
                 .rejectedAt(project.getRejectedAt())
+                .build();
+    }
+
+    public static ProjectListResponse fromCanceled(Project project) {
+        return base(project)
+                .canceledAt(project.getCanceledAt())
                 .build();
     }
 

@@ -1,9 +1,8 @@
-package com.moa.backend.domain.project.dto;
+package com.moa.backend.domain.project.dto.TempProject;
 
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.reward.dto.RewardResponse;
-import com.moa.backend.domain.reward.entity.Reward;
 import lombok.*;
 
 import java.time.LocalDate;

@@ -1,5 +1,6 @@
 package com.moa.backend.domain.reward.repository;
 
+import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.reward.entity.Reward;
 import java.util.Collection;
 import java.util.List;
@@ -16,5 +17,7 @@ public interface RewardRepository extends JpaRepository<Reward, Long> {
 
     /** 프로젝트와 리워드 ID를 함께 검증 */
     Optional<Reward> findByIdAndProjectId(Long rewardId, Long projectId);
+
+    void deleteByProject(Project project);
 }
 

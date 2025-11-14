@@ -2,7 +2,7 @@ package com.moa.backend.domain.admin.controller;
 
 import com.moa.backend.domain.admin.dto.RejectProjectRequest;
 import com.moa.backend.domain.admin.service.AdminService;
-import com.moa.backend.domain.project.dto.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
 import com.moa.backend.domain.project.dto.ProjectDetailResponse;
 import com.moa.backend.domain.admin.dto.ProjectStatusResponse;
 import lombok.RequiredArgsConstructor;
