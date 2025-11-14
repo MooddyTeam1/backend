@@ -1,6 +1,10 @@
 package com.moa.backend.domain.project.controller;
 
 import com.moa.backend.domain.project.dto.*;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectRequest;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.TempProject.TempProjectRequest;
+import com.moa.backend.domain.project.dto.TempProject.TempProjectResponse;
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
@@ -120,5 +124,15 @@ public class ProjectController {
     ) {
         projectTempService.deleteTemp(principal.getId(), projectId);
         return ResponseEntity.noContent().build();
+    }
+
+    //프로젝트 취소(심사중, 승인됨, 공개예정)
+    @PatchMapping("/cancel/{projectId}")
+    public ResponseEntity<ProjectListResponse> cancelProject(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId
+    ) {
+        ProjectListResponse response = projectCommandService.canceledProject(principal.getId(), projectId);
+        return ResponseEntity.ok(response);
     }
 }

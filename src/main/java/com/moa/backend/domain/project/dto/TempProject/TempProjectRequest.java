@@ -1,4 +1,4 @@
-package com.moa.backend.domain.project.dto;
+package com.moa.backend.domain.project.dto.TempProject;
 
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.reward.dto.RewardRequest;

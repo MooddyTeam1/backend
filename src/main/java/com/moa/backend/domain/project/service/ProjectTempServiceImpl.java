@@ -1,14 +1,17 @@
 package com.moa.backend.domain.project.service;
 
 import com.moa.backend.domain.maker.repository.MakerRepository;
-import com.moa.backend.domain.project.dto.CreateProjectRequest;
-import com.moa.backend.domain.project.dto.CreateProjectResponse;
-import com.moa.backend.domain.project.dto.TempProjectRequest;
-import com.moa.backend.domain.project.dto.TempProjectResponse;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectRequest;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.TempProject.TempProjectRequest;
+import com.moa.backend.domain.project.dto.TempProject.TempProjectResponse;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
+import com.moa.backend.domain.reward.dto.RewardRequest;
+import com.moa.backend.domain.reward.factory.RewardFactory;
+import com.moa.backend.domain.reward.repository.RewardRepository;
 import com.moa.backend.domain.user.entity.User;
 import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
@@ -27,8 +30,10 @@ public class ProjectTempServiceImpl implements ProjectTempService {
     private final ProjectRepository projectRepository;
     private final MakerRepository makerRepository;
     private final UserRepository userRepository;
+    private final RewardFactory rewardFactory;
+    private final RewardRepository rewardRepository;
 
-    //프로젝트 임시 저장
+    //프로젝트 임시 저장 (수정까지같이)
     @Override
     @Transactional
     public TempProjectResponse saveTemp(Long userId, Long projectId, TempProjectRequest request) {
@@ -64,6 +69,21 @@ public class ProjectTempServiceImpl implements ProjectTempService {
         if (request.getEndDate() != null) project.setEndDate(request.getEndDate());
         if (request.getStoryMarkdown() != null) project.setStoryMarkdown(request.getStoryMarkdown());
         if (request.getCoverImageUrl() != null) project.setCoverImageUrl(request.getCoverImageUrl());
+
+        if (projectId == null) {
+            projectRepository.save(project);
+        }
+
+        // 기존 리워드 전체 삭제
+        rewardRepository.deleteByProject(project);
+        project.getRewards().clear();
+
+        // 새로운 리워드 추가
+        if (request.getRewardRequests() != null) {
+            for (RewardRequest r : request.getRewardRequests()) {
+                project.addReward(rewardFactory.createReward(project, r));
+            }
+        }
 
         projectRepository.save(project);
 

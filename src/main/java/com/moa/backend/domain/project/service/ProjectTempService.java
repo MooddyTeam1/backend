@@ -1,9 +1,9 @@
 package com.moa.backend.domain.project.service;
 
-import com.moa.backend.domain.project.dto.CreateProjectRequest;
-import com.moa.backend.domain.project.dto.CreateProjectResponse;
-import com.moa.backend.domain.project.dto.TempProjectRequest;
-import com.moa.backend.domain.project.dto.TempProjectResponse;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectRequest;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.TempProject.TempProjectRequest;
+import com.moa.backend.domain.project.dto.TempProject.TempProjectResponse;
 
 public interface ProjectTempService {
 

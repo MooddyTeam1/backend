@@ -123,6 +123,8 @@ public class Project {
     @Column(name = "tag")
     private List<String> tags = new ArrayList<>();
 
+    private LocalDateTime canceledAt;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

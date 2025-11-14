@@ -2,8 +2,9 @@ package com.moa.backend.domain.project.service;
 
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
-import com.moa.backend.domain.project.dto.CreateProjectRequest;
-import com.moa.backend.domain.project.dto.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectRequest;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.ProjectListResponse;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
@@ -33,7 +34,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     public CreateProjectResponse createProject(Long userId, CreateProjectRequest request) {
 
         Maker maker = makerRepository.findByOwner_Id(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "메이커 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         if (request.getGoalAmount() <= 0) {
             throw new AppException(ErrorCode.INVALID_AMOUNT);
@@ -70,5 +71,33 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
         Project saved = projectRepository.save(project);
         return CreateProjectResponse.from(saved);
+    }
+
+    //프로젝트 취소(심사중, 승인됨, 공개예정)
+    @Override
+    public ProjectListResponse canceledProject(Long userId, Long projectId) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
+
+        boolean canCancel =
+                (project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
+                        project.getReviewStatus() == ProjectReviewStatus.REVIEW)
+                        || (project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
+                        project.getReviewStatus() == ProjectReviewStatus.APPROVED)
+                        || (project.getLifecycleStatus() == ProjectLifecycleStatus.SCHEDULED &&
+                        project.getReviewStatus() == ProjectReviewStatus.APPROVED);
+
+        if(!canCancel) {
+            throw new AppException(ErrorCode.PROJECT_NOT_CANCELED);
+        }
+
+        project.setLifecycleStatus(ProjectLifecycleStatus.CANCELED);
+        project.setReviewStatus(ProjectReviewStatus.NONE);
+        project.setCanceledAt(LocalDateTime.now());
+
+        projectRepository.save(project);
+
+        return ProjectListResponse.fromCanceled(project);
     }
 }

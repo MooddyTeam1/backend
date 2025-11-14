@@ -1,4 +1,4 @@
-package com.moa.backend.domain.project.dto;
+package com.moa.backend.domain.project.dto.CreateProject;
 
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
