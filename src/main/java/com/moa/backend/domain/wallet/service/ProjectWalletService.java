@@ -31,10 +31,13 @@ public class ProjectWalletService {
      */
     @Transactional
     public ProjectWallet createForProject(Project project) {
-        ProjectWallet wallet = ProjectWallet.of(project);
-        projectWalletRepository.save(wallet);
-        log.info("ProjectWallet 생성: projectId={}", project.getId());
-        return wallet;
+        return projectWalletRepository.findByProjectId(project.getId())
+                .orElseGet(() -> {
+                    ProjectWallet wallet = ProjectWallet.of(project);
+                    projectWalletRepository.save(wallet);
+                    log.info("ProjectWallet 생성: projectId={}", project.getId());
+                    return wallet;
+                });
     }
 
     /**

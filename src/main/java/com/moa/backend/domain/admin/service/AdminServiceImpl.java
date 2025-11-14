@@ -7,6 +7,7 @@ import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
+import com.moa.backend.domain.wallet.service.ProjectWalletService;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import jakarta.transaction.Transactional;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 public class AdminServiceImpl implements AdminService {
 
     private final ProjectRepository projectRepository;
+    private final ProjectWalletService projectWalletService;
 
 
     //프로젝트 승인
@@ -47,6 +49,7 @@ public class AdminServiceImpl implements AdminService {
         }
 
         projectRepository.save(project);
+        projectWalletService.createForProject(project);
 
         return ProjectStatusResponse.from(project);
     }
