@@ -59,13 +59,13 @@ INSERT INTO supporter_profiles (user_id, display_name, bio, image_url, phone, po
    '서울시 중구 을지로 15', '본사 10층', '["플랫폼","운영"]');
 
 INSERT INTO makers (id, owner_user_id, name, business_name, business_number, representative, established_at, industry_type, location, product_intro, core_competencies, image_url, contact_email, contact_phone, tech_stack, created_at, updated_at) VALUES
-  (1100, 1003, '메이커원 스튜디오', '메이커원 스튜디오', '110-22-334455', '박알리스', DATE '2021-03-15',
+  (1003, 1003, '메이커원 스튜디오', '메이커원 스튜디오', '110-22-334455', '박알리스', DATE '2021-03-15',
    '스마트 하드웨어', '서울시 강남구', '일상에서 쓰는 웨어러블 로봇을 연구합니다.',
    '하이브리드 제조, 임베디드 펌웨어, 산업 디자인',
    'https://cdn.moa.dev/makers/maker1.png', 'maker1@test.com', '010-1111-0001',
    '["Spring Boot","Embedded C","PostgreSQL"]',
    TIMESTAMP '2024-11-08 11:00:00', TIMESTAMP '2024-11-12 13:45:00'),
-  (1101, 1004, '트레일랩스', 'Trail Labs Co.', '220-33-778899', '최브라이언', DATE '2020-05-20',
+  (1004, 1004, '트레일랩스', 'Trail Labs Co.', '220-33-778899', '최브라이언', DATE '2020-05-20',
    '아웃도어 기어', '부산시 해운대구', '여행자와 하이커를 위한 스마트 액세서리를 만듭니다.',
    '내구성 원단, 저전력 IoT, 민첩한 공급망',
    'https://cdn.moa.dev/makers/maker2.png', 'maker2@test.com', '010-1111-0002',
@@ -77,10 +77,10 @@ INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount,
                       request_at, approved_at, rejected_at, rejected_reason,
                       cover_image_url, cover_gallery, created_at, updated_at, live_start_at, live_end_at)
 VALUES
-    (1200, 1100, '오로라 자동조명',
+    (1200, 1003, '오로라 자동조명',
      '하루 리듬에 맞춰 색온도를 조절하는 책상 조명입니다.',
      '## 오로라 자동조명' || CHAR(10) || '재택 근무자에게 건강한 빛 환경을 제공합니다.',
-     2000000, DATE '2025-12-10', DATE '2026-01-20',
+     2000000, DATE '2025-11-13', DATE '2026-01-20',
      'TECH', 'SCHEDULED', 'APPROVED', 'NONE',
      TIMESTAMP '2025-11-05 09:00:00', TIMESTAMP '2025-11-07 15:00:00', NULL, NULL,
      'https://cdn.moa.dev/projects/aurora/cover.png',
@@ -88,7 +88,7 @@ VALUES
      TIMESTAMP '2025-11-01 09:00:00', TIMESTAMP '2025-11-12 11:00:00',
      TIMESTAMP '2025-12-10 09:00:00', TIMESTAMP '2026-01-20 23:59:00'),
 
-    (1201, 1100, '펄스핏 모듈 밴드',
+    (1201, 1003, '펄스핏 모듈 밴드',
      '센서를 교체하며 데이터를 맞춤 수집하는 피트니스 밴드입니다.',
      '## 펄스핏 모듈 밴드' || CHAR(10) || '스타일을 유지하면서도 유의미한 바이오 데이터를 기록합니다.',
      3000000, DATE '2025-11-01', DATE '2025-12-15',
@@ -99,7 +99,7 @@ VALUES
      TIMESTAMP '2025-10-15 09:30:00', TIMESTAMP '2025-11-12 11:10:00',
      TIMESTAMP '2025-11-01 10:00:00', TIMESTAMP '2025-12-15 23:59:00'),
 
-    (1202, 1100, '루멘노트 전자노트',
+    (1202, 1003, '루멘노트 전자노트',
      '종이 질감을 살리고 배터리 걱정이 없는 전자 필기장입니다.',
      '## 루멘노트' || CHAR(10) || '종이 같은 필기감과 클라우드 동기화를 동시에 제공합니다.',
      1500000, DATE '2025-09-01', DATE '2025-10-01',
@@ -110,7 +110,7 @@ VALUES
      TIMESTAMP '2025-07-28 11:45:00', TIMESTAMP '2025-10-05 12:00:00',
      TIMESTAMP '2025-09-01 10:00:00', TIMESTAMP '2025-10-01 23:59:00'),
 
-  (1203, 1101, '지오트레일 스마트 백팩',
+  (1203, 1004, '지오트레일 스마트 백팩',
    '태양광 패널과 LTE 트래커를 내장한 여행용 백팩입니다.',
    '## 지오트레일 스마트 백팩' || CHAR(10) || '밤길에서도 안전하게 이동하고 언제든 위치를 확인하세요.',
    2500000, DATE '2025-10-25', DATE '2025-11-19',

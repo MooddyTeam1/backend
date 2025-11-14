@@ -6,7 +6,7 @@ import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.project.dto.ProjectDetailResponse;
 import com.moa.backend.domain.project.dto.ProjectListResponse;
 import com.moa.backend.domain.project.dto.StatusSummaryResponse;
-import com.moa.backend.domain.project.dto.TempProjectResponse;
+import com.moa.backend.domain.project.dto.TempProject.TempProjectResponse;
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;

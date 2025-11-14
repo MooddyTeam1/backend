@@ -1,7 +1,6 @@
 package com.moa.backend.domain.user.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moa.backend.domain.follow.dto.SimpleMakerSummary;
 import com.moa.backend.domain.follow.dto.SimpleSupporterSummary;
@@ -17,13 +16,13 @@ import com.moa.backend.domain.user.dto.SupporterProfileResponse;
 import com.moa.backend.domain.user.dto.SupporterProfileUpdateRequest;
 import com.moa.backend.domain.user.entity.SupporterProfile;
 import com.moa.backend.domain.user.repository.SupporterProfileRepository;
+import com.moa.backend.global.error.AppException;
+import com.moa.backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,27 +39,46 @@ public class SupporterProfileService {
     private final SupporterBookmarkProjectRepository supporterBookmarkProjectRepository;
 
     /**
-     * 내 서포터 프로필 조회
+     * 한글 설명: 내 서포터 프로필 조회
      * - 기본 프로필 정보
      * - 내가 팔로우한 서포터/메이커 정보
      * - 내가 찜한 프로젝트 목록
      */
     @Transactional(readOnly = true)
     public SupporterProfileResponse getProfile(Long userId) {
-        SupporterProfile profile = supporterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("서포터 프로필을 찾을 수 없습니다."));
-
+        SupporterProfile profile = getProfileOrThrow(userId);
         return toResponseWithFollows(profile);
     }
 
     /**
-     * 내 서포터 프로필 수정 (+ 수정 후 최신 팔로우 / 찜 정보까지 포함해서 반환)
+     * 한글 설명: 내 서포터 프로필 수정
+     * - 변경 가능한 필드만 갱신
+     * - 수정 후 최신 팔로우 / 찜 정보까지 포함해서 반환
      */
     @Transactional
     public SupporterProfileResponse updateProfile(Long userId, SupporterProfileUpdateRequest request) {
-        SupporterProfile profile = supporterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("서포터 프로필을 찾을 수 없습니다."));
+        SupporterProfile profile = getProfileOrThrow(userId);
+        applyUpdates(profile, request);
+        return toResponseWithFollows(profile);
+    }
 
+    // ================== 내부 헬퍼 메서드 ==================
+
+    /**
+     * 한글 설명: userId 기준으로 서포터 프로필 조회
+     * - 없으면 AppException(NOT_FOUND) 발생
+     */
+    private SupporterProfile getProfileOrThrow(Long userId) {
+        return supporterProfileRepository.findByUserId(userId)
+                .orElseThrow(() ->
+                        new AppException(ErrorCode.NOT_FOUND, "서포터 프로필을 찾을 수 없습니다."));
+    }
+
+    /**
+     * 한글 설명: 요청값 기반으로 SupporterProfile 필드 업데이트
+     * - null 이 아닌 값만 반영
+     */
+    private void applyUpdates(SupporterProfile profile, SupporterProfileUpdateRequest request) {
         if (request.displayName() != null) {
             profile.updateDisplayName(request.displayName());
         }
@@ -83,18 +101,33 @@ public class SupporterProfileService {
             profile.updatePostalCode(request.postalCode());
         }
         if (request.interests() != null) {
-            profile.updateInterests(toJson(request.interests())); // List<String> → JSON 문자열
+            // 한글 설명: List<String> → JSON 문자열로 저장
+            profile.updateInterests(toJson(request.interests()));
         }
-
-        return toResponseWithFollows(profile);
     }
 
     /**
-     * 서포터 프로필 + 팔로우 카운트/리스트 + 찜한 프로젝트 리스트까지 포함한 DTO로 변환
+     * 한글 설명: 서포터 프로필 + 팔로우 카운트/리스트 + 찜한 프로젝트 리스트까지 포함한 DTO로 변환
      */
     private SupporterProfileResponse toResponseWithFollows(SupporterProfile profile) {
 
-        // 1) 내가 팔로우한 서포터/메이커 관계 조회
+        // 1) 기본 프로필 부분은 기존 팩토리 메서드 재사용
+        //    - 여기서 interestsJson → List<String> 으로 이미 변환됨
+        SupporterProfileResponse base = SupporterProfileResponse.of(
+                profile.getUserId(),
+                profile.getDisplayName(),
+                profile.getBio(),
+                profile.getImageUrl(),
+                profile.getPhone(),
+                profile.getAddress1(),
+                profile.getAddress2(),
+                profile.getPostalCode(),
+                profile.getInterests(),      // JSON 문자열
+                profile.getCreatedAt(),
+                profile.getUpdatedAt()
+        );
+
+        // 2) 팔로우 관계 조회
         List<SupporterFollowSupporter> supporterRelations =
                 supporterFollowSupporterRepository.findByFollower(profile);
 
@@ -104,19 +137,19 @@ public class SupporterProfileService {
         long followingSupporterCount = supporterRelations.size();
         long followingMakerCount = makerRelations.size();
 
-        // 2) 서포터 요약 DTO 리스트
+        // 3) 서포터 요약 DTO 리스트 매핑
         List<SimpleSupporterSummary> followingSupporters = supporterRelations.stream()
                 .map(rel -> {
                     SupporterProfile target = rel.getFollowing();
                     return new SimpleSupporterSummary(
-                            target.getUserId(),          // PK = user_id
+                            target.getUserId(),          // supporter_profiles.user_id
                             target.getDisplayName(),
                             target.getImageUrl()
                     );
                 })
-                .collect(Collectors.toList());
+                .toList();
 
-        // 3) 메이커 요약 DTO 리스트
+        // 4) 메이커 요약 DTO 리스트 매핑
         List<SimpleMakerSummary> followingMakers = makerRelations.stream()
                 .map(rel -> {
                     Maker maker = rel.getMaker();
@@ -126,57 +159,40 @@ public class SupporterProfileService {
                             maker.getImageUrl()
                     );
                 })
-                .collect(Collectors.toList());
-
-        // 4) 나의 관심사(interests) JSON 문자열 → List<String>
-        List<String> interests = parseInterests(profile.getInterests());
+                .toList();
 
         // 5) ✅ 내가 찜한 프로젝트들 조회
         List<SupporterBookmarkProject> bookmarkRelations =
                 supporterBookmarkProjectRepository.findBySupporter(profile);
 
-        // 한글 설명: 각 북마크 관계에서 project 꺼내서 리스트용 DTO로 변환.
+        // 한글 설명: 각 북마크 관계에서 project 꺼내서 리스트용 DTO로 변환
         List<ProjectListResponse> bookmarkedProjects = bookmarkRelations.stream()
                 .map(rel -> ProjectListResponse.base(rel.getProject()).build())
                 .toList();
 
         // 6) 최종 응답 DTO 생성
         return new SupporterProfileResponse(
-                profile.getUserId(),
-                profile.getDisplayName(),
-                profile.getBio(),
-                profile.getImageUrl(),
-                profile.getPhone(),
-                profile.getAddress1(),
-                profile.getAddress2(),
-                profile.getPostalCode(),
-                interests,
-                profile.getCreatedAt(),
-                profile.getUpdatedAt(),
+                base.userId(),
+                base.displayName(),
+                base.bio(),
+                base.imageUrl(),
+                base.phone(),
+                base.address1(),
+                base.address2(),
+                base.postalCode(),
+                base.interests(),              // 이미 List<String> 으로 파싱된 값
+                base.createdAt(),
+                base.updatedAt(),
                 followingSupporterCount,
                 followingMakerCount,
                 followingSupporters,
                 followingMakers,
-                bookmarkedProjects          // ✅ 내가 찜한 프로젝트들
+                bookmarkedProjects             // ✅ 내가 찜한 프로젝트들
         );
     }
 
     /**
-     * "['React','Spring']" 이런 JSON 문자열 → List<String>
-     */
-    private List<String> parseInterests(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return Collections.emptyList();
-        }
-        try {
-            return objectMapper.readValue(raw, new TypeReference<List<String>>() {});
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
-    }
-
-    /**
-     * List<String> → JSON 문자열
+     * 한글 설명: List<String> → JSON 문자열
      */
     private String toJson(Object value) {
         try {

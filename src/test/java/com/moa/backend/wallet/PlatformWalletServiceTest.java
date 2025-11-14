@@ -1,7 +1,5 @@
 package com.moa.backend.wallet;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.order.entity.Order;
@@ -22,14 +20,17 @@ import com.moa.backend.domain.wallet.repository.PlatformWalletRepository;
 import com.moa.backend.domain.wallet.repository.PlatformWalletTransactionRepository;
 import com.moa.backend.domain.wallet.service.PlatformWalletService;
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
@@ -56,14 +57,15 @@ class PlatformWalletServiceTest {
     private SettlementRepository settlementRepository;
 
     @Test
+    @DisplayName("PG 순입금을 반영하면 플랫폼 지갑 잔액과 입금 로그가 생성된다")
     void deposit_플랫폼지갑생성_및_로그기록() {
-        // given: 결제 데이터 준비 (PG 순입금 140,000 가정)
+        // given: 결제 데이터 준비 (총액 150,000 → PG 차감 후 140,000)
         Payment payment = preparePayment(150_000L);
 
-        // when: 플랫폼 지갑에 입금 반영
+        // when: 플랫폼 지갑에 PG 순입금을 반영
         platformWalletService.deposit(140_000L, payment);
 
-        // then: 잔액과 거래 로그가 기대값과 일치
+        // then: 플랫폼 지갑 잔액/입금 합계가 140,000, 거래 로그는 PAYMENT_DEPOSIT 1건
         PlatformWallet wallet = platformWalletRepository.findTopByOrderByIdAsc().orElseThrow();
         assertThat(wallet.getTotalBalance()).isEqualTo(140_000L);
         assertThat(wallet.getTotalProjectDeposit()).isEqualTo(140_000L);
@@ -76,8 +78,9 @@ class PlatformWalletServiceTest {
     }
 
     @Test
+    @DisplayName("메이커 송금과 고객 환불을 처리하면 지갑 잔액·로그가 순서대로 변한다")
     void 메이커송금과_환불_flow() {
-        // given: 지갑과 정산 데이터 준비
+        // given: 지갑과 정산 데이터 준비 (총입금 190,000)
         Payment payment = preparePayment(200_000L);
         platformWalletService.deposit(190_000L, payment);
 
@@ -94,7 +97,7 @@ class PlatformWalletServiceTest {
         wallet = platformWalletRepository.findTopByOrderByIdAsc().orElseThrow();
         assertThat(wallet.getTotalBalance()).isEqualTo(70_000L);
 
-        // then: 세 가지 거래 로그가 순서대로 존재
+        // then: 입금/메이커송금/환불 기록이 순서대로 남는다
         List<PlatformWalletTransaction> logs = platformWalletTransactionRepository.findAll()
                 .stream()
                 .sorted((a, b) -> Long.compare(a.getId(), b.getId()))

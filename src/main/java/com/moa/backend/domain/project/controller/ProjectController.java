@@ -1,7 +1,12 @@
 package com.moa.backend.domain.project.controller;
 
+import com.moa.backend.domain.project.dto.ProjectBookmarkResponse; // 🔥 북마크 응답 DTO
 import com.moa.backend.domain.follow.service.SupporterProjectBookmarkService;
 import com.moa.backend.domain.project.dto.*;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectRequest;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.TempProject.TempProjectRequest;
+import com.moa.backend.domain.project.dto.TempProject.TempProjectResponse;
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
@@ -28,6 +33,8 @@ public class ProjectController {
 
     // 한글 설명: 서포터 → 프로젝트 찜/해제 로직을 담당하는 서비스(follow 도메인).
     private final SupporterProjectBookmarkService supporterProjectBookmarkService;
+
+    // ====================== 프로젝트 생성 / 조회 ======================
 
     //프로젝트 생성
     @PostMapping("/request")
@@ -90,6 +97,8 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getClosingSoon());
     }
 
+    // ====================== 임시저장 프로젝트 ======================
+
     //프로젝트 임시저장
     @PostMapping("/temp")
     public ResponseEntity<TempProjectResponse> saveTempProject(
@@ -109,6 +118,18 @@ public class ProjectController {
         return ResponseEntity.ok(projectTempService.saveTemp(principal.getId(), projectId, request));
     }
 
+    //임시저장 프로젝트 삭제  🔥(develop 쪽 매핑 유지)
+    @DeleteMapping("/temp/delete/{projectId}")
+    public ResponseEntity<Void> deleteTempProject(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId
+    ) {
+        projectTempService.deleteTemp(principal.getId(), projectId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ====================== 프로젝트 상태 관련 ======================
+
     //프로젝트 상태별 요약
     @GetMapping("/summary")
     public ResponseEntity<StatusSummaryResponse> getProjectSummary(
@@ -127,9 +148,19 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getProjectByStatus(principal.getId(), lifecycleStatus, reviewStatus));
     }
 
+    //프로젝트 취소(심사중, 승인됨, 공개예정) 🔥(develop 쪽 매핑 유지)
+    @PatchMapping("/cancel/{projectId}")
+    public ResponseEntity<ProjectListResponse> cancelProject(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId
+    ) {
+        ProjectListResponse response = projectCommandService.canceledProject(principal.getId(), projectId);
+        return ResponseEntity.ok(response);
+    }
+
     // ====================== 프로젝트 찜하기 / 찜 해제 ======================
 
-    // 한글 설명: 서포터 → 프로젝트 찜하기.
+    // 한글 설명: 서포터 → 프로젝트 찜하기. (feature/follow 쪽 매핑 유지)
     @PostMapping("/{projectId}/bookmark")
     public ResponseEntity<ProjectBookmarkResponse> bookmarkProject(
             @AuthenticationPrincipal JwtUserPrincipal principal,
@@ -146,7 +177,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    // 한글 설명: 서포터 → 프로젝트 찜 해제.
+    // 한글 설명: 서포터 → 프로젝트 찜 해제. (feature/follow 쪽 매핑 유지)
     @DeleteMapping("/{projectId}/bookmark")
     public ResponseEntity<ProjectBookmarkResponse> unbookmarkProject(
             @AuthenticationPrincipal JwtUserPrincipal principal,

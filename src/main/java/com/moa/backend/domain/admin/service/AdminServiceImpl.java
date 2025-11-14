@@ -1,18 +1,20 @@
 package com.moa.backend.domain.admin.service;
 
-import com.moa.backend.domain.project.dto.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
 import com.moa.backend.domain.project.dto.ProjectDetailResponse;
 import com.moa.backend.domain.admin.dto.ProjectStatusResponse;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
+import com.moa.backend.domain.wallet.service.ProjectWalletService;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 public class AdminServiceImpl implements AdminService {
 
     private final ProjectRepository projectRepository;
+    private final ProjectWalletService projectWalletService;
 
 
     //프로젝트 승인
@@ -33,30 +36,49 @@ public class AdminServiceImpl implements AdminService {
 
         validateProjectStatusChangeable(project);
 
-        project.setLifecycleStatus(ProjectLifecycleStatus.DRAFT);
-        project.setReviewStatus(ProjectReviewStatus.APPROVED);          //승인됨
         project.setApprovedAt(LocalDateTime.now());
 
+        //시작일이 오늘이거나 오늘 이전인 프로젝트 진행중 상태로 변환
+        LocalDate today =  LocalDate.now();
+        if (project.getStartDate().isEqual(today) || project.getStartDate().isBefore(today)) {
+            project.setReviewStatus(ProjectReviewStatus.APPROVED);
+            project.setLifecycleStatus(ProjectLifecycleStatus.LIVE);
+        } else {    // 시작일이 미래인 프로젝트는 승인됨 상태로 변환
+            project.setLifecycleStatus(ProjectLifecycleStatus.DRAFT);
+            project.setReviewStatus(ProjectReviewStatus.APPROVED);
+        }
+
         projectRepository.save(project);
+        projectWalletService.createForProject(project);
 
         return ProjectStatusResponse.from(project);
     }
 
     //프로젝트 반려
     @Override
+    @Transactional
     public ProjectStatusResponse rejectProject(Long projectId, String reason) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
 
-        validateProjectStatusChangeable(project);
+        boolean canReject =
+                (project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
+                        project.getReviewStatus() == ProjectReviewStatus.REVIEW)
+                        || (project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
+                        project.getReviewStatus() == ProjectReviewStatus.APPROVED)
+                        || (project.getLifecycleStatus() == ProjectLifecycleStatus.SCHEDULED &&
+                        project.getReviewStatus() == ProjectReviewStatus.APPROVED);
 
-        project.setLifecycleStatus(ProjectLifecycleStatus.DRAFT);   //종료됨
-        project.setReviewStatus(ProjectReviewStatus.REJECTED);      //반려됨
-        project.setRejectedAt(LocalDateTime.now());
+        if (!canReject) {
+            throw new AppException(ErrorCode.PROJECT_NOT_REJECTABLE);
+        }
+
+        project.setLifecycleStatus(ProjectLifecycleStatus.DRAFT);
+        project.setReviewStatus(ProjectReviewStatus.REJECTED);
         project.setRejectedReason(reason);
+        project.setRejectedAt(LocalDateTime.now());
 
         projectRepository.save(project);
-
         return ProjectStatusResponse.from(project);
     }
 

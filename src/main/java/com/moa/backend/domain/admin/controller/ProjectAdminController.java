@@ -1,7 +1,8 @@
 package com.moa.backend.domain.admin.controller;
 
+import com.moa.backend.domain.admin.dto.RejectProjectRequest;
 import com.moa.backend.domain.admin.service.AdminService;
-import com.moa.backend.domain.project.dto.CreateProjectResponse;
+import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
 import com.moa.backend.domain.project.dto.ProjectDetailResponse;
 import com.moa.backend.domain.admin.dto.ProjectStatusResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +29,13 @@ public class ProjectAdminController {
         return ResponseEntity.ok(response);
     }
 
-    //프로젝트 반려
+    //프로젝트 반려 (심사중, 승인됨, 공개예정 반려가능)
     @PatchMapping("/{projectId}/reject")
     public ResponseEntity<ProjectStatusResponse> rejectProject(
             @PathVariable Long projectId,
-            @RequestBody(required = false) String reason
+            @RequestBody RejectProjectRequest request
     ) {
-        ProjectStatusResponse response = adminService.rejectProject(projectId, reason);
+        ProjectStatusResponse response = adminService.rejectProject(projectId, request.getReason());
         return ResponseEntity.ok(response);
     }
 

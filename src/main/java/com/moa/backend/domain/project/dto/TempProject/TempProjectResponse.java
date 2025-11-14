@@ -1,7 +1,8 @@
-package com.moa.backend.domain.project.dto;
+package com.moa.backend.domain.project.dto.TempProject;
 
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.Project;
+import com.moa.backend.domain.reward.dto.RewardResponse;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -26,6 +27,8 @@ public class TempProjectResponse {
     private List<String> coverGallery;
     private List<String> tags;
 
+    private List<RewardResponse> rewards;
+
     public static TempProjectResponse from(Project project) {
         return TempProjectResponse.builder()
                 .projectId(project.getId())
@@ -40,6 +43,7 @@ public class TempProjectResponse {
                 .coverImageUrl(project.getCoverImageUrl())
                 .coverGallery(project.getCoverGallery())
                 .tags(project.getTags())
+                .rewards(project.getRewards().stream().map(RewardResponse::from).toList())
                 .build();
     }
 }

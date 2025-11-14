@@ -1,7 +1,5 @@
 package com.moa.backend.wallet;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.project.entity.Project;
@@ -17,12 +15,16 @@ import com.moa.backend.domain.wallet.repository.MakerWalletRepository;
 import com.moa.backend.domain.wallet.repository.WalletTransactionRepository;
 import com.moa.backend.domain.wallet.service.MakerWalletService;
 import jakarta.transaction.Transactional;
-import java.util.List;
-import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
@@ -45,6 +47,7 @@ class MakerWalletServiceTest {
     private SettlementRepository settlementRepository;
 
     @Test
+    @DisplayName("선지급 금액을 적립하면 MakerWallet 가용잔액과 로그가 증가한다")
     void 선지급_적립시_가용잔액과_거래로그확인() {
         // given: 메이커/정산 데이터 준비
         Maker maker = prepareMaker();
@@ -54,7 +57,7 @@ class MakerWalletServiceTest {
         // when: 선지급 금액 적립
         makerWalletService.creditAvailable(maker, 50_000L, settlement);
 
-        // then: 가용 잔액 + 총 벌이 금액이 증가하고 로그가 남는다
+        // then: 가용 잔액 + 총 벌이 금액이 증가하고 SETTLEMENT_FIRST 로그 남음
         MakerWallet wallet = makerWalletRepository.findByMakerId(maker.getId()).orElseThrow();
         assertThat(wallet.getAvailableBalance()).isEqualTo(50_000L);
         assertThat(wallet.getTotalEarned()).isEqualTo(50_000L);
@@ -65,6 +68,7 @@ class MakerWalletServiceTest {
     }
 
     @Test
+    @DisplayName("잔금 지급 시 pending 금액이 available로 이동하고 로그가 남는다")
     void 잔금지급시_pending에서_available로() {
         // given: pending 금액 준비
         Maker maker = prepareMaker();
@@ -75,7 +79,7 @@ class MakerWalletServiceTest {
         // when: 잔금 확정 처리
         makerWalletService.releasePendingToAvailable(maker, 80_000L, settlement);
 
-        // then: pending은 0, available은 증가
+        // then: pending은 0, available은 증가하고 SETTLEMENT_FINAL 로그 남음
         MakerWallet wallet = makerWalletRepository.findByMakerId(maker.getId()).orElseThrow();
         assertThat(wallet.getPendingBalance()).isZero();
         assertThat(wallet.getAvailableBalance()).isEqualTo(80_000L);
@@ -86,6 +90,7 @@ class MakerWalletServiceTest {
     }
 
     @Test
+    @DisplayName("환불 회수 시 MakerWallet 가용 잔액이 감소하고 REFUND 로그가 기록된다")
     void 환불회수시_available감소() {
         // given: 가용 잔액 60,000 확보
         Maker maker = prepareMaker();
@@ -96,7 +101,7 @@ class MakerWalletServiceTest {
         // when: 환불 회수
         makerWalletService.refundDebit(maker, 30_000L);
 
-        // then: 가용 잔액이 회수 금액만큼 감소
+        // then: 가용 잔액이 회수 금액만큼 감소하고 REFUND_DEBIT 로그 추가
         MakerWallet wallet = makerWalletRepository.findByMakerId(maker.getId()).orElseThrow();
         assertThat(wallet.getAvailableBalance()).isEqualTo(30_000L);
         assertThat(wallet.getTotalEarned()).isEqualTo(30_000L);
