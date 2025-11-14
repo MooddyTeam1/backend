@@ -29,11 +29,17 @@ public class MakerWalletService {
      * 메이커 생성 시 지갑도 함께 만든다.
      */
     @Transactional
+    /**
+     * 메이커당 지갑은 하나만 존재해야 하므로, 없을 때만 생성하고 이미 있으면 그대로 반환한다.
+     */
     public MakerWallet createForMaker(Maker maker) {
-        MakerWallet wallet = MakerWallet.of(maker);
-        makerWalletRepository.save(wallet);
-        log.info("MakerWallet 생성: makerId={}", maker.getId());
-        return wallet;
+        return makerWalletRepository.findByMakerId(maker.getId())
+                .orElseGet(() -> {
+                    MakerWallet wallet = MakerWallet.of(maker);
+                    makerWalletRepository.save(wallet);
+                    log.info("MakerWallet 생성: makerId={}", maker.getId());
+                    return wallet;
+                });
     }
 
     /**
