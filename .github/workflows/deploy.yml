@@ -27,7 +27,6 @@ jobs:
           source: "backend/backend/build/libs/*SNAPSHOT.jar,Dockerfile"
           target: "~/server/backend/"
 
-
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -36,7 +35,9 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
             cd ~/server/backend
+
             docker stop backend || true
             docker rm backend || true
+
             docker build -t backend .
             docker run -d -p 8080:8080 --name backend backend
