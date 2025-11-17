@@ -34,7 +34,7 @@ import com.moa.backend.external.tosspayments.dto.TossConfirmRequest;
 import com.moa.backend.external.tosspayments.dto.TossConfirmResponse;
 import com.moa.backend.global.util.MoneyCalculator;
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -166,7 +166,7 @@ class PaymentSettlementFlowTest {
         Mockito.when(response.getPaymentKey()).thenReturn("tosspay-" + orderCode);
         Mockito.when(response.getTotalAmount()).thenReturn(amount);
         Mockito.when(response.getMethod()).thenReturn("CARD");
-        Mockito.when(response.getApprovedAt()).thenReturn(LocalDateTime.now());
+        Mockito.when(response.getApprovedAt()).thenReturn(OffsetDateTime.now());
         Mockito.when(response.getCard()).thenReturn(cardInfo);
         Mockito.when(cardInfo.getNumber()).thenReturn("1111-****-****-2222");
         Mockito.when(response.getReceipt()).thenReturn(receiptInfo);

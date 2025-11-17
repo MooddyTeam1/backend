@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Getter
 @NoArgsConstructor
@@ -17,7 +17,8 @@ public class TossConfirmResponse {
 
     private String method;          // "카드", "간편결제" 등
     private String status;          // "DONE"
-    private LocalDateTime approvedAt;
+    // 토스 응답에는 +09:00 같은 오프셋이 포함되므로 OffsetDateTime으로 수신한다.
+    private OffsetDateTime approvedAt;
 
     // 카드 결제 시
     private CardInfo card;
