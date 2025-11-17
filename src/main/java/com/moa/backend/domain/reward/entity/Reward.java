@@ -1,27 +1,27 @@
 package com.moa.backend.domain.reward.entity;
 
 import com.moa.backend.domain.project.entity.Project;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import com.moa.backend.global.error.AppException;
+import com.moa.backend.global.error.ErrorCode;
+import lombok.*;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Entity
-@Table(name = "reward")
+@Table(name = "rewards")
+@Builder
 public class Reward {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "reward_id_seq")
+    @jakarta.persistence.SequenceGenerator(name = "reward_id_seq", sequenceName = "reward_id_seq", allocationSize = 1)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -31,13 +31,65 @@ public class Reward {
     @Column(name = "name", nullable = false, length = 200)
     private String name;
 
+    @Column(name = "description", nullable = false)
+    private String description;
+
     @Column(name = "price", nullable = false)
     private Long price;
 
-    @Column(name = "is_active", nullable = false)
-    private boolean active = true;
+    @Column(name = "estimated_Delivery_Date")
+    private LocalDate estimatedDeliveryDate;
 
-    @Column(name = "stock_quantity")
+    @Column(name = "is_active", nullable = false)   //판매상태
+    private boolean active;
+
+    @Column(name = "stock_quantity")        //재고 수량
     private Integer stockQuantity;
+
+    @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<OptionGroup> optionGroups = new ArrayList<>();
+
+    @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<RewardSet> rewardSets = new ArrayList<>();
+
+    public void decreaseStock(int quantity) {
+        if (this.stockQuantity == null) {
+            return;
+        }
+        if (quantity <= 0) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "수량은 1 이상이어야 합니다.");
+        }
+        if (this.stockQuantity < quantity) {
+            throw new AppException(ErrorCode.BUSINESS_CONFLICT, "리워드 재고가 부족합니다.");
+        }
+        this.stockQuantity -= quantity;
+    }
+
+    public void restoreStock(int quantity) {
+        if (this.stockQuantity == null) {
+            return;
+        }
+        if (quantity <= 0) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "수량은 1 이상이어야 합니다.");
+        }
+        this.stockQuantity += quantity;
+    }
+
+    public void activate(int quantity) {
+        if(quantity <=0 )
+            this.active=false;
+    }
+
+    public void addOptionGroup(OptionGroup optionGroup) {
+        optionGroups.add(optionGroup);
+        optionGroup.setReward(this);
+    }
+
+    public void addRewardSet(RewardSet rewardSet) {
+        rewardSets.add(rewardSet);
+        rewardSet.setReward(this);
+    }
 }
 

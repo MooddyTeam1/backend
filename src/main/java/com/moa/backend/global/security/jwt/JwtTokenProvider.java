@@ -9,12 +9,14 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
@@ -91,6 +93,9 @@ public class JwtTokenProvider {
         if (userId == null || email == null || role == null) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
         }
+
+        Collection<? extends GrantedAuthority> authorities =
+                List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
         JwtUserPrincipal principal = new JwtUserPrincipal(userId, email, role);
 
@@ -175,5 +180,14 @@ public class JwtTokenProvider {
     public enum TokenType {
         ACCESS,
         REFRESH
+    }
+
+    public String getRoleFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get(CLAIM_ROLE, String.class);
     }
 }
