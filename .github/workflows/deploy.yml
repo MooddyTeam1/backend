@@ -33,9 +33,9 @@ jobs:
       - name: Cleanup on EC2
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.HOST }}
-          username: ubuntu
-          key: ${{ secrets.PRIVATE_KEY }}
+          host: ${{ secrets.HOST }}        # 예: 3.35.24.48
+          username: ubuntu                 # 실제 EC2 로그인 유저
+          key: ${{ secrets.PRIVATE_KEY }}  # PEM 전체를 넣은 GitHub Secret
           script: |
             # 한글 설명: 8080 포트를 쓰는 기존 Spring Boot 프로세스 종료
             PID=$(lsof -t -i:8080 || echo "")
@@ -56,9 +56,9 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ubuntu
           key: ${{ secrets.PRIVATE_KEY }}
-          # 한글 설명: build/libs 안 jar 파일을 /home/USER/app 으로 전송
+          # 한글 설명: build/libs 안 jar 파일을 /home/ubuntu/app 으로 전송
           source: "build/libs/*.jar"
-          target: "/home/${{ secrets.EC2_USER }}/app"
+          target: "/home/ubuntu/app"
 
       # 6️⃣ EC2에서 prod 프로필로 애플리케이션 실행
       - name: Run Spring Boot (prod profile)
@@ -76,7 +76,6 @@ jobs:
 
             # 🔹 prod 프로필 환경변수 설정
             export SPRING_PROFILES_ACTIVE=prod
-
 
             # 🔹 prod 프로필로 Spring Boot 실행
             #   - 환경변수 SPRING_PROFILES_ACTIVE=prod
