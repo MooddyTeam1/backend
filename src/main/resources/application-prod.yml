@@ -81,7 +81,7 @@ spring:
       # 한글 설명:
       #   - 운영에서는 보통 validate 또는 none 권장
       #   - 개발 단계에서 테이블 자동 생성/수정이 필요하면 update로 둬도 됨
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false      # 한글 설명: 운영에서는 SQL 로그는 보통 끄거나 DEBUG 에서만
     properties:
       hibernate:
