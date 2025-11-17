@@ -23,12 +23,11 @@ jobs:
       - name: Upload JAR & Dockerfile to EC2
         uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{ secrets.HOST }}
+          host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key: ${{ secrets.PRIVATE_KEY }}
-          source: "build/libs/*SNAPSHOT.jar,Dockerfile"
-          target: "~/server/backend"
-          strip_components: 0
+          key: ${{ secrets.EC2_KEY }}
+          source: "build/libs/*.jar,Dockerfile"
+          target: "~/server/backend/"
 
       - name: SSH Deploy
         uses: appleboy/ssh-action@v1.0.3
