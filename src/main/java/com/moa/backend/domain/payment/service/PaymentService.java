@@ -70,16 +70,18 @@ public class PaymentService {
             log.info("모의 결제 승인 처리: orderCode={}, mockPaymentKey={}", orderCode, paymentKey);
         }
 
-        String resolvedPaymentKey = mockPayment ? paymentKey : tossResponse.getPaymentKey();
-        Long resolvedAmount = mockPayment ? amount : tossResponse.getTotalAmount();
-        String resolvedMethod = mockPayment ? "MOCK_CARD" : tossResponse.getMethod();
-        OffsetDateTime resolvedApprovedAt = mockPayment ? OffsetDateTime.now() : tossResponse.getApprovedAt();
-        // 토스에서 내려오는 값은 오프셋을 포함하므로 DB에는 LocalDateTime으로 변환해 저장한다.
+        // 실제 결제와 모의 결제(테스트용)에 따라 Payment 엔티티에 저장할 최종 데이터를 결정합니다.
+        // mockPayment가 true이면 모의 데이터를 사용하고, false이면 토스 응답(tossResponse)에서 실제 데이터를 가져옵니다.
+        String resolvedPaymentKey = mockPayment ? paymentKey : tossResponse.getPaymentKey(); // 결제 고유 키
+        Long resolvedAmount = mockPayment ? amount : tossResponse.getTotalAmount(); // 결제 금액
+        String resolvedMethod = mockPayment ? "MOCK_CARD" : tossResponse.getMethod(); // 결제 수단 (카드, 계좌이체 등)
+        OffsetDateTime resolvedApprovedAt = mockPayment ? OffsetDateTime.now() : tossResponse.getApprovedAt(); // 결제 승인 시각
+        // 토스에서 내려오는 값은 시간대 정보(오프셋)를 포함하므로, DB에 저장하기 위해 서버의 로컬 시간대(LocalDateTime)로 변환합니다.
         LocalDateTime resolvedApprovedAtLocal = resolvedApprovedAt != null ? resolvedApprovedAt.toLocalDateTime() : null;
-        String resolvedCardMasked = mockPayment ? "9999-****-****-0000" : extractCardNumber(tossResponse);
+        String resolvedCardMasked = mockPayment ? "9999-****-****-0000" : extractCardNumber(tossResponse); // 마스킹된 카드 번호
         String resolvedReceiptUrl = mockPayment
-                ? "https://mock.tosspayments.com/receipt/" + paymentKey
-                : extractReceiptUrl(tossResponse);
+                ? "https://mock.tosspayments.com/receipt/" + paymentKey // 모의 결제 영수증 URL
+                : extractReceiptUrl(tossResponse); // 실제 결제 영수증 URL
 
         // 5. Payment 엔티티 생성
         Payment payment = Payment.builder()
