@@ -35,7 +35,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -170,7 +170,7 @@ class PaymentServiceTest {
         when(response.getPaymentKey()).thenReturn("tosspay-" + UUID.randomUUID());
         when(response.getTotalAmount()).thenReturn(order.getTotalAmount());
         when(response.getMethod()).thenReturn("CARD");
-        when(response.getApprovedAt()).thenReturn(LocalDateTime.now());
+        when(response.getApprovedAt()).thenReturn(OffsetDateTime.now());
         when(response.getCard()).thenReturn(cardInfo);
         when(cardInfo.getNumber()).thenReturn("1234-****-****-5678");
         when(response.getReceipt()).thenReturn(receiptInfo);

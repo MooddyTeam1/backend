@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -72,7 +73,9 @@ public class PaymentService {
         String resolvedPaymentKey = mockPayment ? paymentKey : tossResponse.getPaymentKey();
         Long resolvedAmount = mockPayment ? amount : tossResponse.getTotalAmount();
         String resolvedMethod = mockPayment ? "MOCK_CARD" : tossResponse.getMethod();
-        LocalDateTime resolvedApprovedAt = mockPayment ? LocalDateTime.now() : tossResponse.getApprovedAt();
+        OffsetDateTime resolvedApprovedAt = mockPayment ? OffsetDateTime.now() : tossResponse.getApprovedAt();
+        // 토스에서 내려오는 값은 오프셋을 포함하므로 DB에는 LocalDateTime으로 변환해 저장한다.
+        LocalDateTime resolvedApprovedAtLocal = resolvedApprovedAt != null ? resolvedApprovedAt.toLocalDateTime() : null;
         String resolvedCardMasked = mockPayment ? "9999-****-****-0000" : extractCardNumber(tossResponse);
         String resolvedReceiptUrl = mockPayment
                 ? "https://mock.tosspayments.com/receipt/" + paymentKey
@@ -85,7 +88,7 @@ public class PaymentService {
                 .amount(resolvedAmount)
                 .method(resolvedMethod)
                 .status(PaymentStatus.DONE)
-                .approvedAt(resolvedApprovedAt)
+                .approvedAt(resolvedApprovedAtLocal)
                 .cardMasked(resolvedCardMasked)
                 .receiptUrl(resolvedReceiptUrl)
                 .build();
