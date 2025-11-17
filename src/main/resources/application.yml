@@ -14,7 +14,8 @@ spring:
 
   sql:
     init:
-      mode: never
+      mode: always
+      data-locations: classpath:data-postgres.sql   # ✅ 여기! spring.sql.init.* 로 인식됨
 
   security:
     oauth2:
@@ -59,11 +60,13 @@ spring:
     properties:
       hibernate:
         format_sql: true                       # ✅ SQL 로그 포맷팅
-        dialect: org.hibernate.dialect.PostgreSQLDialect  # ✅ Postgres용 방언 설정
+        dialect: org.hibernate.dialect.PostgreSQLDialect  # ✅ Postgres용 방언 설정 (사실 안 써도 됨)
+
 logging:
   level:
     org.springframework.security.oauth2.client: DEBUG
     org.springframework.web.client.RestTemplate: DEBUG
+
 app:
   file-storage:
     root-dir: ./uploads        # ✅ 실제 파일이 저장될 루트 디렉터리 (프로젝트 기준 상대경로)

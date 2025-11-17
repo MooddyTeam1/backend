@@ -1,0 +1,106 @@
+# src/main/resources/application-prod.yml
+# 한글 설명: EC2 운영 환경(profiles: prod)에서 사용할 설정 파일
+
+jwt:
+  # 한글 설명: 운영 환경에서는 반드시 강력한 랜덤 문자열을 환경변수로 주입할 것
+  secret: ${JWT_SECRET:change-me-in-prod}
+  access-token-validity-in-seconds: 3600        # 1시간
+  refresh-token-validity-in-seconds: 1209600    # 2주
+  issuer: moa-backend
+
+toss:
+  # 한글 설명: 토스페이먼츠 API 키 (운영/샌드박스 모두 환경변수로 관리)
+  client-key: ${TOSS_CLIENT_KEY}
+  secret-key: ${TOSS_SECRET_KEY}
+
+spring:
+  application:
+    name: backend
+
+  # ===========================
+  # SQL 초기화 (운영용)
+  # ===========================
+  sql:
+    init:
+      # 한글 설명: 운영 DB는 애플리케이션 실행 시 자동으로 data.sql을 실행하지 않도록 설정
+      mode: never
+      # 필요하다면 직접 마이그레이션 도구(Flyway/Liquibase) 도입을 추천
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            # 한글 설명: 운영용 구글 OAuth2 클라이언트 ID/시크릿
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            # 한글 설명: 운영 도메인 기준 redirect URI 로 변경해야 함
+            # 예) https://api.moa.com/login/oauth2/code/google
+            redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
+            scope:
+              - profile
+              - email
+
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET:}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            # 한글 설명: 마찬가지로 운영 도메인 기준 redirect URI 로 변경
+            redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8080/login/oauth2/code/kakao}
+            scope:
+              - profile_nickname
+              - profile_image
+            provider: kakao
+
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+  # ===========================
+  # DataSource (PostgreSQL @ EC2)
+  # ===========================
+  datasource:
+    # 한글 설명:
+    #   EC2 서버에 설정한 환경변수 기준:
+    #     export DB_HOST=3.35.24.48
+    #     export DB_PORT=5432
+    #     export DB_NAME=moa_system
+    #     export DB_USERNAME=moa_system
+    #     export DB_PASSWORD=...
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:moa_system}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME:moa_system}
+    password: ${DB_PASSWORD:changeme}
+
+  jpa:
+    hibernate:
+      # 한글 설명:
+      #   - 운영에서는 보통 validate 또는 none 권장
+      #   - 개발 단계에서 테이블 자동 생성/수정이 필요하면 update로 둬도 됨
+      ddl-auto: validate
+    show-sql: false      # 한글 설명: 운영에서는 SQL 로그는 보통 끄거나 DEBUG 에서만
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  level:
+    # 한글 설명: 운영에서는 DEBUG 로그를 최소화
+    org.springframework.security.oauth2.client: INFO
+    org.springframework.web.client.RestTemplate: INFO
+    # 필요 시 비즈니스 패키지 별도로 DEBUG 조정 가능
+    # com.moa.backend: INFO
+
+app:
+  file-storage:
+    # 한글 설명:
+    #   운영 서버에서 실제 파일이 저장될 루트 디렉터리.
+    #   기본값을 /home/ubuntu/app/uploads 로 두고,
+    #   필요하면 APP_FILE_ROOT_DIR 환경변수로 override.
+    root-dir: ${APP_FILE_ROOT_DIR:/home/ubuntu/app/uploads}
+    image-dir: images
