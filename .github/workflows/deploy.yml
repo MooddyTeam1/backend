@@ -24,9 +24,9 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ubuntu
           key: ${{ secrets.PRIVATE_KEY }}
-          source: "backend/backend/build/libs/*SNAPSHOT.jar,Dockerfile"
+          source: "backend/build/libs/*SNAPSHOT.jar,Dockerfile"
           target: "~/server/backend/"
-          strip_components: 3
+          strip_components: 1
 
 
       - name: Deploy on EC2
