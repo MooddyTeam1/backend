@@ -92,6 +92,7 @@ public class ProjectController {
     }
 
     //마감 임박(7일전)
+    @Deprecated
     @GetMapping("/closing-soon")
     public ResponseEntity<List<ProjectListResponse>> getProjectsByClosingSoon() {
         return ResponseEntity.ok(projectService.getClosingSoon());

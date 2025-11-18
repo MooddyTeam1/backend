@@ -34,4 +34,22 @@ public interface ProjectService {
 
     //특정 상태 프로젝트 필요한데이터만 조회
     List<?> getProjectByStatus(Long userId, ProjectLifecycleStatus lifecycle, ProjectReviewStatus review);
+
+    //홈 화면 '지금 뜨는 프로젝트' 섹션용, 찜 많은 순 인기 프로젝트 조회.
+    List<TrendingProjectResponse> getTrendingProjects(int size);
+
+    //홈 화면 '방금 업로드된 신규 프로젝트' 섹션용 프로젝트 조회.
+    // - 최근 N일 이내에 생성된 프로젝트 중에서, 승인된(APPROVED) + SCHEDULED/LIVE 상태만 반환한다.
+    List<ProjectListResponse> getNewlyUploadedProjects(int size);
+
+    // 한글 설명: 홈 화면 '성공 메이커의 새 프로젝트' 섹션용 조회.
+    List<ProjectListResponse> getSuccessfulMakersNewProjects(int size);
+
+    // 한글 설명: 홈 화면 '첫 도전 메이커 응원하기' 섹션용 조회.
+    List<ProjectListResponse> getFirstChallengeMakerProjects(int size);
+
+    // 한글 설명: 홈 화면 '목표 달성에 가까운 프로젝트' 섹션용 조회.
+    // - 기준: LIVE + APPROVED 상태 프로젝트
+    // - 정렬: (결제 완료 주문 금액 합계 / 목표 금액) 내림차순
+    List<ProjectListResponse> getNearGoalProjects(int size);
 }

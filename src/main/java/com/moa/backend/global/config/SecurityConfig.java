@@ -79,7 +79,9 @@ public class SecurityConfig {
                                 "/project/category",
                                 "/project/closing-soon",
                                 "/project/id/**",
-                                "/uploads/**"
+                                "/uploads/**",
+                                // 🔥 새로 추가한 공개 프로젝트 홈용 API
+                                "/public/projects/**"
 
                         ).permitAll()
                         .anyRequest().authenticated()
