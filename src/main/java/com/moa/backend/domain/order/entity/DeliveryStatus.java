@@ -5,6 +5,12 @@ package com.moa.backend.domain.order.entity;
  */
 public enum DeliveryStatus {
 
+    //기본상태
+    NONE,
+
+    //배송 준비중
+    PREPARING,
+
     // 출고 후 배송 중
     SHIPPING,
 

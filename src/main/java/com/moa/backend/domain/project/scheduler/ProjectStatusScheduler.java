@@ -1,4 +1,4 @@
-package com.moa.backend.domain.project.component;
+package com.moa.backend.domain.project.scheduler;
 
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
@@ -18,7 +18,7 @@ public class ProjectStatusScheduler {
 
     private final ProjectRepository projectRepository;
 
-    @Scheduled(cron = "0/20 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void updateProjectStatus(){
         LocalDate today = LocalDate.now();
