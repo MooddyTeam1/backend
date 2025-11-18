@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -75,4 +77,38 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("projectId") Long projectId,
             @Param("status") DeliveryStatus status
     );
+
+    /**
+     * 배송 예정일이 오늘인 주문 목록 조회.
+     */
+    @Query("""
+    SELECT DISTINCT o FROM Order o
+    JOIN o.orderItems oi
+    JOIN oi.reward r
+    WHERE o.deliveryStatus = 'NONE'
+    AND r.estimatedDeliveryDate = :today
+    """)
+    List<Order> findOrdersToPrepare(LocalDate today);
+
+    /**
+     * 배송 준비중인 주문 목록 조회.
+     */
+    @Query("""
+    SELECT DISTINCT o FROM Order o
+    JOIN o.orderItems oi
+    JOIN oi.reward r
+    WHERE o.deliveryStatus = 'PREPARING'
+    AND r.estimatedDeliveryDate = :shippingDate
+    """)
+    List<Order> findOrdersToShipping(LocalDate shippingDate);
+
+    /**
+     * 배송 중인 주문 목록 조회.
+     */
+    @Query("""
+    SELECT DISTINCT o FROM Order o
+    WHERE o.deliveryStatus = 'SHIPPING'
+    AND o.deliveryStartedAt <= :deliveryDate
+    """)
+    List<Order> findOrdersToDelivered(LocalDateTime deliveryDate);
 }
