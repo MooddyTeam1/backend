@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -63,5 +64,18 @@ public class OrderController {
     ) {
         List<OrderSummaryResponse> responses = orderService.getOrders(principal.getId());
         return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * 로그인 사용자가 자신의 주문을 취소한다.
+     */
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long orderId,
+            @RequestParam(required = false, defaultValue = "사용자 취소") String reason
+    ) {
+        orderService.cancelOrder(principal.getId(), orderId, reason);
+        return ResponseEntity.ok().build();
     }
 }

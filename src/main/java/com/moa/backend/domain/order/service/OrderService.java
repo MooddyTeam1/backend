@@ -3,9 +3,12 @@ package com.moa.backend.domain.order.service;
 import com.moa.backend.domain.order.dto.OrderCreateRequest;
 import com.moa.backend.domain.order.dto.OrderDetailResponse;
 import com.moa.backend.domain.order.dto.OrderSummaryResponse;
+import com.moa.backend.domain.order.entity.DeliveryStatus;
 import com.moa.backend.domain.order.entity.Order;
 import com.moa.backend.domain.order.entity.OrderItem;
+import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.order.repository.OrderRepository;
+import com.moa.backend.domain.payment.service.PaymentService;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
@@ -43,6 +46,7 @@ public class OrderService {
     private final ProjectRepository projectRepository;
     private final RewardRepository rewardRepository;
     private final UserRepository userRepository;
+    private final PaymentService paymentService;
 
     /**
      * 서포터 주문을 생성하고 상세 응답을 반환한다.
@@ -150,6 +154,35 @@ public class OrderService {
                 .stream()
                 .map(OrderSummaryResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 사용자 주문을 취소한다.
+     */
+    public void cancelOrder(Long userId, Long orderId, String reason) {
+        Order order = orderRepository.findByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getStatus() == OrderStatus.CANCELED) {
+            throw new AppException(ErrorCode.ALREADY_PROCESSED, "이미 취소된 주문입니다.");
+        }
+        if (order.getDeliveryStatus() != null && order.getDeliveryStatus() != DeliveryStatus.NONE) {
+            throw new AppException(ErrorCode.BUSINESS_CONFLICT, "배송이 시작된 주문은 취소할 수 없습니다.");
+        }
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            paymentService.cancelByOrder(order, reason);
+            return;
+        }
+
+        order.getOrderItems().forEach(item -> {
+            if (item.getReward() != null) {
+                item.getReward().restoreStock(item.getQuantity());
+            }
+        });
+
+        order.cancel();
+        orderRepository.save(order);
     }
 
     /**
