@@ -3,6 +3,8 @@ package com.moa.backend.domain.order.repository;
 import com.moa.backend.domain.order.entity.DeliveryStatus;
 import com.moa.backend.domain.order.entity.Order;
 import com.moa.backend.domain.order.entity.OrderStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,9 +32,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findWithItemsByIdAndUserId(Long id, Long userId);
 
     /**
-     * 특정 사용자의 주문 목록(최신순)
+     * 특정 사용자의 주문 목록(페이지네이션)
      */
-    List<Order> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+    Page<Order> findAllByUserId(Long userId, Pageable pageable);
 
     /**
      * 사용자 소유 주문 여부 확인
