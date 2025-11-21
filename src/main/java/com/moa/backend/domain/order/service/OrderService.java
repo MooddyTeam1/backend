@@ -9,6 +9,8 @@ import com.moa.backend.domain.order.entity.Order;
 import com.moa.backend.domain.order.entity.OrderItem;
 import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.order.repository.OrderRepository;
+import com.moa.backend.domain.payment.entity.Payment;
+import com.moa.backend.domain.payment.repository.PaymentRepository;
 import com.moa.backend.domain.payment.service.PaymentService;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
@@ -50,6 +52,7 @@ public class OrderService {
     private final ProjectRepository projectRepository;
     private final RewardRepository rewardRepository;
     private final UserRepository userRepository;
+    private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
 
     /**
@@ -146,7 +149,8 @@ public class OrderService {
     public OrderDetailResponse getOrder(Long userId, Long orderId) {
         Order order = orderRepository.findWithItemsByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-        return OrderDetailResponse.from(order);
+        Payment payment = paymentRepository.findByOrder(order).orElse(null);
+        return OrderDetailResponse.from(order, payment);
     }
 
     /**
