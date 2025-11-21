@@ -23,12 +23,14 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * 서포터가 프로젝트 리워드를 구매할 때 생성되는 주문 엔티티.
  * 결제/배송/확정 상태와 배송지 정보를 모두 보관한다.
  */
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "orders")
@@ -84,7 +86,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "delivery_status", length = 20)
-    private DeliveryStatus deliveryStatus;
+    private DeliveryStatus deliveryStatus = DeliveryStatus.NONE;
 
     // 배송 진행 타임라인
     @Column(name = "delivery_started_at")
