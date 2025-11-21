@@ -12,10 +12,23 @@ spring:
   application:
     name: backend
 
+
   sql:
     init:
       mode: always
-      data-locations: classpath:data-postgres.sql   # ✅ 여기! spring.sql.init.* 로 인식됨
+      data-locations: classpath:data-postgres.sql
+
+  mail:
+    host: localhost
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
 
   security:
     oauth2:
@@ -47,6 +60,7 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
+
   datasource:
     url: jdbc:postgresql://localhost:5432/moa  # ✅ docker run에서 지정한 DB 이름(moa)에 접속
     driver-class-name: org.postgresql.Driver   # ✅ Postgres JDBC 드라이버
@@ -71,3 +85,9 @@ app:
   file-storage:
     root-dir: ./uploads        # ✅ 실제 파일이 저장될 루트 디렉터리 (프로젝트 기준 상대경로)
     image-dir: images          # ✅ 이미지 하위 디렉터리 (/uploads/images)
+
+    email:
+      verification-expiration-minutes: 10
+      password-reset:
+        base-url: http://localhost:8080/password/reset
+        token-validity-minutes: 60
