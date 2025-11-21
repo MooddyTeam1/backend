@@ -21,8 +21,10 @@ import com.moa.backend.domain.user.entity.User;
 import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -41,12 +43,14 @@ import java.util.stream.Collectors;
  * 주문 생성/조회 비즈니스 로직을 담당한다.
  * 재고 차감, 주문 코드 생성, 배송지/아이템 조립을 처리한다.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class OrderService {
 
     private static final DateTimeFormatter ORDER_CODE_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final int MAX_RETRY_ATTEMPTS = 3;
 
     private final OrderRepository orderRepository;
     private final ProjectRepository projectRepository;
@@ -57,8 +61,50 @@ public class OrderService {
 
     /**
      * 서포터 주문을 생성하고 상세 응답을 반환한다.
+     * 낙관적 락 충돌 발생 시 자동으로 재시도한다.
      */
     public OrderDetailResponse createOrder(Long userId, OrderCreateRequest request) {
+        int attempt = 0;
+        
+        while (attempt < MAX_RETRY_ATTEMPTS) {
+            try {
+                return createOrderInternal(userId, request);
+                
+            } catch (OptimisticLockException e) {
+                attempt++;
+                log.warn("낙관적 락 충돌 발생 (시도 {}/{}): userId={}, projectId={}", 
+                    attempt, MAX_RETRY_ATTEMPTS, userId, request.getProjectId());
+                
+                if (attempt >= MAX_RETRY_ATTEMPTS) {
+                    log.error("최대 재시도 횟수 초과: userId={}, projectId={}", 
+                        userId, request.getProjectId());
+                    throw new AppException(
+                        ErrorCode.BUSINESS_CONFLICT,
+                        "주문이 집중되어 처리할 수 없습니다. 잠시 후 다시 시도해주세요."
+                    );
+                }
+                
+                // 지수 백오프: 50ms, 100ms, 150ms
+                try {
+                    long sleepTime = 50L * attempt;
+                    log.debug("{}ms 대기 후 재시도합니다.", sleepTime);
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new AppException(ErrorCode.INTERNAL_ERROR, "주문 처리 중 오류가 발생했습니다.");
+                }
+            }
+        }
+        
+        throw new AppException(ErrorCode.INTERNAL_ERROR, "주문 처리 중 오류가 발생했습니다.");
+    }
+
+    /**
+     * 실제 주문 생성 로직.
+     * 낙관적 락 충돌 시 OptimisticLockException을 던진다.
+     */
+    @Transactional
+    private OrderDetailResponse createOrderInternal(Long userId, OrderCreateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
@@ -139,6 +185,9 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
+        log.info("주문 생성 완료: orderId={}, userId={}, totalAmount={}", 
+            savedOrder.getId(), userId, totalAmount);
+
         return OrderDetailResponse.from(savedOrder);
     }
 
@@ -198,6 +247,8 @@ public class OrderService {
 
         order.cancel();
         orderRepository.save(order);
+        
+        log.info("주문 취소 완료: orderId={}, userId={}, reason={}", orderId, userId, reason);
     }
 
     /**

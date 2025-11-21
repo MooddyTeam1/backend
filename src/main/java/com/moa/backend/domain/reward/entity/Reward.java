@@ -46,6 +46,15 @@ public class Reward {
     @Column(name = "stock_quantity")        //재고 수량
     private Integer stockQuantity;
 
+    /**
+     * 낙관적 락(Optimistic Lock)을 위한 버전 필드.
+     * JPA가 UPDATE 시 자동으로 version 값을 확인하고 증가시킨다.
+     * 동시에 여러 트랜잭션이 같은 재고를 수정하려 할 때 충돌을 감지한다.
+     */
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OptionGroup> optionGroups = new ArrayList<>();
