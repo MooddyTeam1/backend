@@ -2,6 +2,7 @@ package com.moa.backend.domain.order.service;
 
 import com.moa.backend.domain.order.dto.OrderCreateRequest;
 import com.moa.backend.domain.order.dto.OrderDetailResponse;
+import com.moa.backend.domain.order.dto.OrderPageResponse;
 import com.moa.backend.domain.order.dto.OrderSummaryResponse;
 import com.moa.backend.domain.order.entity.DeliveryStatus;
 import com.moa.backend.domain.order.entity.Order;
@@ -20,6 +21,9 @@ import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -146,14 +150,21 @@ public class OrderService {
     }
 
     /**
-     * 사용자 주문 목록을 최신순으로 조회한다.
+     * 사용자 주문 목록을 페이지 단위로 최신순 조회한다.
      */
     @Transactional(Transactional.TxType.SUPPORTS)
-    public List<OrderSummaryResponse> getOrders(Long userId) {
-        return orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
-                .stream()
-                .map(OrderSummaryResponse::from)
-                .collect(Collectors.toList());
+    public OrderPageResponse getOrders(Long userId, int page, int size) {
+        if (page < 0) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "page는 0 이상이어야 합니다.");
+        }
+        if (size <= 0) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "size는 1 이상이어야 합니다.");
+        }
+
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Order> orderPage = orderRepository.findAllByUserId(userId, pageRequest);
+
+        return OrderPageResponse.fromOrderPage(orderPage);
     }
 
     /**

@@ -2,7 +2,7 @@ package com.moa.backend.domain.order.controller;
 
 import com.moa.backend.domain.order.dto.OrderCreateRequest;
 import com.moa.backend.domain.order.dto.OrderDetailResponse;
-import com.moa.backend.domain.order.dto.OrderSummaryResponse;
+import com.moa.backend.domain.order.dto.OrderPageResponse;
 import com.moa.backend.domain.order.service.OrderService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import jakarta.validation.Valid;
@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * 주문 생성 및 조회 API를 제공한다.
@@ -59,11 +57,13 @@ public class OrderController {
      * 로그인 사용자의 전체 주문 목록(요약)을 조회한다.
      */
     @GetMapping
-    public ResponseEntity<List<OrderSummaryResponse>> getOrders(
-            @AuthenticationPrincipal JwtUserPrincipal principal
+    public ResponseEntity<OrderPageResponse> getOrders(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        List<OrderSummaryResponse> responses = orderService.getOrders(principal.getId());
-        return ResponseEntity.ok(responses);
+        OrderPageResponse response = orderService.getOrders(principal.getId(), page, size);
+        return ResponseEntity.ok(response);
     }
 
     /**
