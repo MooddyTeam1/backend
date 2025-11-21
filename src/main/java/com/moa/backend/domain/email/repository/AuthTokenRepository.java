@@ -9,7 +9,5 @@ public interface AuthTokenRepository extends JpaRepository<AuthToken, Long> {
 
     Optional<AuthToken> findByEmailAndTokenAndType(String email, String token, AuthToken.TokenType type);
 
-    Optional<AuthToken> findByTokenAndType(String token, AuthToken.TokenType type);
-
     void deleteByEmailAndType(String email, AuthToken.TokenType type);
 }

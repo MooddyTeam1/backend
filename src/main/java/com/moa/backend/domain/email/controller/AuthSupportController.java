@@ -2,6 +2,7 @@ package com.moa.backend.domain.email.controller;
 
 import com.moa.backend.domain.email.dto.EmailRequest;
 import com.moa.backend.domain.email.dto.PasswordResetRequest;
+import com.moa.backend.domain.email.dto.PasswordResetSendRequest;
 import com.moa.backend.domain.email.service.AuthSupportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,14 +34,19 @@ public class AuthSupportController {
     }
 
     @PostMapping("/password/send")
-    public ResponseEntity<Map<String, String>> sendPasswordReset(@RequestBody @Valid EmailRequest request) {
-        authSupportService.sendPasswordResetLink(request.getEmail());
+    public ResponseEntity<Map<String, String>> sendPasswordReset(@RequestBody @Valid PasswordResetSendRequest request) {
+        authSupportService.sendPasswordResetCode(request.getEmail());
         return ResponseEntity.ok(Map.of("message", "비밀번호 재설정 메일을 전송했습니다."));
     }
 
     @PostMapping("/password/reset")
     public ResponseEntity<Map<String, String>> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
-        authSupportService.resetPassword(request.getToken(), request.getNewPassword());
+        authSupportService.resetPassword(
+                request.getUserId(),
+                request.getEmail(),
+                request.getCode(),
+                request.getNewPassword()
+        );
         return ResponseEntity.ok(Map.of("message", "비밀번호를 변경했습니다."));
     }
 }
