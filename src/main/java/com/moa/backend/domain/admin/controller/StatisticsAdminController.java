@@ -2,6 +2,7 @@ package com.moa.backend.domain.admin.controller;
 
 import com.moa.backend.domain.admin.dto.statistics.dashboard.DashboardSummaryDto;
 import com.moa.backend.domain.admin.dto.statistics.daily.DailyStatisticsDto;
+import com.moa.backend.domain.admin.dto.statistics.revenue.RevenueReportDto;
 import com.moa.backend.domain.admin.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,5 +32,15 @@ public class StatisticsAdminController {
             @RequestParam(value = "filterValue", required = false) String filterValue
     ) {
         return statisticsService.getDailyStatistics(startDate, endDate, filterType, filterValue);
+    }
+
+    @GetMapping("/revenue")
+    public RevenueReportDto getRevenueReport(
+            @RequestParam("startDate") java.time.LocalDate startDate,
+            @RequestParam("endDate") java.time.LocalDate endDate,
+            @RequestParam(value = "makerId", required = false) Long makerId,
+            @RequestParam(value = "projectId", required = false) Long projectId
+    ) {
+        return statisticsService.getRevenueReport(startDate, endDate, makerId, projectId);
     }
 }

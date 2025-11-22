@@ -141,6 +141,26 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     );
 
     /**
+     * 기간별 PAID 주문 총액 합계 (makerId/projectId 필터)
+     */
+    @Query("""
+        SELECT COALESCE(SUM(o.totalAmount), 0)
+        FROM Order o
+        JOIN o.project p
+        WHERE o.status = :status
+          AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND (:makerId IS NULL OR p.maker.id = :makerId)
+          AND (:projectId IS NULL OR p.id = :projectId)
+        """)
+    Optional<Long> sumTotalAmountByStatusAndCreatedAtBetweenAndFilters(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("makerId") Long makerId,
+            @Param("projectId") Long projectId
+    );
+
+    /**
      * 기간별 주문 건수
      */
     Long countByStatusAndCreatedAtBetween(
@@ -171,6 +191,26 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Long countDistinctUserByStatusAndCreatedAtBefore(
             @Param("status") OrderStatus status,
             @Param("beforeDateTime") LocalDateTime beforeDateTime
+    );
+
+    /**
+     * 기간 내 주문이 있는 고유 프로젝트 수 (maker/project 필터)
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT p.id)
+        FROM Order o
+        JOIN o.project p
+        WHERE o.status = :status
+          AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND (:makerId IS NULL OR p.maker.id = :makerId)
+          AND (:projectId IS NULL OR p.id = :projectId)
+        """)
+    Long countDistinctProjectByStatusAndCreatedAtBetweenAndFilters(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("makerId") Long makerId,
+            @Param("projectId") Long projectId
     );
 
     /**
@@ -342,5 +382,33 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("status") OrderStatus status,
             @Param("category") Category category,
             @Param("makerId") Long makerId
+    );
+
+    /**
+     * 수익 리포트 상세 (일자/프로젝트 단위)
+     * 결과: Object[] {date(DATE), projectId, projectName, makerName, totalAmount}
+     */
+    @Query("""
+        SELECT DATE(o.createdAt) as date,
+               p.id,
+               p.title,
+               m.name,
+               COALESCE(SUM(o.totalAmount), 0) as totalAmount
+        FROM Order o
+        JOIN o.project p
+        JOIN p.maker m
+        WHERE o.status = :status
+          AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND (:makerId IS NULL OR m.id = :makerId)
+          AND (:projectId IS NULL OR p.id = :projectId)
+        GROUP BY DATE(o.createdAt), p.id, p.title, m.name
+        ORDER BY DATE(o.createdAt), COALESCE(SUM(o.totalAmount), 0) DESC
+        """)
+    List<Object[]> findRevenueDetailsByDateAndFilters(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("makerId") Long makerId,
+            @Param("projectId") Long projectId
     );
 }

@@ -3,6 +3,7 @@ package com.moa.backend.domain.settlement.repository;
 import com.moa.backend.domain.settlement.entity.Settlement;
 import com.moa.backend.domain.settlement.entity.SettlementPayoutStatus;
 import com.moa.backend.domain.settlement.entity.SettlementStatus;
+import java.time.LocalDate;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,5 +40,43 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
      * 특정 Settlement 상태 목록 조회 (예: FIRST_PAID).
      */
     List<Settlement> findAllByStatus(SettlementStatus status);
+
+    List<Settlement> findByProjectIdIn(List<Long> projectIds);
+
+    /**
+     * 상태·기간별 netAmount 합계 (maker/project 필터)
+     */
+    @Query("""
+        SELECT COALESCE(SUM(s.netAmount), 0)
+        FROM Settlement s
+        WHERE s.status = :status
+          AND s.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND (:makerId IS NULL OR s.maker.id = :makerId)
+          AND (:projectId IS NULL OR s.project.id = :projectId)
+        """)
+    Optional<Long> sumNetAmountByStatusAndCreatedAtBetweenAndFilters(
+            @Param("status") SettlementStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("makerId") Long makerId,
+            @Param("projectId") Long projectId
+    );
+
+    /**
+     * 기간 내 총 netAmount 합계 (필터)
+     */
+    @Query("""
+        SELECT COALESCE(SUM(s.netAmount), 0)
+        FROM Settlement s
+        WHERE s.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND (:makerId IS NULL OR s.maker.id = :makerId)
+          AND (:projectId IS NULL OR s.project.id = :projectId)
+        """)
+    Optional<Long> sumNetAmountByCreatedAtBetweenAndFilters(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("makerId") Long makerId,
+            @Param("projectId") Long projectId
+    );
 }
 

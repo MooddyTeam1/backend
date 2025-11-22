@@ -17,6 +17,12 @@ import com.moa.backend.domain.admin.dto.statistics.dashboard.KpiSummaryDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.TopProjectDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.TrendChartDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.TrendDataDto;
+import com.moa.backend.domain.admin.dto.statistics.revenue.FeePolicyAnalysisDto;
+import com.moa.backend.domain.admin.dto.statistics.revenue.FeePolicyItemDto;
+import com.moa.backend.domain.admin.dto.statistics.revenue.MakerSettlementSummaryDto;
+import com.moa.backend.domain.admin.dto.statistics.revenue.PlatformRevenueDto;
+import com.moa.backend.domain.admin.dto.statistics.revenue.RevenueDetailDto;
+import com.moa.backend.domain.admin.dto.statistics.revenue.RevenueReportDto;
 import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.order.repository.OrderRepository;
 import com.moa.backend.domain.payment.entity.PaymentStatus;
@@ -27,6 +33,8 @@ import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
+import com.moa.backend.domain.settlement.entity.Settlement;
+import com.moa.backend.domain.settlement.entity.SettlementStatus;
 import com.moa.backend.domain.settlement.repository.SettlementRepository;
 import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.domain.wallet.entity.PlatformWalletTransactionType;
@@ -38,12 +46,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -587,13 +597,145 @@ public class StatisticsServiceImpl implements StatisticsService {
         return alerts;
     }
 
-    // TODO: Phase 3에서 구현
-    // @Override
-    // public DailyStatisticsDto getDailyStatistics(...) { }
+    /**
+     * 수익 리포트 조회
+     */
+    @Override
+    public RevenueReportDto getRevenueReport(LocalDate startDate, LocalDate endDate, Long makerId, Long projectId) {
+        validateDateRange(startDate, endDate);
 
-    // TODO: Phase 4에서 구현
-    // @Override
-    // public RevenueReportDto getRevenueReport(...) { }
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+
+        PlatformRevenueDto platformRevenue = buildPlatformRevenue(startDateTime, endDateTime, makerId, projectId);
+        MakerSettlementSummaryDto makerSettlementSummary = buildMakerSettlementSummary(startDateTime, endDateTime, makerId, projectId);
+        FeePolicyAnalysisDto feePolicyAnalysis = buildFeePolicyAnalysis(startDateTime, endDateTime, makerId, projectId, platformRevenue);
+        List<RevenueDetailDto> details = buildRevenueDetails(startDateTime, endDateTime, makerId, projectId);
+
+        return RevenueReportDto.builder()
+                .platformRevenue(platformRevenue)
+                .makerSettlementSummary(makerSettlementSummary)
+                .feePolicyAnalysis(feePolicyAnalysis)
+                .details(details)
+                .build();
+    }
+
+    private PlatformRevenueDto buildPlatformRevenue(LocalDateTime startDateTime, LocalDateTime endDateTime, Long makerId, Long projectId) {
+        Long totalPaymentAmount = orderRepository
+                .sumTotalAmountByStatusAndCreatedAtBetweenAndFilters(
+                        OrderStatus.PAID, startDateTime, endDateTime, makerId, projectId)
+                .orElse(0L);
+
+        Long pgFeeAmount = BigDecimal.valueOf(totalPaymentAmount)
+                .multiply(PG_FEE_RATE)
+                .setScale(0, RoundingMode.DOWN)
+                .longValue();
+
+        Long platformFeeAmount = BigDecimal.valueOf(totalPaymentAmount)
+                .multiply(PLATFORM_FEE_RATE)
+                .setScale(0, RoundingMode.DOWN)
+                .longValue();
+
+        Long otherCosts = 0L; // TODO: 기타 비용 정의 시 반영
+        Long netProfit = totalPaymentAmount - pgFeeAmount - platformFeeAmount - otherCosts;
+
+        return PlatformRevenueDto.builder()
+                .totalPaymentAmount(totalPaymentAmount)
+                .pgFeeAmount(pgFeeAmount)
+                .pgFeeRate(PG_FEE_RATE.multiply(BigDecimal.valueOf(100)).doubleValue())
+                .platformFeeAmount(platformFeeAmount)
+                .platformFeeRate(PLATFORM_FEE_RATE.multiply(BigDecimal.valueOf(100)).doubleValue())
+                .otherCosts(otherCosts)
+                .netProfit(netProfit)
+                .build();
+    }
+
+    private MakerSettlementSummaryDto buildMakerSettlementSummary(LocalDateTime startDateTime, LocalDateTime endDateTime, Long makerId, Long projectId) {
+        Long totalSettlementAmount = settlementRepository.sumNetAmountByCreatedAtBetweenAndFilters(
+                startDateTime, endDateTime, makerId, projectId).orElse(0L);
+
+        Long pendingAmount = settlementRepository.sumNetAmountByStatusAndCreatedAtBetweenAndFilters(
+                SettlementStatus.PENDING, startDateTime, endDateTime, makerId, projectId).orElse(0L);
+
+        Long processingAmount = settlementRepository.sumNetAmountByStatusAndCreatedAtBetweenAndFilters(
+                SettlementStatus.FIRST_PAID, startDateTime, endDateTime, makerId, projectId).orElse(0L)
+                + settlementRepository.sumNetAmountByStatusAndCreatedAtBetweenAndFilters(
+                        SettlementStatus.FINAL_READY, startDateTime, endDateTime, makerId, projectId).orElse(0L);
+
+        Long completedAmount = settlementRepository.sumNetAmountByStatusAndCreatedAtBetweenAndFilters(
+                SettlementStatus.COMPLETED, startDateTime, endDateTime, makerId, projectId).orElse(0L);
+
+        return MakerSettlementSummaryDto.builder()
+                .totalSettlementAmount(totalSettlementAmount)
+                .pendingAmount(pendingAmount)
+                .processingAmount(processingAmount)
+                .completedAmount(completedAmount)
+                .build();
+    }
+
+    private FeePolicyAnalysisDto buildFeePolicyAnalysis(LocalDateTime startDateTime, LocalDateTime endDateTime, Long makerId, Long projectId, PlatformRevenueDto platformRevenueDto) {
+        Long projectCount = orderRepository.countDistinctProjectByStatusAndCreatedAtBetweenAndFilters(
+                OrderStatus.PAID, startDateTime, endDateTime, makerId, projectId);
+
+        FeePolicyItemDto generalPolicy = FeePolicyItemDto.builder()
+                .policyName("일반 프로젝트 (10%)")
+                .projectCount(projectCount.intValue())
+                .paymentAmount(platformRevenueDto.getTotalPaymentAmount())
+                .feeAmount(platformRevenueDto.getPlatformFeeAmount())
+                .contributionRate(100.0)
+                .build();
+
+        return FeePolicyAnalysisDto.builder()
+                .policies(List.of(generalPolicy))
+                .build();
+    }
+
+    private List<RevenueDetailDto> buildRevenueDetails(LocalDateTime startDateTime, LocalDateTime endDateTime, Long makerId, Long projectId) {
+        List<Object[]> rows = orderRepository.findRevenueDetailsByDateAndFilters(
+                OrderStatus.PAID, startDateTime, endDateTime, makerId, projectId);
+
+        List<Long> projectIds = rows.stream()
+                .map(row -> ((Number) row[1]).longValue())
+                .distinct()
+                .toList();
+        Map<Long, SettlementStatus> settlementStatusMap = settlementRepository.findByProjectIdIn(projectIds).stream()
+                .collect(Collectors.toMap(s -> s.getProject().getId(), Settlement::getStatus));
+
+        return rows.stream()
+                .map(row -> {
+                    java.sql.Date sqlDate = (java.sql.Date) row[0];
+                    String dateStr = sqlDate.toLocalDate().toString();
+                    Long projectIdVal = ((Number) row[1]).longValue();
+                    String projectName = (String) row[2];
+                    String makerName = (String) row[3];
+                    Long paymentAmount = ((Number) row[4]).longValue();
+
+                    Long pgFee = BigDecimal.valueOf(paymentAmount)
+                            .multiply(PG_FEE_RATE)
+                            .setScale(0, RoundingMode.DOWN)
+                            .longValue();
+                    Long platformFee = BigDecimal.valueOf(paymentAmount)
+                            .multiply(PLATFORM_FEE_RATE)
+                            .setScale(0, RoundingMode.DOWN)
+                            .longValue();
+                    Long makerSettlementAmount = paymentAmount - pgFee - platformFee;
+
+                    String settlementStatus = settlementStatusMap.getOrDefault(projectIdVal, SettlementStatus.PENDING).name();
+
+                    return RevenueDetailDto.builder()
+                            .date(dateStr)
+                            .projectId(projectIdVal)
+                            .projectName(projectName)
+                            .makerName(makerName)
+                            .paymentAmount(paymentAmount)
+                            .pgFee(pgFee)
+                            .platformFee(platformFee)
+                            .makerSettlementAmount(makerSettlementAmount)
+                            .settlementStatus(settlementStatus)
+                            .build();
+                })
+                .toList();
+    }
 
     // TODO: Phase 5에서 구현
     // @Override
