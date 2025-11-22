@@ -522,8 +522,9 @@ public class StatisticsServiceImpl implements StatisticsService {
         List<CategoryItemDto> categories = categoryStats.stream()
                 .limit(4)
                 .map(row -> {
-                    // Object[] {카테고리(STRING), 총액(LONG), 프로젝트수(LONG), 주문건수(LONG)}
-                    String category = (String) row[0];
+                    // Object[] {카테고리(Enum), 총액(LONG), 프로젝트수(LONG), 주문건수(LONG)}
+                    var categoryEnum = (com.moa.backend.domain.project.entity.Category) row[0];
+                    String category = categoryEnum.name();
                     Long fundingAmount = ((Number) row[1]).longValue();
                     Long projectCount = ((Number) row[2]).longValue();
                     Long orderCount = ((Number) row[3]).longValue();
