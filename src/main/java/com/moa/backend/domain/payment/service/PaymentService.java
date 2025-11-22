@@ -1,5 +1,7 @@
 package com.moa.backend.domain.payment.service;
 
+import com.moa.backend.domain.notification.entity.NotificationType;
+import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.order.entity.Order;
 import com.moa.backend.domain.order.repository.OrderRepository;
 import com.moa.backend.domain.payment.entity.Payment;
@@ -32,6 +34,7 @@ public class PaymentService {
     private final TossPaymentsClient tossClient;
     private final ProjectWalletService projectWalletService;
     private final PlatformWalletService platformWalletService;
+    private final NotificationService notificationService;
 
     /**
      * 결제 승인 처리
@@ -101,6 +104,15 @@ public class PaymentService {
         order.markPaid();
         orderRepository.save(order);
 
+        Long receiverId = order.getUser().getId();
+        notificationService.send(
+                receiverId,
+                "결제 완료",
+                "[" + order.getProject().getTitle() + "} 의 결제가 완료되었습니다.",
+                NotificationType.SUPPORTER
+        );
+
+
         // Wallet 동기화
         Long grossAmount = payment.getAmount();
         Long pgFee = MoneyCalculator.percentageOf(grossAmount, 0.05);
@@ -123,6 +135,16 @@ public class PaymentService {
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND,
                         "결제를 찾을 수 없습니다: " + paymentId));
         executeCancel(payment, payment.getOrder(), reason);
+
+        Order order = payment.getOrder();
+        Long receiverId = order.getUser().getId();
+
+        notificationService.send(
+                receiverId,
+                "결제 취소",
+                "[" + order.getProject().getTitle() + "] 결제가 취소되었습니다.\n사유: " + reason,
+                NotificationType.SUPPORTER
+        );
     }
 
     /**

@@ -64,6 +64,10 @@ public enum ErrorCode {
     SETTLEMENT_NOT_READY("SET-410", HttpStatus.CONFLICT, "정산 상태가 요구 조건을 충족하지 않습니다."),
     ALREADY_PROCESSED("COMM-409-02", HttpStatus.CONFLICT, "이미 처리된 요청입니다."),
 
+    //notification
+    NOTIFICATION_NOT_FOUND("NOT-404", HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다."),
+    NOTIFICATION_NOT_READ("NOT-403", HttpStatus.FORBIDDEN, "알림을 읽을 권한이 없습니다."),
+
     // 서버 내부 오류
     INTERNAL_ERROR("SYS-500", HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
 

@@ -1,5 +1,7 @@
 package com.moa.backend.domain.admin.service;
 
+import com.moa.backend.domain.notification.entity.NotificationType;
+import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
 import com.moa.backend.domain.project.dto.ProjectDetailResponse;
 import com.moa.backend.domain.admin.dto.ProjectStatusResponse;
@@ -26,6 +28,7 @@ public class AdminServiceImpl implements AdminService {
 
     private final ProjectRepository projectRepository;
     private final ProjectWalletService projectWalletService;
+    private final NotificationService notificationService;
 
 
     //프로젝트 승인
@@ -50,6 +53,16 @@ public class AdminServiceImpl implements AdminService {
 
         projectRepository.save(project);
         projectWalletService.createForProject(project);
+
+        // 메이커에게 승인 알림
+        Long makerUserId = project.getMaker().getOwner().getId();
+
+        notificationService.send(
+                makerUserId,
+                "프로젝트 심사 승인",
+                "[" + project.getTitle() + "] 의 프로젝트가 심사에서 승인되었습니다.",
+                NotificationType.MAKER
+        );
 
         return ProjectStatusResponse.from(project);
     }
@@ -79,6 +92,17 @@ public class AdminServiceImpl implements AdminService {
         project.setRejectedAt(LocalDateTime.now());
 
         projectRepository.save(project);
+
+        // 메이커에게 반려 알림
+        Long makerUserId = project.getMaker().getOwner().getId();
+
+        notificationService.send(
+                makerUserId,
+                "프로젝트 심사 거절",
+                "[" + project.getTitle() + "] 프로젝트 심사가 거절되었습니다.\n사유: " + reason,
+                NotificationType.MAKER
+        );
+
         return ProjectStatusResponse.from(project);
     }
 

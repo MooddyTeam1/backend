@@ -81,7 +81,9 @@ public class SecurityConfig {
                                 "/project/id/**",
                                 "/uploads/**",
                                 // 🔥 새로 추가한 공개 프로젝트 홈용 API
-                                "/public/projects/**"
+                                "/public/projects/**",
+                                "/notifications/subscribe",
+                                "/notifications/test/**"
 
                         ).permitAll()
                         .anyRequest().authenticated()

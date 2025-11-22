@@ -2,6 +2,8 @@ package com.moa.backend.domain.project.service;
 
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
+import com.moa.backend.domain.notification.entity.NotificationType;
+import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.project.dto.CreateProject.CreateProjectRequest;
 import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
 import com.moa.backend.domain.project.dto.ProjectListResponse;
@@ -11,6 +13,8 @@ import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.reward.dto.RewardRequest;
 import com.moa.backend.domain.reward.factory.RewardFactory;
+import com.moa.backend.domain.user.entity.User;
+import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +32,8 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     private final ProjectRepository projectRepository;
     private final MakerRepository makerRepository;
     private final RewardFactory rewardFactory;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     // 프로젝트 생성
     @Override
@@ -70,6 +77,19 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         }
 
         Project saved = projectRepository.save(project);
+
+        // 관리자에게 프로젝트 심사요청 알림
+        List<User> admins = userRepository.findByRole("ADMIN");
+
+        admins.forEach(admin -> {
+            notificationService.send(
+                    admin.getId(),
+                    "프로젝트 심사 요청",
+                    "[" + project.getTitle() + "] 신규 프로젝트가 생성되어 심사를 요청했습니다.",
+                    NotificationType.ADMIN
+            );
+        });
+
         return CreateProjectResponse.from(saved);
     }
 

@@ -113,4 +113,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     AND o.deliveryStartedAt <= :deliveryDate
     """)
     List<Order> findOrdersToDelivered(LocalDateTime deliveryDate);
+
+    /**
+     *특정 프로젝트에 대해 현재까지 결제(지불) 완료된 모금액 총합을 조회한다.
+     */
+    @Query("""
+       SELECT COALESCE(SUM(o.totalAmount), 0)
+       FROM Order o
+       WHERE o.project.id = :projectId
+       AND o.status = 'PAID'
+       """)
+    Long getTotalFundedAmount(Long projectId);
 }
