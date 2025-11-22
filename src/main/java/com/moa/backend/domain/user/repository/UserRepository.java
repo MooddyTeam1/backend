@@ -40,4 +40,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     );
 
     List<User> findByRole(String role); // 역할로 유저 조회
+
+    // ========== 통계 API용 메서드 ==========
+
+    /**
+     * 기간별 신규 가입자 수
+     */
+    Long countByCreatedAtBetween(
+            java.time.LocalDateTime startDateTime,
+            java.time.LocalDateTime endDateTime
+    );
 }

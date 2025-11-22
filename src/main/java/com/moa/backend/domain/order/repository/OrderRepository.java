@@ -84,44 +84,173 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 배송 예정일이 오늘인 주문 목록 조회.
      */
     @Query("""
-    SELECT DISTINCT o FROM Order o
-    JOIN o.orderItems oi
-    JOIN oi.reward r
-    WHERE o.deliveryStatus = 'NONE'
-    AND r.estimatedDeliveryDate = :today
-    """)
+            SELECT DISTINCT o FROM Order o
+            JOIN o.orderItems oi
+            JOIN oi.reward r
+            WHERE o.deliveryStatus = 'NONE'
+            AND r.estimatedDeliveryDate = :today
+            """)
     List<Order> findOrdersToPrepare(LocalDate today);
 
     /**
      * 배송 준비중인 주문 목록 조회.
      */
     @Query("""
-    SELECT DISTINCT o FROM Order o
-    JOIN o.orderItems oi
-    JOIN oi.reward r
-    WHERE o.deliveryStatus = 'PREPARING'
-    AND r.estimatedDeliveryDate = :shippingDate
-    """)
+            SELECT DISTINCT o FROM Order o
+            JOIN o.orderItems oi
+            JOIN oi.reward r
+            WHERE o.deliveryStatus = 'PREPARING'
+            AND r.estimatedDeliveryDate = :shippingDate
+            """)
     List<Order> findOrdersToShipping(LocalDate shippingDate);
 
     /**
      * 배송 중인 주문 목록 조회.
      */
     @Query("""
-    SELECT DISTINCT o FROM Order o
-    WHERE o.deliveryStatus = 'SHIPPING'
-    AND o.deliveryStartedAt <= :deliveryDate
-    """)
+            SELECT DISTINCT o FROM Order o
+            WHERE o.deliveryStatus = 'SHIPPING'
+            AND o.deliveryStartedAt <= :deliveryDate
+            """)
     List<Order> findOrdersToDelivered(LocalDateTime deliveryDate);
 
     /**
-     *특정 프로젝트에 대해 현재까지 결제(지불) 완료된 모금액 총합을 조회한다.
+     * 특정 프로젝트에 대해 현재까지 결제(지불) 완료된 모금액 총합을 조회한다.
      */
     @Query("""
-       SELECT COALESCE(SUM(o.totalAmount), 0)
-       FROM Order o
-       WHERE o.project.id = :projectId
-       AND o.status = 'PAID'
-       """)
+            SELECT COALESCE(SUM(o.totalAmount), 0)
+            FROM Order o
+            WHERE o.project.id = :projectId
+            AND o.status = 'PAID'
+            """)
     Long getTotalFundedAmount(Long projectId);
+
+    // ========== 통계 API용 메서드 ==========
+
+    /**
+     * 기간별 PAID 주문 총액 합계
+     */
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o " +
+            "WHERE o.status = :status " +
+            "AND o.createdAt BETWEEN :startDateTime AND :endDateTime")
+    Optional<Long> sumTotalAmountByStatusAndCreatedAtBetween(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
+
+    /**
+     * 기간별 주문 건수
+     */
+    Long countByStatusAndCreatedAtBetween(
+            OrderStatus status,
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
+    );
+
+    /**
+     * 전체 기간 활성 서포터 수 (PAID 주문이 있는 고유 사용자 수)
+     */
+    @Query("SELECT COUNT(DISTINCT o.user.id) FROM Order o WHERE o.status = :status")
+    Long countDistinctUserByStatus(@Param("status") OrderStatus status);
+
+    /**
+     * 특정 시점 이전의 활성 서포터 수
+     */
+    @Query("SELECT COUNT(DISTINCT o.user.id) FROM Order o " +
+            "WHERE o.status = :status AND o.createdAt < :beforeDateTime")
+    Long countDistinctUserByStatusAndCreatedAtBefore(
+            @Param("status") OrderStatus status,
+            @Param("beforeDateTime") LocalDateTime beforeDateTime
+    );
+
+    /**
+     * 일별 통계 (날짜, 펀딩액, 주문 건수)
+     * 결과: Object[] {날짜(DATE), 총액(LONG), 건수(LONG)}
+     */
+    @Query("""
+            SELECT DATE(o.createdAt) as date, 
+                   COALESCE(SUM(o.totalAmount), 0) as totalAmount,
+                   COUNT(o) as orderCount
+            FROM Order o
+            WHERE o.status = :status
+            AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+            GROUP BY DATE(o.createdAt)
+            ORDER BY DATE(o.createdAt)
+            """)
+    List<Object[]> findDailyStatsByStatusAndCreatedAtBetween(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
+
+    /**
+     * 일별 프로젝트 수 (주문이 발생한 고유 프로젝트 기준)
+     * 결과: Object[] {날짜(DATE), 프로젝트수(LONG)}
+     */
+    @Query("""
+            SELECT DATE(o.createdAt) as date,
+                   COUNT(DISTINCT p.id) as projectCount
+            FROM Order o
+            JOIN o.project p
+            WHERE o.status = :status
+            AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+            GROUP BY DATE(o.createdAt)
+            ORDER BY DATE(o.createdAt)
+            """)
+    List<Object[]> findDailyProjectCountByStatusAndCreatedAtBetween(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
+
+    /**
+     * 카테고리별 통계 (카테고리, 펀딩액, 프로젝트 수, 주문 건수)
+     * 결과: Object[] {카테고리(STRING), 총액(LONG), 프로젝트수(LONG), 주문건수(LONG)}
+     */
+    @Query("""
+            SELECT p.category as category,
+                   COALESCE(SUM(o.totalAmount), 0) as totalAmount,
+                   COUNT(DISTINCT p.id) as projectCount,
+                   COUNT(o) as orderCount
+            FROM Order o
+            JOIN o.project p
+            WHERE o.status = :status
+            AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+            GROUP BY p.category
+            ORDER BY COALESCE(SUM(o.totalAmount), 0) DESC
+            """)
+    List<Object[]> findCategoryStatsByStatusAndCreatedAtBetween(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
+
+    /**
+     * 프로젝트별 펀딩 통계 (Top N)
+     * 결과: Object[] {프로젝트ID(LONG), 프로젝트명(STRING), 메이커명(STRING),
+     * 총펀딩액(LONG), 목표금액(LONG), 달성률(DOUBLE), 남은일수(INT)}
+     */
+    @Query("""
+            SELECT p.id as projectId,
+                   p.title as projectName,
+                   m.name as makerName,
+                   COALESCE(SUM(o.totalAmount), 0) as fundingAmount,
+                   p.goalAmount as goalAmount,
+                   (COALESCE(SUM(o.totalAmount), 0) * 100.0 / p.goalAmount) as achievementRate,
+                   DATEDIFF(p.endDate, CURRENT_DATE) as remainingDays
+            FROM Order o
+            JOIN o.project p
+            JOIN p.maker m
+            WHERE o.status = :status
+            AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+            GROUP BY p.id, p.title, m.name, p.goalAmount, p.endDate
+            ORDER BY COALESCE(SUM(o.totalAmount), 0) DESC
+            """)
+    List<Object[]> findTopProjectsByFundingAmount(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            Pageable pageable
+    );
 }
