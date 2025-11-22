@@ -1,4 +1,18 @@
--- 개발용 H2 시드 데이터 (통계 테스트용 확장)
+-- 개발용 H2 시드 데이터 (통계/정산/지갑 확인용 풀 세트)
+-- 용도: /api/admin/statistics*, 정산/지갑 화면, 스케줄러(NPE 방지) 로컬 스모크 테스트
+-- 계정:
+--   서포터: 1000~1002 (user1~3@test.com), 신규 1010(newuser1@test.com), 1011(newuser2@test.com)
+--   메이커: 1003(maker1@test.com), 1004(maker2@test.com)
+--   관리자: 1005(admin@test.com / test1234)
+-- 프로젝트: 1200~1205 (LIVE/ENDED/SCHEDULED 섞임, 카테고리 다양)
+-- 주문/결제/환불: orders 1400~1406, payments 1500~1506, refunds 1502(취소 환불)
+-- 수수료: platform_wallet_transactions 7건 (수수료 99,000, 환불 -18,000 반영)
+-- 정산: settlements 5건 (1201 부분정산: 1차 150,000 지급, 잔액 232,500 대기)
+-- 지갑:
+--   project_wallets/transactions: 1201 부분정산 흐름 + 기타 입금
+--   maker_wallets/transactions: 1003 available 379,500 / pending 419,500, 1004 pending 348,500
+--   platform_wallets: balance 99,000
+-- 리셋: TRUNCATE 후 insert, 시퀀스/IDENTITY RESTART 포함
 -- 비밀번호 "test1234"의 bcrypt 해시: $2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC
 
 SET REFERENTIAL_INTEGRITY FALSE;
@@ -87,13 +101,20 @@ INSERT INTO makers (id, owner_user_id, name, business_name, business_number, rep
    '["Kotlin","LoRa","AWS IoT"]',
    TIMESTAMP '2024-11-08 11:10:00', TIMESTAMP '2024-11-12 13:50:00');
 
-INSERT INTO maker_wallets (maker_id, available_balance, pending_balance, total_earned, total_withdrawn, updated_at) VALUES
-  (1003, 0, 0, 0, 0, TIMESTAMP '2024-11-12 13:45:00'),
-  (1004, 0, 0, 0, 0, TIMESTAMP '2024-11-12 13:50:00');
+-- 메이커 지갑 (정산 대기 금액 반영, 부분정산 포함)
+-- 1003: 1202(완료 229,500) + 1201(1차 지급 150,000, 잔액 232,500 대기) + 1205(대기 187,000)
+--      → available=379,500 / pending=419,500 / total_earned=799,000
+-- 1004: 1203(대기 306,000) + 1204(대기 42,500)
+INSERT INTO maker_wallets (id, maker_id, available_balance, pending_balance, total_earned, total_withdrawn, updated_at) VALUES
+  (1, 1003, 379500, 419500, 799000, 0, TIMESTAMP '2025-11-12 13:45:00'),
+  (2, 1004, 0,      348500, 348500, 0, TIMESTAMP '2025-11-12 13:50:00');
 
 -- 플랫폼 지갑 싱글턴
+-- 플랫폼 지갑 (수수료만 반영: 총 99,000 = 10% 수수료 - 환불 18,000)
 INSERT INTO platform_wallets (id, total_balance, total_project_deposit, total_maker_payout, total_platform_fee, created_at, updated_at)
-VALUES (1, 0, 0, 0, 0, TIMESTAMP '2024-11-12 09:00:00', TIMESTAMP '2024-11-12 09:00:00');
+VALUES (1, 99000, 1170000, 0, 99000, TIMESTAMP '2024-11-12 09:00:00', TIMESTAMP '2024-11-12 09:00:00');
+
+
 
 -- 프로젝트 (기존 + 위험/기회 샘플)
 INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount, start_at, end_at,
@@ -163,6 +184,15 @@ VALUES
    '["https://cdn.moa.dev/projects/homelight/gallery-1.png"]',
    TIMESTAMP '2025-10-19 09:00:00', TIMESTAMP '2025-11-06 09:00:00',
    TIMESTAMP '2025-11-01 09:00:00', TIMESTAMP '2025-12-15 23:59:00');
+
+-- 프로젝트 지갑 (정산 스케줄러/지갑 화면용 샘플 금액)
+-- 1201은 부분정산 반영: 총 주문액 450k 중 수수료/환불 제외한 net 382.5k 기준으로 1차 150k 지급 → released=150k, pending_release=232.5k, escrow에는 남은 net(232.5k)을 표시
+INSERT INTO project_wallets (id, escrow_balance, pending_release, released_total, status, updated_at, project_id) VALUES
+  (1, 232500, 232500, 150000, 'ACTIVE', TIMESTAMP '2025-11-12 11:10:00', 1201),
+  (2, 270000, 0, 0, 'ACTIVE', TIMESTAMP '2025-10-05 12:00:00', 1202),
+  (3, 180000, 0, 0, 'ACTIVE', TIMESTAMP '2025-11-12 11:20:00', 1203),
+  (4, 50000,  0, 0, 'ACTIVE', TIMESTAMP '2025-11-05 09:00:00', 1204),
+  (5, 220000, 0, 0, 'ACTIVE', TIMESTAMP '2025-11-06 09:00:00', 1205);
 
 INSERT INTO project_tag (project_id, tag) VALUES
   (1200, '조명'), (1200, '스마트홈'),
@@ -242,6 +272,21 @@ INSERT INTO platform_wallet_transactions (wallet_id, type, amount, balance_after
   (1, 'PLATFORM_FEE_IN', 5000, 77000, 1204, TIMESTAMP '2025-11-05 10:03:00', '테이스트키트 수수료 10%'),
   (1, 'PLATFORM_FEE_IN', 22000, 99000, 1205, TIMESTAMP '2025-11-06 11:06:00', '홈라이트 수수료 10%');
 
+-- 프로젝트 지갑 트랜잭션 (DEPOSIT/REFUND 예시)
+INSERT INTO project_wallet_transactions (project_wallet_id, amount, balance_after, type, description, created_at, order_id) VALUES
+  (1, 150000, 150000, 'DEPOSIT', 'ORD-20251101-AAA 입금', TIMESTAMP '2025-11-01 10:18:00', 1400),
+  (1, 300000, 450000, 'DEPOSIT', 'ORD-20251102-BBB 입금', TIMESTAMP '2025-11-02 11:33:00', 1401),
+  (1, -67500, 382500, 'RELEASE_PENDING', '수수료 차감(플랫폼+PG)', TIMESTAMP '2025-11-02 11:34:00', NULL),
+  (1, -150000, 232500, 'RELEASE', '1차 정산 지급', TIMESTAMP '2025-11-08 10:00:00', NULL),
+
+  (2, 270000, 270000, 'DEPOSIT', 'ORD-20251005-DDD 입금', TIMESTAMP '2025-10-05 09:18:00', 1403),
+
+  (3, 180000, 180000, 'DEPOSIT', 'ORD-20251104-EEE 입금', TIMESTAMP '2025-11-04 09:13:00', 1404),
+
+  (4, 50000, 50000, 'DEPOSIT', 'ORD-20251105-FFF 입금', TIMESTAMP '2025-11-05 10:03:00', 1405),
+
+  (5, 220000, 220000, 'DEPOSIT', 'ORD-20251106-GGG 입금', TIMESTAMP '2025-11-06 11:06:00', 1406);
+
 -- 정산 (완료/진행/대기)
 INSERT INTO settlements (id, project_id, maker_id, total_order_amount, toss_fee_amount, platform_fee_amount, net_amount,
                          first_payment_amount, first_payment_status, first_payment_at,
@@ -252,9 +297,9 @@ INSERT INTO settlements (id, project_id, maker_id, total_order_amount, toss_fee_
    129500, 'DONE', TIMESTAMP '2025-10-20 10:00:00',
    'COMPLETED', 0, TIMESTAMP '2025-10-05 09:20:00', TIMESTAMP '2025-10-20 10:00:00'),
   (1601, 1201, 1003, 450000, 22500, 45000, 382500,
-   0, 'PENDING', NULL,
-   382500, 'PENDING', NULL,
-   'PENDING', 0, TIMESTAMP '2025-11-02 11:35:00', TIMESTAMP '2025-11-02 11:35:00'),
+   150000, 'DONE', TIMESTAMP '2025-11-08 10:00:00',
+   232500, 'PENDING', NULL,
+   'FIRST_PAID', 0, TIMESTAMP '2025-11-02 11:35:00', TIMESTAMP '2025-11-08 10:00:00'),
   (1602, 1203, 1004, 360000, 18000, 36000, 306000,
    0, 'PENDING', NULL,
    306000, 'PENDING', NULL,
@@ -267,6 +312,11 @@ INSERT INTO settlements (id, project_id, maker_id, total_order_amount, toss_fee_
    0, 'PENDING', NULL,
    187000, 'PENDING', NULL,
    'PENDING', 0, TIMESTAMP '2025-11-06 11:07:00', TIMESTAMP '2025-11-06 11:07:00');
+
+-- 메이커 지갑 트랜잭션 (정산 1/2차 샘플)
+INSERT INTO wallet_transactions (wallet_id, amount, balance_after, type, description, created_at, settlement_id) VALUES
+  (1, 229500, 229500, 'SETTLEMENT_FINAL', '루멘노트 최종 정산 완료', TIMESTAMP '2025-10-20 10:00:00', 1600),
+  (1, 150000, 379500, 'SETTLEMENT_FIRST', '펄스핏 1차 정산 완료', TIMESTAMP '2025-11-08 10:00:00', 1601);
 
 -- 시퀀스 기반 ID 테이블 (H2는 SEQUENCE 이름이 생성됨)
 ALTER SEQUENCE user_id_seq RESTART WITH 2000;
