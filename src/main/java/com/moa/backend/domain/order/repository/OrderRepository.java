@@ -207,14 +207,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 결과: Object[] {날짜(DATE), 총액(LONG), 건수(LONG)}
      */
     @Query("""
-        SELECT DATE(o.createdAt) as date, 
+        SELECT CAST(o.createdAt AS date) as date, 
                COALESCE(SUM(o.totalAmount), 0) as totalAmount,
                COUNT(o) as orderCount
         FROM Order o
         WHERE o.status = :status
         AND o.createdAt BETWEEN :startDateTime AND :endDateTime
-        GROUP BY DATE(o.createdAt)
-        ORDER BY DATE(o.createdAt)
+        GROUP BY CAST(o.createdAt AS date)
+        ORDER BY CAST(o.createdAt AS date)
         """)
     List<Object[]> findDailyStatsByStatusAndCreatedAtBetween(
             @Param("status") OrderStatus status,
@@ -227,14 +227,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 결과: Object[] {날짜(DATE), 프로젝트수(LONG)}
      */
     @Query("""
-        SELECT DATE(o.createdAt) as date,
+        SELECT CAST(o.createdAt AS date) as date,
                COUNT(DISTINCT p.id) as projectCount
         FROM Order o
         JOIN o.project p
         WHERE o.status = :status
         AND o.createdAt BETWEEN :startDateTime AND :endDateTime
-        GROUP BY DATE(o.createdAt)
-        ORDER BY DATE(o.createdAt)
+        GROUP BY CAST(o.createdAt AS date)
+        ORDER BY CAST(o.createdAt AS date)
         """)
     List<Object[]> findDailyProjectCountByStatusAndCreatedAtBetween(
             @Param("status") OrderStatus status,
@@ -276,7 +276,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                COALESCE(SUM(o.totalAmount), 0) as fundingAmount,
                p.goalAmount as goalAmount,
                (COALESCE(SUM(o.totalAmount), 0) * 100.0 / p.goalAmount) as achievementRate,
-               DATEDIFF(p.endDate, CURRENT_DATE) as remainingDays
+               FUNCTION('timestampdiff', DAY, CURRENT_DATE, p.endDate) as remainingDays
         FROM Order o
         JOIN o.project p
         JOIN p.maker m
@@ -378,7 +378,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 결과: Object[] {date(DATE), projectId, projectName, makerName, totalAmount}
      */
     @Query("""
-        SELECT DATE(o.createdAt) as date,
+        SELECT CAST(o.createdAt AS date) as date,
                p.id,
                p.title,
                m.name,
@@ -390,8 +390,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
           AND o.createdAt BETWEEN :startDateTime AND :endDateTime
           AND (:makerId IS NULL OR m.id = :makerId)
           AND (:projectId IS NULL OR p.id = :projectId)
-        GROUP BY DATE(o.createdAt), p.id, p.title, m.name
-        ORDER BY DATE(o.createdAt), COALESCE(SUM(o.totalAmount), 0) DESC
+        GROUP BY CAST(o.createdAt AS date), p.id, p.title, m.name
+        ORDER BY CAST(o.createdAt AS date), COALESCE(SUM(o.totalAmount), 0) DESC
         """)
     List<Object[]> findRevenueDetailsByDateAndFilters(
             @Param("status") OrderStatus status,
@@ -421,7 +421,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 월별 일자별 통계 (fundingAmount, orderCount, projectCount)
      */
     @Query("""
-        SELECT DATE(o.createdAt) as date,
+        SELECT CAST(o.createdAt AS date) as date,
                COALESCE(SUM(o.totalAmount), 0) as totalAmount,
                COUNT(o) as orderCount,
                COUNT(DISTINCT p.id) as projectCount
@@ -429,8 +429,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         JOIN o.project p
         WHERE o.status = :status
           AND o.createdAt BETWEEN :startDateTime AND :endDateTime
-        GROUP BY DATE(o.createdAt)
-        ORDER BY DATE(o.createdAt)
+        GROUP BY CAST(o.createdAt AS date)
+        ORDER BY CAST(o.createdAt AS date)
         """)
     List<Object[]> findMonthlyDailyStats(
             @Param("status") OrderStatus status,
