@@ -61,6 +61,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             LocalDate end
     );
 
+    List<Project> findByLifecycleStatusAndEndDate(
+            ProjectLifecycleStatus lifecycleStatus,
+            LocalDate date
+    );
+
     /**
      * 펀딩 종료 스케줄러가 처리할 프로젝트 목록 조회.
      * (LIVE + APPROVED + 아직 결과 미정 + 종료일 <= 기준일)

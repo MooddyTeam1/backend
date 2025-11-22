@@ -1,5 +1,7 @@
 package com.moa.backend.domain.wallet.service;
 
+import com.moa.backend.domain.notification.entity.NotificationType;
+import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.order.entity.Order;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.settlement.entity.Settlement;
@@ -25,6 +27,7 @@ public class ProjectWalletService {
 
     private final ProjectWalletRepository projectWalletRepository;
     private final ProjectWalletTransactionRepository transactionRepository;
+    private final NotificationService notificationService;
 
     /**
      * 프로젝트 생성 시 지갑을 함께 만든다.
@@ -116,6 +119,15 @@ public class ProjectWalletService {
 
         log.info("ProjectWallet hold: projectId={}, amount={}, pending={}",
                 project.getId(), amount, wallet.getPendingRelease());
+
+        Long receiverId = project.getMaker().getOwner().getId();
+
+        notificationService.send(
+                receiverId,
+                "정산 예정 안내",
+                "[" + project.getTitle() + "] 프로젝트의 정산(" + amount + "원)이 예정되었습니다.",
+                NotificationType.MAKER
+        );
     }
 
     /**
@@ -142,5 +154,14 @@ public class ProjectWalletService {
 
         log.info("ProjectWallet release: projectId={}, amount={}, balance={}",
                 project.getId(), amount, wallet.getEscrowBalance());
+
+        Long receiverId = project.getMaker().getOwner().getId();
+
+        notificationService.send(
+                receiverId,
+                "정산 지급 완료",
+                "[" + project.getTitle() + "] 정산 금액 " + amount + "원이 지급되었습니다.",
+                NotificationType.MAKER
+        );
     }
 }

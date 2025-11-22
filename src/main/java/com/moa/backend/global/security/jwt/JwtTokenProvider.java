@@ -182,12 +182,12 @@ public class JwtTokenProvider {
         REFRESH
     }
 
-    public String getRoleFromToken(String token) {
+    public Long getUserId(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.get(CLAIM_ROLE, String.class);
+        return extractLongClaim(claims, CLAIM_USER_ID);
     }
 }

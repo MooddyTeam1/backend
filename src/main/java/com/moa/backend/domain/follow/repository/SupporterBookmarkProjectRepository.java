@@ -5,6 +5,7 @@ import com.moa.backend.domain.follow.entity.SupporterBookmarkProject;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.user.entity.SupporterProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,4 +24,14 @@ public interface SupporterBookmarkProjectRepository
 
     // 한글 설명: 서포터가 찜한 모든 프로젝트 목록 조회용.
     List<SupporterBookmarkProject> findBySupporter(SupporterProfile supporter);
+
+    /**
+     * 해당 프로젝트를 북마크한 모든 서포터의 userId 목록
+     */
+    @Query("""
+        SELECT b.supporter.user.id
+        FROM SupporterBookmarkProject b
+        WHERE b.project.id = :projectId
+    """)
+    List<Long> findSupporterIdsByProject(Long projectId);
 }
