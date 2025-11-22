@@ -3,6 +3,7 @@ package com.moa.backend.domain.admin.controller;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.DashboardSummaryDto;
 import com.moa.backend.domain.admin.dto.statistics.daily.DailyStatisticsDto;
 import com.moa.backend.domain.admin.dto.statistics.revenue.RevenueReportDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.MonthlyReportDto;
 import com.moa.backend.domain.admin.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,5 +43,13 @@ public class StatisticsAdminController {
             @RequestParam(value = "projectId", required = false) Long projectId
     ) {
         return statisticsService.getRevenueReport(startDate, endDate, makerId, projectId);
+    }
+
+    @GetMapping("/monthly")
+    public MonthlyReportDto getMonthlyReport(
+            @RequestParam("targetMonth") String targetMonth,
+            @RequestParam(value = "compareMonth", required = false) String compareMonth
+    ) {
+        return statisticsService.getMonthlyReport(targetMonth, compareMonth);
     }
 }

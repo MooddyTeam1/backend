@@ -1,13 +1,5 @@
 package com.moa.backend.domain.admin.service;
 
-import com.moa.backend.domain.admin.dto.statistics.daily.DailyStatisticsDto;
-import com.moa.backend.domain.admin.dto.statistics.daily.HourlyChartDto;
-import com.moa.backend.domain.admin.dto.statistics.daily.HourlyDataDto;
-import com.moa.backend.domain.admin.dto.statistics.daily.MakerDetailDto;
-import com.moa.backend.domain.admin.dto.statistics.daily.PaymentStatisticsDto;
-import com.moa.backend.domain.admin.dto.statistics.daily.ProjectActivityDto;
-import com.moa.backend.domain.admin.dto.statistics.daily.ProjectDetailDto;
-import com.moa.backend.domain.admin.dto.statistics.daily.TrafficDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.AlertDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.CategoryItemDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.CategoryPerformanceDto;
@@ -17,6 +9,25 @@ import com.moa.backend.domain.admin.dto.statistics.dashboard.KpiSummaryDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.TopProjectDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.TrendChartDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.TrendDataDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.DailyStatisticsDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.HourlyChartDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.HourlyDataDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.MakerDetailDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.PaymentStatisticsDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.ProjectActivityDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.ProjectDetailDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.TrafficDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.CategorySuccessItemDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.CategorySuccessRateDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.GoalAmountRangeDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.GoalRangeItemDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.MonthlyKpiDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.MonthlyReportDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.MonthlyTrendChartDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.MonthlyTrendDataDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.RetentionDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.SuccessRateDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.SuccessRateItemDto;
 import com.moa.backend.domain.admin.dto.statistics.revenue.FeePolicyAnalysisDto;
 import com.moa.backend.domain.admin.dto.statistics.revenue.FeePolicyItemDto;
 import com.moa.backend.domain.admin.dto.statistics.revenue.MakerSettlementSummaryDto;
@@ -25,6 +36,7 @@ import com.moa.backend.domain.admin.dto.statistics.revenue.RevenueDetailDto;
 import com.moa.backend.domain.admin.dto.statistics.revenue.RevenueReportDto;
 import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.order.repository.OrderRepository;
+import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.payment.entity.PaymentStatus;
 import com.moa.backend.domain.payment.entity.RefundStatus;
 import com.moa.backend.domain.payment.repository.PaymentRepository;
@@ -64,6 +76,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final OrderRepository orderRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final MakerRepository makerRepository;
     private final SettlementRepository settlementRepository;
     private final PaymentRepository paymentRepository;
     private final PlatformWalletTransactionRepository platformWalletTransactionRepository;
@@ -737,9 +750,210 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .toList();
     }
 
-    // TODO: Phase 5에서 구현
-    // @Override
-    // public MonthlyReportDto getMonthlyReport(...) { }
+    /**
+     * 월별 리포트 조회
+     */
+    @Override
+    public MonthlyReportDto getMonthlyReport(String targetMonth, String compareMonth) {
+        LocalDate target = parseMonth(targetMonth);
+        LocalDate compare = (compareMonth == null || compareMonth.isBlank())
+                ? target.minusMonths(1)
+                : parseMonth(compareMonth);
+
+        LocalDateTime targetStart = target.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime targetEnd = target.withDayOfMonth(target.lengthOfMonth()).atTime(23, 59, 59);
+        LocalDateTime compareStart = compare.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime compareEnd = compare.withDayOfMonth(compare.lengthOfMonth()).atTime(23, 59, 59);
+
+        MonthlyKpiDto kpi = buildMonthlyKpi(targetStart, targetEnd, compareStart, compareEnd);
+        MonthlyTrendChartDto trendChart = buildMonthlyTrendChart(targetStart, targetEnd);
+        SuccessRateDto successRate = buildSuccessRate(target);
+        GoalAmountRangeDto goalAmountRange = buildGoalAmountRange(target);
+        CategorySuccessRateDto categorySuccessRate = buildCategorySuccessRate(targetStart, targetEnd);
+        RetentionDto retention = buildRetention(targetStart, targetEnd);
+
+        return MonthlyReportDto.builder()
+                .targetMonth(formatMonth(target))
+                .compareMonth(formatMonth(compare))
+                .kpi(kpi)
+                .trendChart(trendChart)
+                .successRate(successRate)
+                .goalAmountRange(goalAmountRange)
+                .categorySuccessRate(categorySuccessRate)
+                .retention(retention)
+                .build();
+    }
+
+    private LocalDate parseMonth(String monthStr) {
+        try {
+            return LocalDate.parse(monthStr + "-01");
+        } catch (Exception e) {
+            throw new IllegalArgumentException("targetMonth/compareMonth는 yyyy-MM 형식이어야 합니다.");
+        }
+    }
+
+    private String formatMonth(LocalDate month) {
+        return String.format("%d-%02d", month.getYear(), month.getMonthValue());
+    }
+
+    private MonthlyKpiDto buildMonthlyKpi(LocalDateTime targetStart, LocalDateTime targetEnd,
+                                          LocalDateTime compareStart, LocalDateTime compareEnd) {
+        List<Object[]> target = orderRepository.findMonthlyFundingAndCount(OrderStatus.PAID, targetStart, targetEnd);
+        List<Object[]> compare = orderRepository.findMonthlyFundingAndCount(OrderStatus.PAID, compareStart, compareEnd);
+
+        Long targetAmount = target.isEmpty() ? 0L : ((Number) target.get(0)[0]).longValue();
+        Long compareAmount = compare.isEmpty() ? 0L : ((Number) compare.get(0)[0]).longValue();
+
+        KpiItemDto totalFunding = buildKpiItem(targetAmount, compareAmount);
+
+        Long successProjectCount = projectRepository.countByResultStatusAndEndDateBetween(
+                com.moa.backend.domain.project.entity.ProjectResultStatus.SUCCESS,
+                targetStart.toLocalDate(),
+                targetEnd.toLocalDate()
+        );
+        Long failedProjectCount = projectRepository.countByResultStatusAndEndDateBetween(
+                com.moa.backend.domain.project.entity.ProjectResultStatus.FAILED,
+                targetStart.toLocalDate(),
+                targetEnd.toLocalDate()
+        );
+
+        Long newMakerCount = makerRepository.countByCreatedAtBetween(targetStart, targetEnd);
+        Long newSupporterCount = userRepository.countByCreatedAtBetween(targetStart, targetEnd);
+
+        return MonthlyKpiDto.builder()
+                .totalFundingAmount(totalFunding)
+                .successProjectCount(successProjectCount.intValue())
+                .failedProjectCount(failedProjectCount.intValue())
+                .newMakerCount(newMakerCount.intValue())
+                .newSupporterCount(newSupporterCount.intValue())
+                .build();
+    }
+
+    private MonthlyTrendChartDto buildMonthlyTrendChart(LocalDateTime targetStart, LocalDateTime targetEnd) {
+        List<Object[]> rows = orderRepository.findMonthlyDailyStats(OrderStatus.PAID, targetStart, targetEnd);
+        List<MonthlyTrendDataDto> data = rows.stream()
+                .map(row -> {
+                    java.sql.Date sqlDate = (java.sql.Date) row[0];
+                    LocalDate date = sqlDate.toLocalDate();
+                    Long fundingAmount = ((Number) row[1]).longValue();
+                    Integer orderCount = ((Number) row[2]).intValue();
+                    Integer projectCount = ((Number) row[3]).intValue();
+
+                    return MonthlyTrendDataDto.builder()
+                            .date(String.format("%02d/%02d", date.getMonthValue(), date.getDayOfMonth()))
+                            .fundingAmount(fundingAmount)
+                            .projectCount(projectCount)
+                            .orderCount(orderCount)
+                            .build();
+                })
+                .toList();
+
+        return MonthlyTrendChartDto.builder()
+                .data(data)
+                .build();
+    }
+
+    private SuccessRateDto buildSuccessRate(LocalDate targetMonth) {
+        LocalDate start = targetMonth.withDayOfMonth(1);
+        LocalDate end = targetMonth.withDayOfMonth(targetMonth.lengthOfMonth());
+
+        Long startTotal = projectRepository.countByStartDateBetween(start, end);
+        Long startSuccess = projectRepository.countByStartDateBetweenAndResultStatus(
+                start, end, com.moa.backend.domain.project.entity.ProjectResultStatus.SUCCESS);
+
+        Long endTotal = projectRepository.countByEndDateBetween(start, end);
+        Long endSuccess = projectRepository.countByEndDateBetweenAndResultStatus(
+                start, end, com.moa.backend.domain.project.entity.ProjectResultStatus.SUCCESS);
+
+        SuccessRateItemDto startBased = SuccessRateItemDto.builder()
+                .successCount(startSuccess.intValue())
+                .totalCount(startTotal.intValue())
+                .rate(startTotal == 0 ? 0.0 : Math.round((startSuccess * 100.0 / startTotal) * 10.0) / 10.0)
+                .build();
+
+        SuccessRateItemDto endBased = SuccessRateItemDto.builder()
+                .successCount(endSuccess.intValue())
+                .totalCount(endTotal.intValue())
+                .rate(endTotal == 0 ? 0.0 : Math.round((endSuccess * 100.0 / endTotal) * 10.0) / 10.0)
+                .build();
+
+        return SuccessRateDto.builder()
+                .startBased(startBased)
+                .endBased(endBased)
+                .build();
+    }
+
+    private GoalAmountRangeDto buildGoalAmountRange(LocalDate targetMonth) {
+        LocalDate start = targetMonth.withDayOfMonth(1);
+        LocalDate end = targetMonth.withDayOfMonth(targetMonth.lengthOfMonth());
+
+        List<GoalRangeItemDto> ranges = new ArrayList<>();
+        ranges.add(calculateGoalRange(start, end, 0L, 999_999L, "소액 (100만원 미만)"));
+        ranges.add(calculateGoalRange(start, end, 1_000_000L, 9_999_999L, "중간 (100~1000만원)"));
+        ranges.add(calculateGoalRange(start, end, 10_000_000L, Long.MAX_VALUE, "고액 (1000만원 이상)"));
+
+        return GoalAmountRangeDto.builder()
+                .ranges(ranges)
+                .build();
+    }
+
+    private GoalRangeItemDto calculateGoalRange(LocalDate start, LocalDate end, Long minGoal, Long maxGoal, String name) {
+        Long total = projectRepository.countByGoalAmountBetweenAndEndDateBetween(minGoal, maxGoal, start, end);
+        Long success = projectRepository.countByGoalAmountBetweenAndEndDateBetweenAndResultStatus(
+                minGoal, maxGoal, start, end, com.moa.backend.domain.project.entity.ProjectResultStatus.SUCCESS);
+
+        double rate = total == 0 ? 0.0 : Math.round((success * 100.0 / total) * 10.0) / 10.0;
+
+        return GoalRangeItemDto.builder()
+                .rangeName(name)
+                .totalCount(total.intValue())
+                .successCount(success.intValue())
+                .successRate(rate)
+                .build();
+    }
+
+    private CategorySuccessRateDto buildCategorySuccessRate(LocalDateTime targetStart, LocalDateTime targetEnd) {
+        List<CategorySuccessItemDto> items = new ArrayList<>();
+        for (Category category : Category.values()) {
+            Long total = projectRepository.countByCategoryAndEndDateBetween(category, targetStart.toLocalDate(), targetEnd.toLocalDate());
+            Long success = projectRepository.countByCategoryAndEndDateBetweenAndResultStatus(
+                    category, targetStart.toLocalDate(), targetEnd.toLocalDate(),
+                    com.moa.backend.domain.project.entity.ProjectResultStatus.SUCCESS);
+
+            double rate = total == 0 ? 0.0 : Math.round((success * 100.0 / total) * 10.0) / 10.0;
+
+            items.add(CategorySuccessItemDto.builder()
+                    .categoryName(category.name())
+                    .totalCount(total.intValue())
+                    .successCount(success.intValue())
+                    .successRate(rate)
+                    .build());
+        }
+
+        return CategorySuccessRateDto.builder()
+                .categories(items)
+                .build();
+    }
+
+    private RetentionDto buildRetention(LocalDateTime targetStart, LocalDateTime targetEnd) {
+        Long totalSupporters = orderRepository.countDistinctSupporterByStatusAndCreatedAtBetween(
+                OrderStatus.PAID, targetStart, targetEnd);
+
+        Long newSupporters = userRepository.countByCreatedAtBetween(targetStart, targetEnd);
+        long existingSupporters = Math.max(totalSupporters - newSupporters, 0);
+
+        double repeatRate = totalSupporters == 0 ? 0.0 : Math.round((existingSupporters * 100.0 / totalSupporters) * 10.0) / 10.0;
+        double existingRatio = totalSupporters == 0 ? 0.0 : Math.round((existingSupporters * 100.0 / totalSupporters) * 10.0) / 10.0;
+        double newRatio = totalSupporters == 0 ? 0.0 : 100.0 - existingRatio;
+
+        return RetentionDto.builder()
+                .repeatSupporterRate(repeatRate)
+                .existingSupporterCount(existingSupporters)
+                .newSupporterCount(newSupporters)
+                .existingRatio(existingRatio)
+                .newRatio(newRatio)
+                .build();
+    }
 
     // TODO: Phase 6에서 구현
     // @Override

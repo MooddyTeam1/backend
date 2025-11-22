@@ -220,4 +220,81 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             LocalDate startDate,
             LocalDate endDate
     );
+
+    /**
+     * 종료일 기준 결과 상태 카운트
+     */
+    Long countByResultStatusAndEndDateBetween(
+            ProjectResultStatus resultStatus,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 시작일 기준 카운트
+     */
+    Long countByStartDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 시작일 기준 + 결과 상태 카운트
+     */
+    Long countByStartDateBetweenAndResultStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 종료일 기준 카운트
+     */
+    Long countByEndDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 종료일 기준 + 결과 상태 카운트
+     */
+    Long countByEndDateBetweenAndResultStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 목표금액 구간 + 종료일 기준 카운트
+     */
+    Long countByGoalAmountBetweenAndEndDateBetween(
+            Long minGoal,
+            Long maxGoal,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 목표금액 구간 + 종료일 + 결과 상태 카운트
+     */
+    Long countByGoalAmountBetweenAndEndDateBetweenAndResultStatus(
+            Long minGoal,
+            Long maxGoal,
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 카테고리별 종료일 기준 카운트
+     */
+    Long countByCategoryAndEndDateBetween(
+            Category category,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 카테고리별 종료일 + 결과 상태 카운트
+     */
+    Long countByCategoryAndEndDateBetweenAndResultStatus(
+            Category category,
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
 }
