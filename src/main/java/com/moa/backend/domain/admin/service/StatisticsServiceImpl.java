@@ -28,6 +28,12 @@ import com.moa.backend.domain.admin.dto.statistics.monthly.MonthlyTrendDataDto;
 import com.moa.backend.domain.admin.dto.statistics.monthly.RetentionDto;
 import com.moa.backend.domain.admin.dto.statistics.monthly.SuccessRateDto;
 import com.moa.backend.domain.admin.dto.statistics.monthly.SuccessRateItemDto;
+import com.moa.backend.domain.admin.dto.statistics.performance.CategoryAverageDto;
+import com.moa.backend.domain.admin.dto.statistics.performance.MakerAverageDto;
+import com.moa.backend.domain.admin.dto.statistics.performance.OpportunityProjectDto;
+import com.moa.backend.domain.admin.dto.statistics.performance.ProjectPerformanceDto;
+import com.moa.backend.domain.admin.dto.statistics.performance.ProjectPerformanceItemDto;
+import com.moa.backend.domain.admin.dto.statistics.performance.RiskProjectDto;
 import com.moa.backend.domain.admin.dto.statistics.revenue.FeePolicyAnalysisDto;
 import com.moa.backend.domain.admin.dto.statistics.revenue.FeePolicyItemDto;
 import com.moa.backend.domain.admin.dto.statistics.revenue.MakerSettlementSummaryDto;
@@ -44,6 +50,7 @@ import com.moa.backend.domain.payment.repository.RefundRepository;
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
+import com.moa.backend.domain.project.entity.ProjectResultStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.settlement.entity.Settlement;
 import com.moa.backend.domain.settlement.entity.SettlementStatus;
@@ -61,6 +68,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -955,7 +963,172 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .build();
     }
 
-    // TODO: Phase 6에서 구현
-    // @Override
-    // public ProjectPerformanceDto getProjectPerformance(...) { }
+    /**
+     * 프로젝트 성과 리포트 조회
+     */
+    @Override
+    public ProjectPerformanceDto getProjectPerformance(String category, Long makerId) {
+        Category categoryFilter = parseCategoryParam(category);
+
+        List<Object[]> rows = projectRepository.findProjectPerformanceStats(
+                OrderStatus.PAID, categoryFilter, makerId);
+
+        List<ProjectPerformanceItemDto> projectItems = new ArrayList<>();
+        Map<Category, CategoryAgg> categoryAggMap = new HashMap<>();
+        Map<Long, MakerAgg> makerAggMap = new HashMap<>();
+        List<RiskProjectDto> riskProjects = new ArrayList<>();
+        List<OpportunityProjectDto> opportunityProjects = new ArrayList<>();
+
+        LocalDate today = LocalDate.now();
+
+        for (Object[] row : rows) {
+            Long projectId = ((Number) row[0]).longValue();
+            String projectName = (String) row[1];
+            Long makerIdVal = ((Number) row[2]).longValue();
+            String makerName = (String) row[3];
+            Category cat = (Category) row[4];
+            Long goalAmount = row[5] == null ? 0L : ((Number) row[5]).longValue();
+            LocalDate endDate = (LocalDate) row[6];
+            ProjectResultStatus resultStatus = (ProjectResultStatus) row[7];
+            Long fundingAmount = ((Number) row[8]).longValue();
+            Integer supporterCount = ((Number) row[9]).intValue();
+            Long bookmarkCount = ((Number) row[10]).longValue();
+
+            double achievementRate = goalAmount == null || goalAmount == 0
+                    ? 0.0
+                    : round1(fundingAmount * 100.0 / goalAmount);
+            Long avgSupportAmount = supporterCount == 0 ? 0L : fundingAmount / supporterCount;
+            Integer remainingDays = endDate == null ? 0 : (int) ChronoUnit.DAYS.between(today, endDate);
+
+            ProjectPerformanceItemDto item = ProjectPerformanceItemDto.builder()
+                    .projectId(projectId)
+                    .projectName(projectName)
+                    .makerName(makerName)
+                    .category(cat.name())
+                    .fundingAmount(fundingAmount)
+                    .achievementRate(achievementRate)
+                    .supporterCount(supporterCount)
+                    .averageSupportAmount(avgSupportAmount)
+                    .bookmarkCount(bookmarkCount)
+                    .conversionRate(0.0) // 방문자 데이터 없음
+                    .remainingDays(remainingDays)
+                    .build();
+            projectItems.add(item);
+
+            // 카테고리 집계
+            CategoryAgg cAgg = categoryAggMap.getOrDefault(cat, new CategoryAgg());
+            cAgg.totalFunding += fundingAmount;
+            cAgg.totalAchievement += achievementRate;
+            cAgg.count += 1;
+            if (resultStatus == ProjectResultStatus.SUCCESS) {
+                cAgg.successCount += 1;
+            }
+            categoryAggMap.put(cat, cAgg);
+
+            // 메이커 집계
+            MakerAgg mAgg = makerAggMap.getOrDefault(makerIdVal, new MakerAgg(makerName));
+            mAgg.totalFunding += fundingAmount;
+            mAgg.count += 1;
+            if (resultStatus == ProjectResultStatus.SUCCESS) {
+                mAgg.successCount += 1;
+            }
+            makerAggMap.put(makerIdVal, mAgg);
+
+            // 위험/기회 프로젝트 분류
+            if (remainingDays < 7 && achievementRate < 70.0) {
+                riskProjects.add(RiskProjectDto.builder()
+                        .projectId(projectId)
+                        .projectName(projectName)
+                        .makerName(makerName)
+                        .reason("마감 임박, 달성률 낮음")
+                        .remainingDays(remainingDays)
+                        .achievementRate(achievementRate)
+                        .build());
+            } else if (remainingDays > 14 && achievementRate > 80.0) {
+                opportunityProjects.add(OpportunityProjectDto.builder()
+                        .projectId(projectId)
+                        .projectName(projectName)
+                        .makerName(makerName)
+                        .reason("초기 반응이 좋은 프로젝트")
+                        .remainingDays(remainingDays)
+                        .achievementRate(achievementRate)
+                        .build());
+            }
+        }
+
+        List<CategoryAverageDto> categoryAverages = categoryAggMap.entrySet().stream()
+                .map(entry -> {
+                    CategoryAgg agg = entry.getValue();
+                    double avgAchievement = agg.count == 0 ? 0.0 : round1(agg.totalAchievement / agg.count);
+                    long avgFunding = agg.count == 0 ? 0L : agg.totalFunding / agg.count;
+                    double successRate = agg.count == 0 ? 0.0 : round1(agg.successCount * 100.0 / agg.count);
+                    return CategoryAverageDto.builder()
+                            .categoryName(entry.getKey().name())
+                            .averageAchievementRate(avgAchievement)
+                            .averageFundingAmount(avgFunding)
+                            .successRate(successRate)
+                            .build();
+                })
+                .toList();
+
+        List<MakerAverageDto> makerAverages = makerAggMap.entrySet().stream()
+                .map(entry -> {
+                    MakerAgg agg = entry.getValue();
+                    int count = agg.count;
+                    long avgFunding = count == 0 ? 0L : agg.totalFunding / count;
+                    double successRate = count == 0 ? 0.0 : round1(agg.successCount * 100.0 / count);
+                    boolean isFirstProject = count == 1; // 단순 기준
+                    return MakerAverageDto.builder()
+                            .makerId(entry.getKey())
+                            .makerName(agg.makerName)
+                            .projectCount(count)
+                            .averageFundingAmount(avgFunding)
+                            .successRate(successRate)
+                            .isFirstProject(isFirstProject)
+                            .build();
+                })
+                .toList();
+
+        return ProjectPerformanceDto.builder()
+                .projects(projectItems)
+                .categoryAverages(categoryAverages)
+                .makerAverages(makerAverages)
+                .riskProjects(riskProjects)
+                .opportunityProjects(opportunityProjects)
+                .build();
+    }
+
+    private Category parseCategoryParam(String category) {
+        if (category == null || category.isBlank()) {
+            return null;
+        }
+        try {
+            return Category.valueOf(category);
+        } catch (IllegalArgumentException e) {
+            log.warn("잘못된 카테고리 값: {}", category);
+            return null;
+        }
+    }
+
+    private double round1(double value) {
+        return Math.round(value * 10.0) / 10.0;
+    }
+
+    private static class CategoryAgg {
+        long totalFunding = 0L;
+        double totalAchievement = 0.0;
+        int count = 0;
+        int successCount = 0;
+    }
+
+    private static class MakerAgg {
+        String makerName;
+        long totalFunding = 0L;
+        int count = 0;
+        int successCount = 0;
+
+        MakerAgg(String makerName) {
+            this.makerName = makerName;
+        }
+    }
 }

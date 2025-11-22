@@ -2,6 +2,7 @@ package com.moa.backend.domain.project.repository;
 
 import com.moa.backend.domain.project.dto.TrendingProjectResponse;
 import com.moa.backend.domain.project.entity.*;
+import com.moa.backend.domain.order.entity.OrderStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -301,5 +302,37 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             LocalDate startDate,
             LocalDate endDate,
             ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 프로젝트 성과 리포트용 집계 (프로젝트별)
+     * 결과: Object[] {projectId, projectName, makerId, makerName, category, goalAmount, endDate, resultStatus, fundingAmount, supporterCount, bookmarkCount}
+     */
+    @Query("""
+        SELECT p.id,
+               p.title,
+               m.id,
+               m.name,
+               p.category,
+               p.goalAmount,
+               p.endDate,
+               p.resultStatus,
+               COALESCE(SUM(o.totalAmount), 0) as fundingAmount,
+               COUNT(DISTINCT o.user.id) as supporterCount,
+               COUNT(DISTINCT sb.id) as bookmarkCount
+        FROM Project p
+        JOIN p.maker m
+        LEFT JOIN Order o ON o.project = p AND o.status = :status
+        LEFT JOIN com.moa.backend.domain.follow.entity.SupporterBookmarkProject sb
+               ON sb.project = p
+        WHERE (:category IS NULL OR p.category = :category)
+          AND (:makerId IS NULL OR m.id = :makerId)
+        GROUP BY p.id, p.title, m.id, m.name, p.category, p.goalAmount, p.endDate, p.resultStatus
+        ORDER BY COALESCE(SUM(o.totalAmount), 0) DESC
+        """)
+    List<Object[]> findProjectPerformanceStats(
+            @Param("status") OrderStatus status,
+            @Param("category") Category category,
+            @Param("makerId") Long makerId
     );
 }
