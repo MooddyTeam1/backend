@@ -1,5 +1,13 @@
 package com.moa.backend.domain.admin.service;
 
+import com.moa.backend.domain.admin.dto.statistics.daily.DailyStatisticsDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.HourlyChartDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.HourlyDataDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.MakerDetailDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.PaymentStatisticsDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.ProjectActivityDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.ProjectDetailDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.TrafficDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.AlertDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.CategoryItemDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.CategoryPerformanceDto;
@@ -11,7 +19,13 @@ import com.moa.backend.domain.admin.dto.statistics.dashboard.TrendChartDto;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.TrendDataDto;
 import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.order.repository.OrderRepository;
+import com.moa.backend.domain.payment.entity.PaymentStatus;
+import com.moa.backend.domain.payment.entity.RefundStatus;
 import com.moa.backend.domain.payment.repository.PaymentRepository;
+import com.moa.backend.domain.payment.repository.RefundRepository;
+import com.moa.backend.domain.project.entity.Category;
+import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
+import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.settlement.repository.SettlementRepository;
 import com.moa.backend.domain.user.repository.UserRepository;
@@ -43,6 +57,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final SettlementRepository settlementRepository;
     private final PaymentRepository paymentRepository;
     private final PlatformWalletTransactionRepository platformWalletTransactionRepository;
+    private final RefundRepository refundRepository;
 
     // 수수료율 상수
     private static final BigDecimal PG_FEE_RATE = new BigDecimal("0.05");  // 5%
@@ -92,6 +107,221 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .topProjects(topProjects)
                 .alerts(alerts)
                 .build();
+    }
+
+    /**
+     * 일일 통계 조회
+     */
+    @Override
+    public DailyStatisticsDto getDailyStatistics(LocalDate startDate, LocalDate endDate, String filterType, String filterValue) {
+        validateDateRange(startDate, endDate);
+
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+
+        Category categoryFilter = parseCategory(filterType, filterValue);
+        Long makerIdFilter = parseMakerId(filterType, filterValue);
+
+        TrafficDto traffic = buildTraffic(startDateTime, endDateTime);
+        ProjectActivityDto projectActivity = buildProjectActivity(startDate, endDate, startDateTime, endDateTime);
+        PaymentStatisticsDto paymentStatistics = buildPaymentStatistics(startDateTime, endDateTime);
+        HourlyChartDto hourlyChart = buildHourlyChart(startDateTime, endDateTime, categoryFilter, makerIdFilter);
+        List<ProjectDetailDto> projectDetails = buildProjectDetails(startDateTime, endDateTime, categoryFilter, makerIdFilter);
+        List<MakerDetailDto> makerDetails = buildMakerDetails(startDateTime, endDateTime, categoryFilter, makerIdFilter);
+
+        return DailyStatisticsDto.builder()
+                .traffic(traffic)
+                .projectActivity(projectActivity)
+                .paymentStatistics(paymentStatistics)
+                .hourlyChart(hourlyChart)
+                .projectDetails(projectDetails)
+                .makerDetails(makerDetails)
+                .build();
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("startDate와 endDate는 필수입니다.");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("startDate가 endDate보다 이후일 수 없습니다.");
+        }
+    }
+
+    private Category parseCategory(String filterType, String filterValue) {
+        if (!"CATEGORY".equalsIgnoreCase(filterType) || filterValue == null) {
+            return null;
+        }
+        try {
+            return Category.valueOf(filterValue);
+        } catch (IllegalArgumentException e) {
+            log.warn("잘못된 카테고리 값: {}", filterValue);
+            return null;
+        }
+    }
+
+    private Long parseMakerId(String filterType, String filterValue) {
+        if (!"MAKER".equalsIgnoreCase(filterType) || filterValue == null) {
+            return null;
+        }
+        try {
+            return Long.valueOf(filterValue);
+        } catch (NumberFormatException e) {
+            log.warn("잘못된 메이커 ID 값: {}", filterValue);
+            return null;
+        }
+    }
+
+    private TrafficDto buildTraffic(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        Long newUsers = userRepository.countByCreatedAtBetween(startDateTime, endDateTime);
+        return TrafficDto.builder()
+                .uniqueVisitors(0L)   // 추후 GA 연동
+                .pageViews(0L)        // 추후 GA 연동
+                .newUsers(newUsers)
+                .returningRate(0.0)   // 추후 GA 연동
+                .build();
+    }
+
+    private ProjectActivityDto buildProjectActivity(LocalDate startDate, LocalDate endDate, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        Long newProjects = projectRepository.countByCreatedAtBetween(startDateTime, endDateTime);
+        Long reviewRequested = projectRepository.countByReviewStatusAndCreatedAtBetween(
+                ProjectReviewStatus.REVIEW, startDateTime, endDateTime);
+        Long approved = projectRepository.countByReviewStatusAndApprovedAtBetween(
+                ProjectReviewStatus.APPROVED, startDateTime, endDateTime);
+        Long closed = projectRepository.countByLifecycleStatusAndEndDateBetween(
+                ProjectLifecycleStatus.ENDED, startDate, endDate);
+
+        return ProjectActivityDto.builder()
+                .newProjectCount(newProjects)
+                .reviewRequestedCount(reviewRequested)
+                .approvedCount(approved)
+                .closedTodayCount(closed)
+                .build();
+    }
+
+    private PaymentStatisticsDto buildPaymentStatistics(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        Long attemptCount = paymentRepository.countByCreatedAtBetween(startDateTime, endDateTime);
+        Long successCount = paymentRepository.countByStatusAndCreatedAtBetween(
+                PaymentStatus.DONE, startDateTime, endDateTime);
+        Long failureCount = paymentRepository.countByStatusAndCreatedAtBetween(
+                PaymentStatus.CANCELED, startDateTime, endDateTime);
+
+        Long refundCount = refundRepository.countByStatusAndCreatedAtBetween(
+                RefundStatus.COMPLETED, startDateTime, endDateTime);
+        Long refundAmount = refundRepository.sumAmountByStatusAndCreatedAtBetween(
+                RefundStatus.COMPLETED, startDateTime, endDateTime
+        ).orElse(0L);
+
+        double successRate = attemptCount == 0 ? 0.0 :
+                Math.round((successCount * 100.0 / attemptCount) * 10.0) / 10.0;
+
+        return PaymentStatisticsDto.builder()
+                .attemptCount(attemptCount)
+                .successCount(successCount)
+                .successRate(successRate)
+                .failureCount(failureCount)
+                .refundCount(refundCount)
+                .refundAmount(refundAmount)
+                .build();
+    }
+
+    private HourlyChartDto buildHourlyChart(LocalDateTime startDateTime, LocalDateTime endDateTime, Category category, Long makerId) {
+        List<Object[]> successRows = orderRepository.findHourlyStatsByStatusAndFilters(
+                startDateTime, endDateTime, OrderStatus.PAID, category, makerId);
+        List<Object[]> failureRows = orderRepository.findHourlyStatsByStatusAndFilters(
+                startDateTime, endDateTime, OrderStatus.CANCELED, category, makerId);
+
+        Map<Integer, HourlyDataDto> hourlyMap = new HashMap<>();
+        for (int h = 0; h <= 23; h++) {
+            hourlyMap.put(h, HourlyDataDto.builder()
+                    .hour(h)
+                    .successCount(0)
+                    .failureCount(0)
+                    .successAmount(0L)
+                    .build());
+        }
+
+        successRows.forEach(row -> {
+            Integer hour = ((Number) row[0]).intValue();
+            Long count = ((Number) row[1]).longValue();
+            Long amount = ((Number) row[2]).longValue();
+            HourlyDataDto existing = hourlyMap.get(hour);
+            hourlyMap.put(hour, HourlyDataDto.builder()
+                    .hour(hour)
+                    .successCount(existing.getSuccessCount() + count.intValue())
+                    .failureCount(existing.getFailureCount())
+                    .successAmount(existing.getSuccessAmount() + amount)
+                    .build());
+        });
+
+        failureRows.forEach(row -> {
+            Integer hour = ((Number) row[0]).intValue();
+            Long count = ((Number) row[1]).longValue();
+            HourlyDataDto existing = hourlyMap.get(hour);
+            hourlyMap.put(hour, HourlyDataDto.builder()
+                    .hour(hour)
+                    .successCount(existing.getSuccessCount())
+                    .failureCount(existing.getFailureCount() + count.intValue())
+                    .successAmount(existing.getSuccessAmount())
+                    .build());
+        });
+
+        List<HourlyDataDto> data = hourlyMap.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(Map.Entry::getValue)
+                .toList();
+
+        return HourlyChartDto.builder()
+                .data(data)
+                .build();
+    }
+
+    private List<ProjectDetailDto> buildProjectDetails(LocalDateTime startDateTime, LocalDateTime endDateTime, Category category, Long makerId) {
+        List<Object[]> rows = orderRepository.findProjectDetailsByStatusAndFilters(
+                startDateTime, endDateTime, OrderStatus.PAID, category, makerId);
+
+        return rows.stream()
+                .map(row -> {
+                    Long projectId = ((Number) row[0]).longValue();
+                    String projectName = (String) row[1];
+                    String makerName = (String) row[2];
+                    Integer orderCount = ((Number) row[3]).intValue();
+                    Long fundingAmount = ((Number) row[4]).longValue();
+
+                    // 방문자 데이터가 없으므로 전환율은 0.0으로 반환
+                    return ProjectDetailDto.builder()
+                            .projectId(projectId)
+                            .projectName(projectName)
+                            .makerName(makerName)
+                            .orderCount(orderCount)
+                            .fundingAmount(fundingAmount)
+                            .conversionRate(0.0)
+                            .build();
+                })
+                .toList();
+    }
+
+    private List<MakerDetailDto> buildMakerDetails(LocalDateTime startDateTime, LocalDateTime endDateTime, Category category, Long makerId) {
+        List<Object[]> rows = orderRepository.findMakerDetailsByStatusAndFilters(
+                startDateTime, endDateTime, OrderStatus.PAID, category, makerId);
+
+        return rows.stream()
+                .map(row -> {
+                    Long makerIdVal = ((Number) row[0]).longValue();
+                    String makerName = (String) row[1];
+                    Integer projectCount = ((Number) row[2]).intValue();
+                    Integer orderCount = ((Number) row[3]).intValue();
+                    Long fundingAmount = ((Number) row[4]).longValue();
+
+                    return MakerDetailDto.builder()
+                            .makerId(makerIdVal)
+                            .makerName(makerName)
+                            .projectCount(projectCount)
+                            .orderCount(orderCount)
+                            .fundingAmount(fundingAmount)
+                            .build();
+                })
+                .toList();
     }
 
     /**
