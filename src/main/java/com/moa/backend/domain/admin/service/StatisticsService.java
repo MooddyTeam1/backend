@@ -1,6 +1,7 @@
 package com.moa.backend.domain.admin.service;
 
 import com.moa.backend.domain.admin.dto.statistics.dashboard.DashboardSummaryDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.DailyStatisticsDto;
 
 public interface StatisticsService {
 
@@ -9,4 +10,13 @@ public interface StatisticsService {
      */
     DashboardSummaryDto getDashboardSummary();
 
+    /**
+     * 일일 통계 조회
+     */
+    DailyStatisticsDto getDailyStatistics(
+            java.time.LocalDate startDate,
+            java.time.LocalDate endDate,
+            String filterType,
+            String filterValue
+    );
 }

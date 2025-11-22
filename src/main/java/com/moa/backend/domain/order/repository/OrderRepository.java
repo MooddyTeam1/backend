@@ -3,6 +3,7 @@ package com.moa.backend.domain.order.repository;
 import com.moa.backend.domain.order.entity.DeliveryStatus;
 import com.moa.backend.domain.order.entity.Order;
 import com.moa.backend.domain.order.entity.OrderStatus;
+import com.moa.backend.domain.project.entity.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -149,6 +150,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     );
 
     /**
+     * 기간별 전체 주문 건수 (상태 무관, 시도 횟수 대용)
+     */
+    Long countByCreatedAtBetween(
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
+    );
+
+    /**
      * 전체 기간 활성 서포터 수 (PAID 주문이 있는 고유 사용자 수)
      */
     @Query("SELECT COUNT(DISTINCT o.user.id) FROM Order o WHERE o.status = :status")
@@ -252,5 +261,86 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("endDateTime") LocalDateTime endDateTime,
             Pageable pageable
+    );
+
+    /**
+     * 시간대별 주문 통계 (status 필터 + 옵션 category/maker)
+     * 결과: Object[] {hour(INT), count(LONG), amount(LONG)}
+     */
+    @Query("""
+        SELECT FUNCTION('HOUR', o.createdAt) as hour,
+               COUNT(o) as orderCount,
+               COALESCE(SUM(o.totalAmount), 0) as totalAmount
+        FROM Order o
+        JOIN o.project p
+        WHERE o.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND o.status = :status
+          AND (:category IS NULL OR p.category = :category)
+          AND (:makerId IS NULL OR p.maker.id = :makerId)
+        GROUP BY FUNCTION('HOUR', o.createdAt)
+        ORDER BY hour
+        """)
+    List<Object[]> findHourlyStatsByStatusAndFilters(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("status") OrderStatus status,
+            @Param("category") Category category,
+            @Param("makerId") Long makerId
+    );
+
+    /**
+     * 프로젝트별 상세 집계 (주문수/펀딩액) - 필터 옵션
+     * 결과: Object[] {projectId, projectName, makerName, orderCount, fundingAmount}
+     */
+    @Query("""
+        SELECT p.id,
+               p.title,
+               m.name,
+               COUNT(o) as orderCount,
+               COALESCE(SUM(o.totalAmount), 0) as fundingAmount
+        FROM Order o
+        JOIN o.project p
+        JOIN p.maker m
+        WHERE o.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND o.status = :status
+          AND (:category IS NULL OR p.category = :category)
+          AND (:makerId IS NULL OR p.maker.id = :makerId)
+        GROUP BY p.id, p.title, m.name
+        ORDER BY COALESCE(SUM(o.totalAmount), 0) DESC
+        """)
+    List<Object[]> findProjectDetailsByStatusAndFilters(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("status") OrderStatus status,
+            @Param("category") Category category,
+            @Param("makerId") Long makerId
+    );
+
+    /**
+     * 메이커별 상세 집계 (프로젝트수/주문수/펀딩액) - 필터 옵션
+     * 결과: Object[] {makerId, makerName, projectCount, orderCount, fundingAmount}
+     */
+    @Query("""
+        SELECT m.id,
+               m.name,
+               COUNT(DISTINCT p.id) as projectCount,
+               COUNT(o) as orderCount,
+               COALESCE(SUM(o.totalAmount), 0) as fundingAmount
+        FROM Order o
+        JOIN o.project p
+        JOIN p.maker m
+        WHERE o.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND o.status = :status
+          AND (:category IS NULL OR p.category = :category)
+          AND (:makerId IS NULL OR p.maker.id = :makerId)
+        GROUP BY m.id, m.name
+        ORDER BY COALESCE(SUM(o.totalAmount), 0) DESC
+        """)
+    List<Object[]> findMakerDetailsByStatusAndFilters(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("status") OrderStatus status,
+            @Param("category") Category category,
+            @Param("makerId") Long makerId
     );
 }

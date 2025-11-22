@@ -1,11 +1,13 @@
 package com.moa.backend.domain.admin.controller;
 
 import com.moa.backend.domain.admin.dto.statistics.dashboard.DashboardSummaryDto;
+import com.moa.backend.domain.admin.dto.statistics.daily.DailyStatisticsDto;
 import com.moa.backend.domain.admin.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -19,5 +21,15 @@ public class StatisticsAdminController {
     @GetMapping("/dashboard")
     public DashboardSummaryDto getDashboardSummary() {
         return statisticsService.getDashboardSummary();
+    }
+
+    @GetMapping("/daily")
+    public DailyStatisticsDto getDailyStatistics(
+            @RequestParam("startDate") java.time.LocalDate startDate,
+            @RequestParam("endDate") java.time.LocalDate endDate,
+            @RequestParam(value = "filterType", required = false) String filterType,
+            @RequestParam(value = "filterValue", required = false) String filterValue
+    ) {
+        return statisticsService.getDailyStatistics(startDate, endDate, filterType, filterValue);
     }
 }
