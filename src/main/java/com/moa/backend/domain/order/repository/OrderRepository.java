@@ -411,4 +411,56 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("makerId") Long makerId,
             @Param("projectId") Long projectId
     );
+
+    /**
+     * 월별 KPI용 월간 합계 (fundingAmount, orderCount)
+     */
+    @Query("""
+        SELECT COALESCE(SUM(o.totalAmount), 0) as totalAmount,
+               COUNT(o) as orderCount
+        FROM Order o
+        WHERE o.status = :status
+          AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+        """)
+    List<Object[]> findMonthlyFundingAndCount(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
+
+    /**
+     * 월별 일자별 통계 (fundingAmount, orderCount, projectCount)
+     */
+    @Query("""
+        SELECT DATE(o.createdAt) as date,
+               COALESCE(SUM(o.totalAmount), 0) as totalAmount,
+               COUNT(o) as orderCount,
+               COUNT(DISTINCT p.id) as projectCount
+        FROM Order o
+        JOIN o.project p
+        WHERE o.status = :status
+          AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+        GROUP BY DATE(o.createdAt)
+        ORDER BY DATE(o.createdAt)
+        """)
+    List<Object[]> findMonthlyDailyStats(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
+
+    /**
+     * 기간 내 고유 서포터 수 (PAID 기준)
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT o.user.id)
+        FROM Order o
+        WHERE o.status = :status
+          AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+        """)
+    Long countDistinctSupporterByStatusAndCreatedAtBetween(
+            @Param("status") OrderStatus status,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
 }

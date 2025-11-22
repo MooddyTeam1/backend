@@ -3,6 +3,7 @@ package com.moa.backend.domain.admin.service;
 import com.moa.backend.domain.admin.dto.statistics.dashboard.DashboardSummaryDto;
 import com.moa.backend.domain.admin.dto.statistics.daily.DailyStatisticsDto;
 import com.moa.backend.domain.admin.dto.statistics.revenue.RevenueReportDto;
+import com.moa.backend.domain.admin.dto.statistics.monthly.MonthlyReportDto;
 
 public interface StatisticsService {
 
@@ -29,5 +30,13 @@ public interface StatisticsService {
             java.time.LocalDate endDate,
             Long makerId,
             Long projectId
+    );
+
+    /**
+     * 월별 리포트 조회
+     */
+    MonthlyReportDto getMonthlyReport(
+            String targetMonth,
+            String compareMonth
     );
 }
