@@ -4,6 +4,7 @@ import com.moa.backend.domain.admin.dto.statistics.dashboard.DashboardSummaryDto
 import com.moa.backend.domain.admin.dto.statistics.daily.DailyStatisticsDto;
 import com.moa.backend.domain.admin.dto.statistics.revenue.RevenueReportDto;
 import com.moa.backend.domain.admin.dto.statistics.monthly.MonthlyReportDto;
+import com.moa.backend.domain.admin.dto.statistics.performance.ProjectPerformanceDto;
 import com.moa.backend.domain.admin.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -51,5 +52,13 @@ public class StatisticsAdminController {
             @RequestParam(value = "compareMonth", required = false) String compareMonth
     ) {
         return statisticsService.getMonthlyReport(targetMonth, compareMonth);
+    }
+
+    @GetMapping("/project-performance")
+    public ProjectPerformanceDto getProjectPerformance(
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "makerId", required = false) Long makerId
+    ) {
+        return statisticsService.getProjectPerformance(category, makerId);
     }
 }
