@@ -37,4 +37,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("provider") String provider,
             @Param("providerId") String providerId
     );
+
+    // ========== 통계 API용 메서드 ==========
+
+    /**
+     * 기간별 신규 가입자 수
+     */
+    Long countByCreatedAtBetween(
+            java.time.LocalDateTime startDateTime,
+            java.time.LocalDateTime endDateTime
+    );
 }

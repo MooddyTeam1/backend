@@ -190,4 +190,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             ProjectReviewStatus reviewStatus,
             Pageable pageable
     );
+
+    // ========== 통계 API용 메서드 ==========
+
+    /**
+     * 기간별 신규 프로젝트 수
+     */
+    Long countByCreatedAtBetween(LocalDateTime startDateTime, LocalDateTime endDateTime);
 }
