@@ -14,6 +14,7 @@ import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.reward.dto.RewardRequest;
 import com.moa.backend.domain.reward.factory.RewardFactory;
 import com.moa.backend.domain.user.entity.User;
+import com.moa.backend.domain.user.entity.UserRole;
 import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
@@ -78,8 +79,9 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
         Project saved = projectRepository.save(project);
 
+        // 버그 수정: findByRole 파라미터를 enum(UserRole)으로 맞춤 (기존 "ADMIN" 문자열 → UserRole.ADMIN)
         // 관리자에게 프로젝트 심사요청 알림
-        List<User> admins = userRepository.findByRole("ADMIN");
+        List<User> admins = userRepository.findByRole(UserRole.ADMIN);
 
         admins.forEach(admin -> {
             notificationService.send(
@@ -108,7 +110,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                         || (project.getLifecycleStatus() == ProjectLifecycleStatus.SCHEDULED &&
                         project.getReviewStatus() == ProjectReviewStatus.APPROVED);
 
-        if(!canCancel) {
+        if (!canCancel) {
             throw new AppException(ErrorCode.PROJECT_NOT_CANCELED);
         }
 

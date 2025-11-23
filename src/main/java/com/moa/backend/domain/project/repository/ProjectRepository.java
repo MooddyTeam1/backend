@@ -2,18 +2,15 @@ package com.moa.backend.domain.project.repository;
 
 import com.moa.backend.domain.project.dto.TrendingProjectResponse;
 import com.moa.backend.domain.project.entity.*;
-
+import com.moa.backend.domain.order.entity.OrderStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-
-import java.util.List;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
@@ -194,5 +191,148 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             List<ProjectLifecycleStatus> lifecycleStatuses,
             ProjectReviewStatus reviewStatus,
             Pageable pageable
+    );
+
+    // ========== 통계 API용 메서드 ==========
+
+    /**
+     * 기간별 신규 프로젝트 수
+     */
+    Long countByCreatedAtBetween(LocalDateTime startDateTime, LocalDateTime endDateTime);
+
+    /**
+     * 기간별 심사 요청된 프로젝트 수 (REVIEW)
+     */
+    Long countByReviewStatusAndCreatedAtBetween(
+            ProjectReviewStatus reviewStatus,
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
+    );
+
+    /**
+     * 기간별 승인 완료된 프로젝트 수 (APPROVED)
+     */
+    Long countByReviewStatusAndApprovedAtBetween(
+            ProjectReviewStatus reviewStatus,
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
+    );
+
+    /**
+     * 기간 내 종료된 프로젝트 수 (ENDED, endDate 기준)
+     */
+    Long countByLifecycleStatusAndEndDateBetween(
+            ProjectLifecycleStatus lifecycleStatus,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 종료일 기준 결과 상태 카운트
+     */
+    Long countByResultStatusAndEndDateBetween(
+            ProjectResultStatus resultStatus,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 시작일 기준 카운트
+     */
+    Long countByStartDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 시작일 기준 + 결과 상태 카운트
+     */
+    Long countByStartDateBetweenAndResultStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 종료일 기준 카운트
+     */
+    Long countByEndDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 종료일 기준 + 결과 상태 카운트
+     */
+    Long countByEndDateBetweenAndResultStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 목표금액 구간 + 종료일 기준 카운트
+     */
+    Long countByGoalAmountBetweenAndEndDateBetween(
+            Long minGoal,
+            Long maxGoal,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 목표금액 구간 + 종료일 + 결과 상태 카운트
+     */
+    Long countByGoalAmountBetweenAndEndDateBetweenAndResultStatus(
+            Long minGoal,
+            Long maxGoal,
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 카테고리별 종료일 기준 카운트
+     */
+    Long countByCategoryAndEndDateBetween(
+            Category category,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 카테고리별 종료일 + 결과 상태 카운트
+     */
+    Long countByCategoryAndEndDateBetweenAndResultStatus(
+            Category category,
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 프로젝트 성과 리포트용 집계 (프로젝트별)
+     * 결과: Object[] {projectId, projectName, makerId, makerName, category, goalAmount, endDate, resultStatus, fundingAmount, supporterCount, bookmarkCount}
+     */
+    @Query("""
+        SELECT p.id,
+               p.title,
+               m.id,
+               m.name,
+               p.category,
+               p.goalAmount,
+               p.endDate,
+               p.resultStatus,
+               COALESCE(SUM(o.totalAmount), 0) as fundingAmount,
+               COUNT(DISTINCT o.user.id) as supporterCount,
+               COUNT(DISTINCT sb.id) as bookmarkCount
+        FROM Project p
+        JOIN p.maker m
+        LEFT JOIN Order o ON o.project = p AND o.status = :status
+        LEFT JOIN com.moa.backend.domain.follow.entity.SupporterBookmarkProject sb
+               ON sb.project = p
+        WHERE (:category IS NULL OR p.category = :category)
+          AND (:makerId IS NULL OR m.id = :makerId)
+        GROUP BY p.id, p.title, m.id, m.name, p.category, p.goalAmount, p.endDate, p.resultStatus
+        ORDER BY COALESCE(SUM(o.totalAmount), 0) DESC
+        """)
+    List<Object[]> findProjectPerformanceStats(
+            @Param("status") OrderStatus status,
+            @Param("category") Category category,
+            @Param("makerId") Long makerId
     );
 }
