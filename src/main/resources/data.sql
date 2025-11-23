@@ -32,31 +32,30 @@ TRUNCATE TABLE supporter_profiles;
 TRUNCATE TABLE users;
 SET REFERENTIAL_INTEGRITY TRUE;
 
--- 유저 (기존 + 통계용 신규)
-INSERT INTO users (id, email, password, name, role, created_at, updated_at, last_login_at, image_url, provider) VALUES
-  (1000, 'user1@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터1', 'USER',
+INSERT INTO users (id, email, password, name, role, onboarding_status, created_at, updated_at, last_login_at, image_url, provider) VALUES
+  (1000, 'user1@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터1', 'USER', 'NOT_STARTED',
    TIMESTAMP '2024-11-10 09:00:00', TIMESTAMP '2024-11-12 10:00:00', TIMESTAMP '2024-11-15 08:10:00',
    'https://cdn.moa.dev/avatars/user1.png', 'LOCAL'),
-  (1001, 'user2@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터2', 'USER',
+  (1001, 'user2@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터2', 'USER', 'NOT_STARTED',
    TIMESTAMP '2024-11-10 09:05:00', TIMESTAMP '2024-11-12 10:10:00', TIMESTAMP '2024-11-15 08:20:00',
    'https://cdn.moa.dev/avatars/user2.png', 'LOCAL'),
-  (1002, 'user3@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터3', 'USER',
+  (1002, 'user3@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터3', 'USER', 'NOT_STARTED',
    TIMESTAMP '2024-11-10 09:10:00', TIMESTAMP '2024-11-12 10:20:00', TIMESTAMP '2024-11-15 08:30:00',
    'https://cdn.moa.dev/avatars/user3.png', 'LOCAL'),
-  (1003, 'maker1@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '메이커1', 'USER',
+  (1003, 'maker1@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '메이커1', 'USER', 'NOT_STARTED',
    TIMESTAMP '2024-11-09 14:00:00', TIMESTAMP '2024-11-12 11:00:00', TIMESTAMP '2024-11-15 07:50:00',
    'https://cdn.moa.dev/avatars/maker1.png', 'LOCAL'),
-  (1004, 'maker2@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '메이커2', 'USER',
+  (1004, 'maker2@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '메이커2', 'USER', 'NOT_STARTED',
    TIMESTAMP '2024-11-09 14:05:00', TIMESTAMP '2024-11-12 11:10:00', TIMESTAMP '2024-11-15 07:40:00',
    'https://cdn.moa.dev/avatars/maker2.png', 'LOCAL'),
-  (1005, 'admin@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '관리자', 'ADMIN',
+  (1005, 'admin@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '관리자', 'ADMIN', 'NOT_STARTED',
    TIMESTAMP '2024-11-08 08:30:00', TIMESTAMP '2024-11-12 09:00:00', TIMESTAMP '2024-11-15 06:30:00',
    'https://cdn.moa.dev/avatars/admin.png', 'LOCAL'),
   -- 신규 서포터 (2025-11 가입) : 신규/리텐션 지표용
-  (1010, 'newuser1@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '신규서포터1', 'USER',
+  (1010, 'newuser1@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '신규서포터1', 'USER', 'NOT_STARTED',
    TIMESTAMP '2025-11-02 09:00:00', TIMESTAMP '2025-11-02 09:00:00', TIMESTAMP '2025-11-02 09:10:00',
    'https://cdn.moa.dev/avatars/new1.png', 'LOCAL'),
-  (1011, 'newuser2@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '신규서포터2', 'USER',
+  (1011, 'newuser2@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '신규서포터2', 'USER', 'NOT_STARTED',
    TIMESTAMP '2025-11-03 10:00:00', TIMESTAMP '2025-11-03 10:00:00', TIMESTAMP '2025-11-03 10:05:00',
    'https://cdn.moa.dev/avatars/new2.png', 'LOCAL');
 
@@ -87,14 +86,14 @@ INSERT INTO supporter_profiles (user_id, display_name, bio, image_url, phone, po
    '서울시 강남구 테헤란로 50', '12층', '["FOOD","HOME_LIVING"]');
 
 -- 메이커 & 지갑
-INSERT INTO makers (id, owner_user_id, name, business_name, business_number, representative, established_at, industry_type, location, product_intro, core_competencies, image_url, contact_email, contact_phone, tech_stack, created_at, updated_at) VALUES
-  (1003, 1003, '메이커원 스튜디오', '메이커원 스튜디오', '110-22-334455', '박알리스', DATE '2021-03-15',
+INSERT INTO makers (id, owner_user_id, maker_type, name, business_name, business_number, representative, established_at, industry_type, location, product_intro, core_competencies, image_url, contact_email, contact_phone, tech_stack, created_at, updated_at) VALUES
+  (1003, 1003, 'BUSINESS', '메이커원 스튜디오', '메이커원 스튜디오', '110-22-334455', '박알리스', DATE '2021-03-15',
    '스마트 하드웨어', '서울시 강남구', '일상에서 쓰는 웨어러블 로봇을 연구합니다.',
    '하이브리드 제조, 임베디드 펌웨어, 산업 디자인',
    'https://cdn.moa.dev/makers/maker1.png', 'maker1@test.com', '010-1111-0001',
    '["Spring Boot","Embedded C","PostgreSQL"]',
    TIMESTAMP '2024-11-08 11:00:00', TIMESTAMP '2024-11-12 13:45:00'),
-  (1004, 1004, '트레일랩스', 'Trail Labs Co.', '220-33-778899', '최브라이언', DATE '2020-05-20',
+  (1004, 1004, 'BUSINESS', '트레일랩스', 'Trail Labs Co.', '220-33-778899', '최브라이언', DATE '2020-05-20',
    '아웃도어 기어', '부산시 해운대구', '여행자와 하이커를 위한 스마트 액세서리를 만듭니다.',
    '내구성 원단, 저전력 IoT, 민첩한 공급망',
    'https://cdn.moa.dev/makers/maker2.png', 'maker2@test.com', '010-1111-0002',
@@ -317,6 +316,241 @@ INSERT INTO settlements (id, project_id, maker_id, total_order_amount, toss_fee_
 INSERT INTO wallet_transactions (wallet_id, amount, balance_after, type, description, created_at, settlement_id) VALUES
   (1, 229500, 229500, 'SETTLEMENT_FINAL', '루멘노트 최종 정산 완료', TIMESTAMP '2025-10-20 10:00:00', 1600),
   (1, 150000, 379500, 'SETTLEMENT_FIRST', '펄스핏 1차 정산 완료', TIMESTAMP '2025-11-08 10:00:00', 1601);
+
+-- ============================================================
+-- 추가 데이터: 완전한 테스트를 위한 시나리오 (10월 주문, 시간대 다양화, PENDING, 환불, 종료 프로젝트)
+-- ============================================================
+
+-- 종료된 프로젝트 2개 추가 (성공 1개, 실패 1개)
+INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount, start_at, end_at,
+                      category, lifecycle_status, review_status, result_status,
+                      request_at, approved_at, rejected_at, rejected_reason,
+                      cover_image_url, cover_gallery, created_at, updated_at,
+                      live_start_at, live_end_at)
+VALUES
+  -- 1206: 성공한 프로젝트 (9월 종료, 달성률 200%)
+  (1206, 1003, '에코캔들 세트',
+   '친환경 왁스로 만든 향초 세트입니다.',
+   '## 에코캔들' || CHAR(10) || '지속 가능한 원료로 만든 프리미엄 향초입니다.',
+   500000, DATE '2025-09-01', DATE '2025-09-30',
+   'HOME_LIVING', 'ENDED', 'APPROVED', 'SUCCESS',
+   TIMESTAMP '2025-08-20 09:00:00', TIMESTAMP '2025-08-22 10:00:00', NULL, NULL,
+   'https://cdn.moa.dev/projects/ecocandle/cover.png',
+   '["https://cdn.moa.dev/projects/ecocandle/gallery-1.png"]',
+   TIMESTAMP '2025-08-15 09:00:00', TIMESTAMP '2025-10-01 10:00:00',
+   TIMESTAMP '2025-09-01 10:00:00', TIMESTAMP '2025-09-30 23:59:00'),
+
+  -- 1207: 실패한 프로젝트 (10월 종료, 달성률 40%)
+  (1207, 1004, '스마트 식물재배기',
+   'IoT 기반 자동 식물 재배 시스템입니다.',
+   '## 스마트 식물재배기' || CHAR(10) || '물과 빛을 자동으로 조절합니다.',
+   1000000, DATE '2025-10-01', DATE '2025-10-31',
+   'HOME_LIVING', 'ENDED', 'APPROVED', 'FAILED',
+   TIMESTAMP '2025-09-20 09:00:00', TIMESTAMP '2025-09-22 10:00:00', NULL, NULL,
+   'https://cdn.moa.dev/projects/smartgarden/cover.png',
+   '["https://cdn.moa.dev/projects/smartgarden/gallery-1.png"]',
+   TIMESTAMP '2025-09-15 09:00:00', TIMESTAMP '2025-11-01 10:00:00',
+   TIMESTAMP '2025-10-01 10:00:00', TIMESTAMP '2025-10-31 23:59:00');
+
+-- 프로젝트 지갑 추가
+INSERT INTO project_wallets (id, escrow_balance, pending_release, released_total, status, updated_at, project_id) VALUES
+  (6, 1000000, 0, 0, 'CLOSED', TIMESTAMP '2025-10-01 10:00:00', 1206),
+  (7, 400000, 0, 0, 'CLOSED', TIMESTAMP '2025-11-01 10:00:00', 1207);
+
+-- 프로젝트 태그 추가
+INSERT INTO project_tag (project_id, tag) VALUES
+  (1206, '향초'), (1206, '친환경'),
+  (1207, 'IoT'), (1207, '스마트홈');
+
+-- 리워드 추가
+INSERT INTO rewards (id, project_id, name, description, price, estimated_delivery_date, is_active, stock_quantity) VALUES
+  (1306, 1206, '에코캔들 기본 세트', '향초 3개 세트', 100000, DATE '2025-10-15', FALSE, 0),
+  (1307, 1207, '스마트 식물재배기 얼리버드', '본체 + 씨앗 키트', 400000, DATE '2025-11-30', FALSE, 0);
+
+-- ============================================================
+-- 10월 주문 추가 (월별 비교 안정화를 위해)
+-- ============================================================
+INSERT INTO orders (id, order_id, order_name, user_id, project_id, status, total_amount,
+                    receiver_name, receiver_phone, address_line1, address_line2, zip_code,
+                    delivery_status, created_at, updated_at)
+VALUES
+  -- 10-10: 1206 프로젝트 (성공 프로젝트)
+  (1407, 'ORD-20251010-HHH', '에코캔들 기본 세트', 1000, 1206, 'PAID', 300000,
+   '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236',
+   'NONE', TIMESTAMP '2025-10-10 14:30:00', TIMESTAMP '2025-10-10 14:35:00'),
+
+  -- 10-15: 1206 프로젝트
+  (1408, 'ORD-20251015-III', '에코캔들 기본 세트', 1001, 1206, 'PAID', 200000,
+   '서포터2', '010-2000-0002', '서울시 강남구 테헤란로 212', '902호', '06102',
+   'NONE', TIMESTAMP '2025-10-15 16:20:00', TIMESTAMP '2025-10-15 16:25:00'),
+
+  -- 10-20: 1206 프로젝트
+  (1409, 'ORD-20251020-JJJ', '에코캔들 기본 세트', 1002, 1206, 'PAID', 500000,
+   '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018',
+   'NONE', TIMESTAMP '2025-10-20 10:45:00', TIMESTAMP '2025-10-20 10:50:00'),
+
+  -- 10-25: 1207 프로젝트 (실패 프로젝트)
+  (1410, 'ORD-20251025-KKK', '스마트 식물재배기 얼리버드', 1000, 1207, 'PAID', 400000,
+   '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236',
+   'NONE', TIMESTAMP '2025-10-25 11:15:00', TIMESTAMP '2025-10-25 11:20:00');
+
+-- 주문 아이템 추가 (10월)
+INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
+  (1407, 1306, '에코캔들 기본 세트', 100000, 3, 300000, '3개 구매'),
+  (1408, 1306, '에코캔들 기본 세트', 100000, 2, 200000, '2개 구매'),
+  (1409, 1306, '에코캔들 기본 세트', 100000, 5, 500000, '5개 구매'),
+  (1410, 1307, '스마트 식물재배기 얼리버드', 400000, 1, 400000, '실패 프로젝트 주문');
+
+-- 결제 추가 (10월)
+INSERT INTO payments (id, order_id, payment_key, amount, method, status, created_at, approved_at) VALUES
+  (1507, 1407, 'pay-key-1407', 300000, 'CARD', 'DONE', TIMESTAMP '2025-10-10 14:31:00', TIMESTAMP '2025-10-10 14:32:00'),
+  (1508, 1408, 'pay-key-1408', 200000, 'CARD', 'DONE', TIMESTAMP '2025-10-15 16:21:00', TIMESTAMP '2025-10-15 16:22:00'),
+  (1509, 1409, 'pay-key-1409', 500000, 'CARD', 'DONE', TIMESTAMP '2025-10-20 10:46:00', TIMESTAMP '2025-10-20 10:47:00'),
+  (1510, 1410, 'pay-key-1410', 400000, 'CARD', 'DONE', TIMESTAMP '2025-10-25 11:16:00', TIMESTAMP '2025-10-25 11:17:00');
+
+-- ============================================================
+-- 11월 저녁/밤 시간대 주문 추가 (시간대별 차트 다양화)
+-- ============================================================
+INSERT INTO orders (id, order_id, order_name, user_id, project_id, status, total_amount,
+                    receiver_name, receiver_phone, address_line1, address_line2, zip_code,
+                    delivery_status, created_at, updated_at)
+VALUES
+  -- 11-07 14:30 (오후)
+  (1411, 'ORD-20251107-LLL', '펄스핏 스타터 패키지', 1002, 1201, 'PAID', 150000,
+   '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018',
+   'NONE', TIMESTAMP '2025-11-07 14:30:00', TIMESTAMP '2025-11-07 14:35:00'),
+
+  -- 11-08 19:45 (저녁)
+  (1412, 'ORD-20251108-MMM', '지오트레일 얼리버드', 1001, 1203, 'PAID', 360000,
+   '서포터2', '010-2000-0002', '서울시 강남구 테헤란로 212', '902호', '06102',
+   'NONE', TIMESTAMP '2025-11-08 19:45:00', TIMESTAMP '2025-11-08 19:50:00'),
+
+  -- 11-09 21:20 (밤)
+  (1413, 'ORD-20251109-NNN', '홈라이트 얼리버드', 1000, 1205, 'PAID', 220000,
+   '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236',
+   'NONE', TIMESTAMP '2025-11-09 21:20:00', TIMESTAMP '2025-11-09 21:25:00');
+
+-- 주문 아이템 추가 (11월 저녁/밤)
+INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
+  (1411, 1301, '펄스핏 스타터 패키지', 150000, 1, 150000, '오후 주문'),
+  (1412, 1303, '지오트레일 얼리버드', 180000, 2, 360000, '저녁 주문'),
+  (1413, 1305, '홈라이트 얼리버드', 220000, 1, 220000, '밤 주문');
+
+-- 결제 추가 (11월 저녁/밤)
+INSERT INTO payments (id, order_id, payment_key, amount, method, status, created_at, approved_at) VALUES
+  (1511, 1411, 'pay-key-1411', 150000, 'CARD', 'DONE', TIMESTAMP '2025-11-07 14:31:00', TIMESTAMP '2025-11-07 14:32:00'),
+  (1512, 1412, 'pay-key-1412', 360000, 'CARD', 'DONE', TIMESTAMP '2025-11-08 19:46:00', TIMESTAMP '2025-11-08 19:47:00'),
+  (1513, 1413, 'pay-key-1413', 220000, 'CARD', 'DONE', TIMESTAMP '2025-11-09 21:21:00', TIMESTAMP '2025-11-09 21:22:00');
+
+-- ============================================================
+-- PENDING 주문 추가 (결제 실패/대기 케이스)
+-- ============================================================
+INSERT INTO orders (id, order_id, order_name, user_id, project_id, status, total_amount,
+                    receiver_name, receiver_phone, address_line1, address_line2, zip_code,
+                    delivery_status, created_at, updated_at)
+VALUES
+  -- 11-10: PENDING (결제 시도 중)
+  (1414, 'ORD-20251110-OOO', '펄스핏 스타터 패키지', 1010, 1201, 'PENDING', 150000,
+   '신규서포터1', '010-3000-0001', '서울시 강남구 언주로 100', '1층', '06000',
+   'NONE', TIMESTAMP '2025-11-10 15:00:00', TIMESTAMP '2025-11-10 15:05:00'),
+
+  -- 11-11: PENDING (PG 오류)
+  (1415, 'ORD-20251111-PPP', '지오트레일 얼리버드', 1011, 1203, 'PENDING', 180000,
+   '신규서포터2', '010-3000-0002', '서울시 강남구 테헤란로 50', '12층', '06110',
+   'NONE', TIMESTAMP '2025-11-11 16:30:00', TIMESTAMP '2025-11-11 16:35:00');
+
+-- 주문 아이템 추가 (PENDING)
+INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
+  (1414, 1301, '펄스핏 스타터 패키지', 150000, 1, 150000, 'PENDING 주문'),
+  (1415, 1303, '지오트레일 얼리버드', 180000, 1, 180000, 'PENDING 주문');
+
+-- 결제 추가 (PENDING - 승인되지 않음)
+INSERT INTO payments (id, order_id, payment_key, amount, method, status, created_at, approved_at) VALUES
+  (1514, 1414, 'pay-key-1414', 150000, 'CARD', 'READY', TIMESTAMP '2025-11-10 15:01:00', NULL),
+  (1515, 1415, 'pay-key-1415', 180000, 'CARD', 'CANCELED', TIMESTAMP '2025-11-11 16:31:00', NULL);
+
+-- ============================================================
+-- 환불 추가 (환불 통계 테스트용)
+-- ============================================================
+-- 11-12: 펄스핏 주문 환불
+INSERT INTO orders (id, order_id, order_name, user_id, project_id, status, total_amount,
+                    receiver_name, receiver_phone, address_line1, address_line2, zip_code,
+                    delivery_status, created_at, updated_at)
+VALUES
+  (1416, 'ORD-20251112-QQQ', '펄스핏 스타터 패키지', 1002, 1201, 'CANCELED', 150000,
+   '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018',
+   'NONE', TIMESTAMP '2025-11-12 10:00:00', TIMESTAMP '2025-11-12 10:30:00');
+
+-- 주문 아이템 추가 (환불)
+INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
+  (1416, 1301, '펄스핏 스타터 패키지', 150000, 1, 150000, '환불 주문');
+
+-- 결제 추가 (환불)
+INSERT INTO payments (id, order_id, payment_key, amount, method, status, created_at, approved_at) VALUES
+  (1516, 1416, 'pay-key-1416', 150000, 'CARD', 'CANCELED', TIMESTAMP '2025-11-12 10:01:00', TIMESTAMP '2025-11-12 10:02:00');
+
+-- 환불 추가
+INSERT INTO refunds (payment_id, amount, status, reason, created_at) VALUES
+  (1516, 150000, 'COMPLETED', '단순 변심', TIMESTAMP '2025-11-12 10:31:00');
+
+-- ============================================================
+-- 플랫폼 수수료 트랜잭션 추가
+-- ============================================================
+INSERT INTO platform_wallet_transactions (wallet_id, type, amount, balance_after, related_project_id, created_at, description) VALUES
+  -- 10월
+  (1, 'PLATFORM_FEE_IN', 30000, 129000, 1206, TIMESTAMP '2025-10-10 14:33:00', '에코캔들 수수료 10%'),
+  (1, 'PLATFORM_FEE_IN', 20000, 149000, 1206, TIMESTAMP '2025-10-15 16:23:00', '에코캔들 수수료 10%'),
+  (1, 'PLATFORM_FEE_IN', 50000, 199000, 1206, TIMESTAMP '2025-10-20 10:48:00', '에코캔들 수수료 10%'),
+  (1, 'PLATFORM_FEE_IN', 40000, 239000, 1207, TIMESTAMP '2025-10-25 11:18:00', '스마트 식물재배기 수수료 10%'),
+  -- 11월
+  (1, 'PLATFORM_FEE_IN', 15000, 254000, 1201, TIMESTAMP '2025-11-07 14:33:00', '펄스핏 수수료 10%'),
+  (1, 'PLATFORM_FEE_IN', 36000, 290000, 1203, TIMESTAMP '2025-11-08 19:48:00', '지오트레일 수수료 10%'),
+  (1, 'PLATFORM_FEE_IN', 22000, 312000, 1205, TIMESTAMP '2025-11-09 21:23:00', '홈라이트 수수료 10%'),
+  (1, 'REFUND_OUT', -15000, 297000, 1201, TIMESTAMP '2025-11-12 10:32:00', '펄스핏 환불');
+
+-- 프로젝트 지갑 트랜잭션 추가
+INSERT INTO project_wallet_transactions (project_wallet_id, amount, balance_after, type, description, created_at, order_id) VALUES
+  -- 10월 (1206 프로젝트)
+  (6, 300000, 300000, 'DEPOSIT', 'ORD-20251010-HHH 입금', TIMESTAMP '2025-10-10 14:33:00', 1407),
+  (6, 200000, 500000, 'DEPOSIT', 'ORD-20251015-III 입금', TIMESTAMP '2025-10-15 16:23:00', 1408),
+  (6, 500000, 1000000, 'DEPOSIT', 'ORD-20251020-JJJ 입금', TIMESTAMP '2025-10-20 10:48:00', 1409),
+  -- 10월 (1207 프로젝트)
+  (7, 400000, 400000, 'DEPOSIT', 'ORD-20251025-KKK 입금', TIMESTAMP '2025-10-25 11:18:00', 1410),
+  -- 11월
+  (1, 150000, 382500, 'DEPOSIT', 'ORD-20251107-LLL 입금', TIMESTAMP '2025-11-07 14:33:00', 1411),
+  (3, 360000, 540000, 'DEPOSIT', 'ORD-20251108-MMM 입금', TIMESTAMP '2025-11-08 19:48:00', 1412),
+  (5, 220000, 440000, 'DEPOSIT', 'ORD-20251109-NNN 입금', TIMESTAMP '2025-11-09 21:23:00', 1413);
+
+-- 정산 추가 (1206: 완료, 1207: 대기)
+INSERT INTO settlements (id, project_id, maker_id, total_order_amount, toss_fee_amount, platform_fee_amount, net_amount,
+                         first_payment_amount, first_payment_status, first_payment_at,
+                         final_payment_amount, final_payment_status, final_payment_at,
+                         status, retry_count, created_at, updated_at) VALUES
+  (1605, 1206, 1003, 1000000, 50000, 100000, 850000,
+   400000, 'DONE', TIMESTAMP '2025-09-15 10:00:00',
+   450000, 'DONE', TIMESTAMP '2025-10-01 10:00:00',
+   'COMPLETED', 0, TIMESTAMP '2025-09-01 10:00:00', TIMESTAMP '2025-10-01 10:00:00'),
+  (1606, 1207, 1004, 400000, 20000, 40000, 340000,
+   0, 'PENDING', NULL,
+   340000, 'PENDING', NULL,
+   'PENDING', 0, TIMESTAMP '2025-10-25 11:20:00', TIMESTAMP '2025-10-25 11:20:00');
+
+-- 메이커 지갑 트랜잭션 추가 (1206 정산 완료)
+INSERT INTO wallet_transactions (wallet_id, amount, balance_after, type, description, created_at, settlement_id) VALUES
+  (1, 850000, 1229500, 'SETTLEMENT_FINAL', '에코캔들 최종 정산 완료', TIMESTAMP '2025-10-01 10:00:00', 1605);
+
+-- 메이커 지갑 업데이트 (total_earned, available_balance 반영)
+UPDATE maker_wallets SET
+  available_balance = 1229500,
+  total_earned = 1649000
+WHERE id = 1;
+
+-- 플랫폼 지갑 업데이트 (최종 잔액 반영)
+UPDATE platform_wallets SET
+  total_balance = 297000,
+  total_platform_fee = 297000,
+  updated_at = TIMESTAMP '2025-11-12 10:32:00'
+WHERE id = 1;
 
 -- 시퀀스 기반 ID 테이블 (H2는 SEQUENCE 이름이 생성됨)
 ALTER SEQUENCE user_id_seq RESTART WITH 2000;

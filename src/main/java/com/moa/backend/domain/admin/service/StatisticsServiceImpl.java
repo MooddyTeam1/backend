@@ -659,7 +659,10 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .longValue();
 
         Long otherCosts = 0L; // TODO: 기타 비용 정의 시 반영
-        Long netProfit = totalPaymentAmount - pgFeeAmount - platformFeeAmount - otherCosts;
+        // 메이커 지급액(총 결제액 - PG 수수료 - 플랫폼 수수료)
+        Long netPayoutToMaker = totalPaymentAmount - pgFeeAmount - platformFeeAmount - otherCosts;
+        // 플랫폼 순이익(플랫폼 수익 = 플랫폼 수수료 10%) - PG 비용을 제외하지 않음
+        Long netPlatformProfit = platformFeeAmount;
 
         return PlatformRevenueDto.builder()
                 .totalPaymentAmount(totalPaymentAmount)
@@ -668,7 +671,8 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .platformFeeAmount(platformFeeAmount)
                 .platformFeeRate(PLATFORM_FEE_RATE.multiply(BigDecimal.valueOf(100)).doubleValue())
                 .otherCosts(otherCosts)
-                .netProfit(netProfit)
+                .netPayoutToMaker(netPayoutToMaker)
+                .netPlatformProfit(netPlatformProfit)
                 .build();
     }
 
