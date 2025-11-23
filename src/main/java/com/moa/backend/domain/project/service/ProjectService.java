@@ -52,4 +52,11 @@ public interface ProjectService {
     // - 기준: LIVE + APPROVED 상태 프로젝트
     // - 정렬: (결제 완료 주문 금액 합계 / 목표 금액) 내림차순
     List<ProjectListResponse> getNearGoalProjects(int size);
+
+    // 한글 설명: 홈 화면 '예정되어 있는 펀딩' 섹션용 조회.
+    // - 조건: SCHEDULED + APPROVED + startDate >= 오늘
+    // - 정렬: startDate 오름차순, 같은 날이면 createdAt 최신순
+    List<ProjectListResponse> getScheduledProjects(int size);
+
+
 }

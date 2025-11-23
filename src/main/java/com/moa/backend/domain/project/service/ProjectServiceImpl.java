@@ -328,6 +328,35 @@ public class ProjectServiceImpl implements ProjectService {
                 })
                 .toList();
     }
+    // ===================== 홈 섹션: 예정되어 있는 펀딩 =====================
+
+    /**
+     * 한글 설명:
+     * - '예정되어 있는 펀딩' 섹션에서 사용할 프로젝트 목록을 조회한다.
+     * - 조건:
+     *   - lifecycleStatus = SCHEDULED (공개 예정)
+     *   - reviewStatus = APPROVED (관리자 승인 완료)
+     *   - startDate >= 오늘
+     * - 정렬:
+     *   - startDate 오름차순, 동일일자는 createdAt 최신순
+     */
+    @Override
+    public List<ProjectListResponse> getScheduledProjects(int size) {
+        int safeSize = Math.max(1, Math.min(size, 30));
+
+        // 한글 설명: '예정되어 있는 펀딩' 기준 시각 (현재 시각)
+        LocalDateTime now = LocalDateTime.now();
+
+        return projectRepository.findScheduledProjects(
+                        ProjectLifecycleStatus.SCHEDULED,
+                        ProjectReviewStatus.APPROVED,
+                        now,
+                        PageRequest.of(0, safeSize)
+                ).stream()
+                // 한글 설명: 공개 예정 상태이므로 fromScheduled를 사용해서 카드 데이터를 만든다.
+                .map(ProjectListResponse::fromScheduled)
+                .toList();
+    }
 
 
 
