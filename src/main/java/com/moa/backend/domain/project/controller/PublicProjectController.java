@@ -93,4 +93,13 @@ public class PublicProjectController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/scheduled")
+    public ResponseEntity<List<ProjectListResponse>> getScheduledProjects(
+            @RequestParam(name = "size", defaultValue = "6") int size
+    ) {
+        // 한글 설명: 지정된 개수만큼 공개 예정 프로젝트 목록을 조회한다.
+        List<ProjectListResponse> result = projectService.getScheduledProjects(size);
+        return ResponseEntity.ok(result);
+    }
+
 }

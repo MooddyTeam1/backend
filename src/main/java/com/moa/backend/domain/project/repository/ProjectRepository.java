@@ -335,4 +335,25 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             @Param("category") Category category,
             @Param("makerId") Long makerId
     );
+
+    // 한글 설명: '예정되어 있는 펀딩' 섹션용 프로젝트 조회
+// - 조건:
+//   - lifecycleStatus = SCHEDULED
+//   - reviewStatus = APPROVED
+//   - liveStartAt >= now (아직 시작 전이거나 곧 시작할 프로젝트)
+//   - (선택) liveEndAt > now 인 경우만 포함하고 싶으면 AND 조건 추가
+    @Query("""
+    SELECT p
+    FROM Project p
+    WHERE p.lifecycleStatus = :lifecycleStatus
+      AND p.reviewStatus = :reviewStatus
+      AND p.liveStartAt >= :now
+    ORDER BY p.liveStartAt ASC, p.createdAt DESC
+    """)
+    List<Project> findScheduledProjects(
+            @Param("lifecycleStatus") ProjectLifecycleStatus lifecycleStatus,
+            @Param("reviewStatus") ProjectReviewStatus reviewStatus,
+            @Param("now") LocalDateTime now,
+            Pageable pageable
+    );
 }
