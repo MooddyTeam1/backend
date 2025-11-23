@@ -20,6 +20,16 @@ TRUNCATE TABLE
   platform_wallets,
   users
 RESTART IDENTITY CASCADE;
+-- 💡maker 변경 점----------------------------------------
+ALTER TABLE makers
+  ADD COLUMN IF NOT EXISTS maker_type varchar(20);
+
+ALTER TABLE makers
+  ADD COLUMN IF NOT EXISTS business_item varchar(100);
+
+ALTER TABLE makers
+  ADD COLUMN IF NOT EXISTS online_sales_registration_no varchar(100);
+-- ---------------------------------------------------------------------
 
 -- 2. 공통 비밀번호 (bcrypt 해시)
 -- 비밀번호: "test1234"
@@ -158,12 +168,15 @@ INSERT INTO supporter_profiles (
 INSERT INTO makers (
   id,
   owner_user_id,
+  maker_type,
   name,
   business_name,
   business_number,
   representative,
   established_at,
   industry_type,
+  business_item,
+  online_sales_registration_no,
   location,
   product_intro,
   core_competencies,
@@ -171,16 +184,20 @@ INSERT INTO makers (
   contact_email,
   contact_phone,
   tech_stack,
+  keywords,
   created_at,
   updated_at
 ) VALUES
   (1003, 1003,
+   'BUSINESS',
    '메이커원 스튜디오',
    '메이커원 스튜디오',
    '110-22-334455',
    '박알리스',
    DATE '2021-03-15',
    '스마트 하드웨어',
+   '제조업, 도매 및 소매업',
+   '제 0000-서울강남-0000호',
    '서울시 강남구',
    '일상에서 쓰는 웨어러블 로봇을 연구합니다.',
    '하이브리드 제조, 임베디드 펌웨어, 산업 디자인',
@@ -188,16 +205,20 @@ INSERT INTO makers (
    'maker1@test.com',
    '010-1111-0001',
    '["Spring Boot","Embedded C","PostgreSQL"]',
+   '친환경,소셜임팩트,B2B',
    TIMESTAMP '2024-11-08 11:00:00',
    TIMESTAMP '2024-11-12 13:45:00'),
 
   (1004, 1004,
+   'BUSINESS',
    '트레일랩스',
    'Trail Labs Co.',
    '220-33-778899',
    '최브라이언',
    DATE '2020-05-20',
    '아웃도어 기어',
+   '제조업',
+   '제 0000-부산해운-0001호',
    '부산시 해운대구',
    '여행자와 하이커를 위한 스마트 액세서리를 만듭니다.',
    '내구성 원단, 저전력 IoT, 민첩한 공급망',
@@ -205,6 +226,7 @@ INSERT INTO makers (
    'maker2@test.com',
    '010-1111-0002',
    '["Kotlin","LoRa","AWS IoT"]',
+   '아웃도어,여행,IoT',
    TIMESTAMP '2024-11-08 11:10:00',
    TIMESTAMP '2024-11-12 13:50:00');
 
@@ -447,8 +469,8 @@ INSERT INTO projects (
    DATE '2026-02-01',
    DATE '2026-03-01',
    'TECH',
-   'DRAFT',      -- 작성중
-   'NONE',       -- 심사 요청 안 함
+   'DRAFT',
+   'NONE',
    'NONE',
    NULL,
    NULL,
@@ -471,10 +493,10 @@ INSERT INTO projects (
    DATE '2026-03-10',
    DATE '2026-04-10',
    'TECH',
-   'DRAFT',      -- 아직 공개 전, 라이프사이클은 작성중 상태로 유지
-   'REVIEW',     -- 심사중
+   'DRAFT',
+   'REVIEW',
    'NONE',
-   TIMESTAMP '2025-11-10 09:30:00',  -- request_at
+   TIMESTAMP '2025-11-10 09:30:00',
    NULL,
    NULL,
    NULL,
@@ -492,22 +514,22 @@ INSERT INTO projects (
    '심사를 통과했고 지정된 시작일에 공개될 예정입니다.',
    '## 메이커1 - 승인된 프로젝트(공개예정) - 오픈일까지 사전 마케팅을 진행할 수 있습니다.',
    3000000,
-   DATE '2026-05-01',    -- 공개 예정일
+   DATE '2026-05-01',
    DATE '2026-06-01',
    'DESIGN',
-   'SCHEDULED',          -- 공개 예정
-   'APPROVED',           -- 승인됨
+   'SCHEDULED',
+   'APPROVED',
    'NONE',
-   TIMESTAMP '2025-11-08 11:00:00',  -- request_at
-   TIMESTAMP '2025-11-09 15:00:00',  -- approved_at
+   TIMESTAMP '2025-11-08 11:00:00',
+   TIMESTAMP '2025-11-09 15:00:00',
    NULL,
    NULL,
    'https://picsum.photos/seed/project-1206-cover/800/600',
    '["https://picsum.photos/seed/project-1206-1/1200/800"]',
    TIMESTAMP '2025-11-08 10:30:00',
    TIMESTAMP '2025-11-12 10:20:00',
-   NULL,  -- live_start_at (아직 라이브 전)
-   NULL,  -- live_end_at
+   NULL,
+   NULL,
    NULL),
 
   -- 4) 반려됨: 심사에서 반려된 프로젝트
@@ -519,12 +541,12 @@ INSERT INTO projects (
    DATE '2026-02-15',
    DATE '2026-03-15',
    'TECH',
-   'DRAFT',              -- 여전히 작성중 상태
-   'REJECTED',           -- 반려됨
+   'DRAFT',
+   'REJECTED',
    'NONE',
-   TIMESTAMP '2025-11-06 14:00:00',  -- request_at
+   TIMESTAMP '2025-11-06 14:00:00',
    NULL,
-   TIMESTAMP '2025-11-07 16:30:00',  -- rejected_at
+   TIMESTAMP '2025-11-07 16:30:00',
    '프로젝트 리스크 설명과 리워드 배송 계획이 충분하지 않습니다.',
    'https://picsum.photos/seed/project-1207-cover/800/600',
    '["https://picsum.photos/seed/project-1207-1/1200/800"]',
@@ -589,7 +611,6 @@ SELECT
   '시드 서포터 #' || s AS display_name,
   '데모용 자동 생성 서포터입니다.' AS bio,
   'https://picsum.photos/seed/seed-user-' || s || '/200/200' AS image_url,
-  -- 010-3000-1000 ~ 010-3000-1099
   '010-3000-' || LPAD((1000 + s)::text, 4, '0') AS phone,
   '06000' AS postal_code,
   NOW() - INTERVAL '9 days' AS created_at,
@@ -630,10 +651,10 @@ INSERT INTO supporter_bookmarks_project (
 SELECT
   1100 + s AS supporter_user_id,
   CASE
-    WHEN s % 4 = 0 THEN 1203  -- 1차 때 1201 찜했던 유저 → 이번엔 1203
-    WHEN s % 4 = 1 THEN 1201  -- 1차 때 1203 → 이번엔 1201
-    WHEN s % 4 = 2 THEN 1203  -- 1차 때 1202 → 이번엔 1203
-    ELSE 1202                 -- 1차 때 1200 → 이번엔 1202
+    WHEN s % 4 = 0 THEN 1203
+    WHEN s % 4 = 1 THEN 1201
+    WHEN s % 4 = 2 THEN 1203
+    ELSE 1202
   END AS project_id,
   NOW() - ( (s + 200) || ' hours')::interval AS created_at
 FROM generate_series(0, 49) AS s;
@@ -643,11 +664,6 @@ FROM generate_series(0, 49) AS s;
 --  - LIVE + APPROVED 프로젝트 3개
 --  - 달성률: 30%, 72%, 95%
 -- ============================================================
-
--- ------------------------------------------------------------
--- 1) projects 더미 3개 (id: 1208, 1209, 1210)
---    - maker_id / user_id 는 실제 존재하는 값으로 맞춰서 사용
--- ------------------------------------------------------------
 
 INSERT INTO projects (
     id,
@@ -668,7 +684,6 @@ INSERT INTO projects (
     live_start_at,
     live_end_at
 ) VALUES
--- 📌 프로젝트 1: 목표 1,000,000원 / 30% 달성 (= 300,000원)
 (
     1208,
     1003,
@@ -688,7 +703,6 @@ INSERT INTO projects (
     NOW() - INTERVAL '5 days',
     NOW() + INTERVAL '10 days'
 ),
--- 📌 프로젝트 2: 목표 500,000원 / 72% 달성 (= 360,000원)
 (
     1209,
     1003,
@@ -708,7 +722,6 @@ INSERT INTO projects (
     NOW() - INTERVAL '3 days',
     NOW() + INTERVAL '12 days'
 ),
--- 📌 프로젝트 3: 목표 2,000,000원 / 95% 달성 (= 1,900,000원)
 (
     1210,
     1003,
@@ -729,16 +742,8 @@ INSERT INTO projects (
     NOW() + INTERVAL '7 days'
 );
 
--- ✅ 시퀀스(project_id_seq)가 있다면, ID 최대값으로 맞춰주기 (선택)
 SELECT setval('project_id_seq', (SELECT MAX(id) FROM projects));
 
--- ------------------------------------------------------------
--- 2) orders 더미 데이터 (결제 완료 상태 PAID)
---    - order_id 는 비즈니스용 주문코드(문자열)
---    - user_id 는 실제 존재하는 유저 ID 사용 (1000)
--- ------------------------------------------------------------
-
--- 🎯 프로젝트 1 (id=1208): 총 모금액 300,000원 → 30%
 INSERT INTO orders (
     order_id,
     user_id,
@@ -770,8 +775,6 @@ INSERT INTO orders (
     NOW()
 );
 
--- 🎯 프로젝트 2 (id=1209): 총 모금액 360,000원 → 72%
---   - 주문 2건: 200,000 + 160,000 = 360,000
 INSERT INTO orders (
     order_id,
     user_id,
@@ -818,8 +821,6 @@ INSERT INTO orders (
     NOW()
 );
 
--- 🎯 프로젝트 3 (id=1210): 총 모금액 1,900,000원 → 95%
---   - 주문 3건: 1,000,000 + 500,000 + 400,000 = 1,900,000
 INSERT INTO orders (
     order_id,
     user_id,
@@ -881,14 +882,6 @@ INSERT INTO orders (
     NOW()
 );
 
--- ------------------------------------------------------------
--- 3) order_items 더미 데이터
---    - reward_id 는 NULL 로 두고, 스냅샷 정보만 채운다.
---    - order_id(FK)는 PK가 아니라 orders.id 이므로,
---      orders.order_id(문자열)로 조회해서 매핑한다.
--- ------------------------------------------------------------
-
--- 📦 프로젝트 1 (30%): 100,000원짜리 리워드 3개 = 300,000원
 INSERT INTO order_items (
     order_id,
     reward_id,
@@ -909,9 +902,6 @@ SELECT
 FROM orders o
 WHERE o.order_id = 'ORD-NEAR-30-1';
 
--- 📦 프로젝트 2 (72%):
---   - 주문 1: 50,000원 * 4 = 200,000
---   - 주문 2: 80,000원 * 2 = 160,000
 INSERT INTO order_items (
     order_id,
     reward_id,
@@ -952,10 +942,6 @@ SELECT
 FROM orders o
 WHERE o.order_id = 'ORD-NEAR-72-2';
 
--- 📦 프로젝트 3 (95%):
---   - 주문 1: 100,000원 * 10 = 1,000,000
---   - 주문 2: 50,000원 * 10 = 500,000
---   - 주문 3: 400,000원 * 1 = 400,000
 INSERT INTO order_items (
     order_id,
     reward_id,

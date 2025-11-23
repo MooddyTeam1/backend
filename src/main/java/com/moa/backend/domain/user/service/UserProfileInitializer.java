@@ -30,9 +30,13 @@ public class UserProfileInitializer {
             supporterProfileRepository.save(SupporterProfile.createEmpty(user));
         }
 
-        // 메이커 엔티티가 없으면 새로 만들고, 이어서 지갑까지 보장한다.
+// 한글 설명: 메이커 엔티티가 없으면 개인 메이커로 새로 만들고, 이어서 지갑까지 보장한다.
         makerRepository.findByOwner_Id(user.getId())
-                .or(() -> Optional.of(makerRepository.save(Maker.create(user, user.getEmail()))))
+                .or(() -> Optional.of(
+                        makerRepository.save(
+                                Maker.createIndividual(user, user.getEmail()) // ✅ 새 팩토리 메서드 사용
+                        )
+                ))
                 .ifPresent(makerWalletService::createForMaker);
     }
 }
