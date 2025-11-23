@@ -18,6 +18,10 @@ public enum ErrorCode {
     NOT_FOUND("COMM-404", HttpStatus.NOT_FOUND, "요청하신 대상을 찾을 수 없습니다."),
     BUSINESS_CONFLICT("BUSN-409", HttpStatus.CONFLICT, "요청이 현재 상태와 충돌합니다."),
 
+    // 🔹 User / Profile 관련
+    USER_NOT_FOUND("USR-404", HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
+    SUPPORTER_PROFILE_NOT_FOUND("SUP-404", HttpStatus.NOT_FOUND, "서포터 프로필을 찾을 수 없습니다."),
+
     ORDER_NOT_FOUND("ORD-404", HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."),
     ORDER_ALREADY_PAID("ORD-409", HttpStatus.CONFLICT, "이미 결제 완료된 주문입니다."),
 

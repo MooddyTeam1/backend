@@ -20,7 +20,8 @@ TRUNCATE TABLE
   platform_wallets,
   users
 RESTART IDENTITY CASCADE;
--- 💡maker 변경 점----------------------------------------
+
+-- 💡 maker 변경 점 ------------------------------------------------------
 ALTER TABLE makers
   ADD COLUMN IF NOT EXISTS maker_type varchar(20);
 
@@ -29,6 +30,20 @@ ALTER TABLE makers
 
 ALTER TABLE makers
   ADD COLUMN IF NOT EXISTS online_sales_registration_no varchar(100);
+
+-- 💡 user 온보딩(알림 설정) 컬럼 ---------------------------------------
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS notification_level varchar(20),
+  ADD COLUMN IF NOT EXISTS onboarding_status varchar(20) DEFAULT 'NOT_STARTED';
+
+-- 💡 supporter 온보딩 컬럼 ---------------------------------------------
+ALTER TABLE supporter_profiles
+  ADD COLUMN IF NOT EXISTS preferred_styles jsonb,
+  ADD COLUMN IF NOT EXISTS budget_range varchar(30),
+  ADD COLUMN IF NOT EXISTS funding_experience varchar(20),
+  ADD COLUMN IF NOT EXISTS acquisition_channel varchar(30),
+  ADD COLUMN IF NOT EXISTS acquisition_channel_etc varchar(100);
+
 -- ---------------------------------------------------------------------
 
 -- 2. 공통 비밀번호 (bcrypt 해시)
@@ -46,7 +61,9 @@ INSERT INTO users (
   updated_at,
   last_login_at,
   image_url,
-  provider
+  provider,
+  notification_level,
+  onboarding_status
 ) VALUES
   (1000, 'user1@test.com',
    '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC',
@@ -54,7 +71,9 @@ INSERT INTO users (
    TIMESTAMP '2024-11-10 09:00:00',
    TIMESTAMP '2024-11-12 10:00:00',
    TIMESTAMP '2024-11-15 08:10:00',
-   'https://picsum.photos/seed/user-1000/200/200', 'LOCAL'),
+   'https://picsum.photos/seed/user-1000/200/200', 'LOCAL',
+   'IMPORTANT_ONLY',
+   'COMPLETED'),
 
   (1001, 'user2@test.com',
    '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC',
@@ -62,7 +81,9 @@ INSERT INTO users (
    TIMESTAMP '2024-11-10 09:05:00',
    TIMESTAMP '2024-11-12 10:10:00',
    TIMESTAMP '2024-11-15 08:20:00',
-   'https://picsum.photos/seed/user-1001/200/200', 'LOCAL'),
+   'https://picsum.photos/seed/user-1001/200/200', 'LOCAL',
+   'IMPORTANT_ONLY',
+   'COMPLETED'),
 
   (1002, 'user3@test.com',
    '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC',
@@ -70,7 +91,9 @@ INSERT INTO users (
    TIMESTAMP '2024-11-10 09:10:00',
    TIMESTAMP '2024-11-12 10:20:00',
    TIMESTAMP '2024-11-15 08:30:00',
-   'https://picsum.photos/seed/user-1002/200/200', 'LOCAL'),
+   'https://picsum.photos/seed/user-1002/200/200', 'LOCAL',
+   'IMPORTANT_ONLY',
+   'COMPLETED'),
 
   (1003, 'maker1@test.com',
    '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC',
@@ -78,7 +101,9 @@ INSERT INTO users (
    TIMESTAMP '2024-11-09 14:00:00',
    TIMESTAMP '2024-11-12 11:00:00',
    TIMESTAMP '2024-11-15 07:50:00',
-   'https://picsum.photos/seed/user-1003/200/200', 'LOCAL'),
+   'https://picsum.photos/seed/user-1003/200/200', 'LOCAL',
+   'IMPORTANT_ONLY',
+   'COMPLETED'),
 
   (1004, 'maker2@test.com',
    '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC',
@@ -86,7 +111,9 @@ INSERT INTO users (
    TIMESTAMP '2024-11-09 14:05:00',
    TIMESTAMP '2024-11-12 11:10:00',
    TIMESTAMP '2024-11-15 07:40:00',
-   'https://picsum.photos/seed/user-1004/200/200', 'LOCAL'),
+   'https://picsum.photos/seed/user-1004/200/200', 'LOCAL',
+   'IMPORTANT_ONLY',
+   'COMPLETED'),
 
   (1005, 'admin@test.com',
    '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC',
@@ -94,7 +121,9 @@ INSERT INTO users (
    TIMESTAMP '2024-11-08 08:30:00',
    TIMESTAMP '2024-11-12 09:00:00',
    TIMESTAMP '2024-11-15 06:30:00',
-   'https://picsum.photos/seed/user-1005/200/200', 'LOCAL');
+   'https://picsum.photos/seed/user-1005/200/200', 'LOCAL',
+   'IMPORTANT_ONLY',
+   'COMPLETED');
 
 -- 4. supporter_profiles --------------------------------------------------
 INSERT INTO supporter_profiles (
@@ -432,7 +461,6 @@ INSERT INTO rewards (
 -- maker1( maker_id = 1003 ) 상태별 테스트 프로젝트 4개
 -- 작성중(DRAFT/NONE), 심사중(DRAFT/REVIEW), 승인됨(SCHEDULED/APPROVED),
 -- 반려됨(DRAFT/REJECTED)
--- ※ data-postgres.sql의 기존 projects INSERT 아래에 이어서 붙이면 됨
 -- =====================================================================
 
 INSERT INTO projects (
@@ -556,13 +584,19 @@ INSERT INTO projects (
    NULL,
    NULL);
 
-INSERT INTO project_wallets (id, project_id, escrow_balance, pending_release, released_total, status, updated_at)
-  VALUES (2001, 1201, 0, 0, 0, 'ACTIVE', CURRENT_TIMESTAMP);
+INSERT INTO project_wallets (
+  id,
+  project_id,
+  escrow_balance,
+  pending_release,
+  released_total,
+  status,
+  updated_at
+) VALUES
+  (2001, 1201, 0, 0, 0, 'ACTIVE', CURRENT_TIMESTAMP);
 
 -- =====================================================================
 -- 시드 유저 100명 (id: 1100 ~ 1199)
---  - supporter_profiles에서 user_id로 참조할 사용자들
---  - 비밀번호: "test1234" (기존과 동일 bcrypt)
 -- =====================================================================
 INSERT INTO users (
   id,
@@ -574,7 +608,9 @@ INSERT INTO users (
   updated_at,
   last_login_at,
   image_url,
-  provider
+  provider,
+  notification_level,
+  onboarding_status
 )
 SELECT
   1100 + s AS id,
@@ -586,7 +622,9 @@ SELECT
   NOW() - INTERVAL '5 days'  AS updated_at,
   NOW() - INTERVAL '1 days'  AS last_login_at,
   'https://picsum.photos/seed/seed-user-' || s || '/200/200' AS image_url,
-  'LOCAL' AS provider
+  'LOCAL' AS provider,
+  'IMPORTANT_ONLY' AS notification_level,
+  'COMPLETED' AS onboarding_status
 FROM generate_series(0, 99) AS s;
 
 -- =====================================================================
@@ -621,10 +659,14 @@ SELECT
 FROM generate_series(0, 99) AS s;
 
 -- =====================================================================
--- C-1. 기존 서포터(1000~1005)의 찜 데이터 (핸드메이드)
+-- C-1. 기존 서포터(1000~1005)의 찜 데이터
 -- =====================================================================
 
-INSERT INTO supporter_bookmarks_project (supporter_user_id, project_id, created_at) VALUES
+INSERT INTO supporter_bookmarks_project (
+  supporter_user_id,
+  project_id,
+  created_at
+) VALUES
   (1000, 1201, NOW() - INTERVAL '12 days'),
   (1000, 1203, NOW() - INTERVAL '10 days'),
   (1001, 1201, NOW() - INTERVAL '9 days'),
@@ -639,8 +681,6 @@ INSERT INTO supporter_bookmarks_project (supporter_user_id, project_id, created_
 
 -- =====================================================================
 -- C-3. 시드 서포터 중 앞 50명(1100~1149)의 2차 북마크
---      - 한 유저가 서로 다른 프로젝트 2개를 찜하도록 구성
---      - 1201, 1203에 북마크 수를 더 몰아줌
 -- =====================================================================
 
 INSERT INTO supporter_bookmarks_project (
@@ -660,9 +700,7 @@ SELECT
 FROM generate_series(0, 49) AS s;
 
 -- ============================================================
--- 🧪 홈 섹션 테스트용 더미 데이터
---  - LIVE + APPROVED 프로젝트 3개
---  - 달성률: 30%, 72%, 95%
+-- 🧪 홈 섹션 테스트용 더미 데이터 (달성률 30%, 72%, 95%)
 -- ============================================================
 
 INSERT INTO projects (
@@ -743,6 +781,8 @@ INSERT INTO projects (
 );
 
 SELECT setval('project_id_seq', (SELECT MAX(id) FROM projects));
+
+-- orders ------------------------------------------------------
 
 INSERT INTO orders (
     order_id,
@@ -882,6 +922,8 @@ INSERT INTO orders (
     NOW()
 );
 
+-- order_items --------------------------------------------------
+
 INSERT INTO order_items (
     order_id,
     reward_id,
@@ -1002,6 +1044,7 @@ SELECT
 FROM orders o
 WHERE o.order_id = 'ORD-NEAR-95-3';
 
+-- 시퀀스 리셋 --------------------------------------------------
 ALTER SEQUENCE user_id_seq RESTART WITH 2000;
 ALTER SEQUENCE maker_id_seq RESTART WITH 2000;
 ALTER SEQUENCE project_id_seq RESTART WITH 2000;
