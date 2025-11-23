@@ -32,31 +32,30 @@ TRUNCATE TABLE supporter_profiles;
 TRUNCATE TABLE users;
 SET REFERENTIAL_INTEGRITY TRUE;
 
--- 유저 (기존 + 통계용 신규)
-INSERT INTO users (id, email, password, name, role, created_at, updated_at, last_login_at, image_url, provider) VALUES
-  (1000, 'user1@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터1', 'USER',
+INSERT INTO users (id, email, password, name, role, onboarding_status, created_at, updated_at, last_login_at, image_url, provider) VALUES
+  (1000, 'user1@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터1', 'USER', 'NOT_STARTED',
    TIMESTAMP '2024-11-10 09:00:00', TIMESTAMP '2024-11-12 10:00:00', TIMESTAMP '2024-11-15 08:10:00',
    'https://cdn.moa.dev/avatars/user1.png', 'LOCAL'),
-  (1001, 'user2@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터2', 'USER',
+  (1001, 'user2@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터2', 'USER', 'NOT_STARTED',
    TIMESTAMP '2024-11-10 09:05:00', TIMESTAMP '2024-11-12 10:10:00', TIMESTAMP '2024-11-15 08:20:00',
    'https://cdn.moa.dev/avatars/user2.png', 'LOCAL'),
-  (1002, 'user3@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터3', 'USER',
+  (1002, 'user3@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터3', 'USER', 'NOT_STARTED',
    TIMESTAMP '2024-11-10 09:10:00', TIMESTAMP '2024-11-12 10:20:00', TIMESTAMP '2024-11-15 08:30:00',
    'https://cdn.moa.dev/avatars/user3.png', 'LOCAL'),
-  (1003, 'maker1@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '메이커1', 'USER',
+  (1003, 'maker1@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '메이커1', 'USER', 'NOT_STARTED',
    TIMESTAMP '2024-11-09 14:00:00', TIMESTAMP '2024-11-12 11:00:00', TIMESTAMP '2024-11-15 07:50:00',
    'https://cdn.moa.dev/avatars/maker1.png', 'LOCAL'),
-  (1004, 'maker2@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '메이커2', 'USER',
+  (1004, 'maker2@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '메이커2', 'USER', 'NOT_STARTED',
    TIMESTAMP '2024-11-09 14:05:00', TIMESTAMP '2024-11-12 11:10:00', TIMESTAMP '2024-11-15 07:40:00',
    'https://cdn.moa.dev/avatars/maker2.png', 'LOCAL'),
-  (1005, 'admin@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '관리자', 'ADMIN',
+  (1005, 'admin@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '관리자', 'ADMIN', 'NOT_STARTED',
    TIMESTAMP '2024-11-08 08:30:00', TIMESTAMP '2024-11-12 09:00:00', TIMESTAMP '2024-11-15 06:30:00',
    'https://cdn.moa.dev/avatars/admin.png', 'LOCAL'),
   -- 신규 서포터 (2025-11 가입) : 신규/리텐션 지표용
-  (1010, 'newuser1@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '신규서포터1', 'USER',
+  (1010, 'newuser1@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '신규서포터1', 'USER', 'NOT_STARTED',
    TIMESTAMP '2025-11-02 09:00:00', TIMESTAMP '2025-11-02 09:00:00', TIMESTAMP '2025-11-02 09:10:00',
    'https://cdn.moa.dev/avatars/new1.png', 'LOCAL'),
-  (1011, 'newuser2@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '신규서포터2', 'USER',
+  (1011, 'newuser2@test.com', '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '신규서포터2', 'USER', 'NOT_STARTED',
    TIMESTAMP '2025-11-03 10:00:00', TIMESTAMP '2025-11-03 10:00:00', TIMESTAMP '2025-11-03 10:05:00',
    'https://cdn.moa.dev/avatars/new2.png', 'LOCAL');
 
