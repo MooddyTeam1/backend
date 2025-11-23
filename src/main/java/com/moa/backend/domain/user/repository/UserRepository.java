@@ -39,7 +39,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("providerId") String providerId
     );
 
-    List<User> findByRole(String role); // 역할로 유저 조회
+    // 버그 수정: role 컬럼이 UserRole(enum)이므로 파라미터도 enum으로 맞춤 (기존 String → UserRole)
+    List<User> findByRole(com.moa.backend.domain.user.entity.UserRole role); // 역할로 유저 조회
 
     // ========== 통계 API용 메서드 ==========
 
