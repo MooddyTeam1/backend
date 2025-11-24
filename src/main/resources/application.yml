@@ -5,8 +5,8 @@ jwt:
   issuer: moa-backend
 
 toss:
-  client-key: "test"     # 토스페이먼츠 샌드박스 클라이언트 키
-  secret-key: "test"    # 토스페이먼츠 샌드박스 시크릿 키
+  client-key: ${TOSS_CLIENT_KEY}     # 토스페이먼츠 샌드박스 클라이언트 키
+  secret-key: ${TOSS_SECRET_KEY}     # 토스페이먼츠 샌드박스 시크릿 키
 
 spring:
   application:
@@ -14,7 +14,7 @@ spring:
 
   sql:
     init:
-      mode: never
+      mode: always
       data-locations: classpath:data-postgres.sql   # ✅ 여기! spring.sql.init.* 로 인식됨
 
   security:

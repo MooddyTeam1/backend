@@ -29,6 +29,11 @@ public class ProjectCommunityComment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // 부모 댓글 (null 이면 일반 댓글, 값이 있으면 대댓글)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private ProjectCommunityComment parent;
+
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
