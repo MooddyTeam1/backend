@@ -202,13 +202,13 @@ INSERT INTO project_tag (project_id, tag) VALUES
   (1205, '홈리빙'), (1205, '충전');
 
 -- 리워드
-INSERT INTO rewards (id, project_id, name, description, price, estimated_delivery_date, is_active, stock_quantity) VALUES
-  (1300, 1200, '오로라 얼리버드 세트', '본체 + 디퓨저 + 패브릭 케이블 구성', 120000, DATE '2026-02-15', TRUE, 200),
-  (1301, 1201, '펄스핏 스타터 패키지', '기본 밴드와 센서 카트리지 2종 포함', 150000, DATE '2026-01-20', TRUE, 250),
-  (1302, 1202, '루멘노트 풀 패키지', '전자노트 + 스타일러스 + 폴리오 커버', 90000, DATE '2025-12-05', FALSE, 0),
-  (1303, 1203, '지오트레일 얼리버드', '태양광 패널과 비상 비컨을 포함한 백팩', 180000, DATE '2025-12-15', TRUE, 180),
-  (1304, 1204, '테이스트키트 얼리버드', '즉석 조리 키트 샘플', 50000, DATE '2025-12-30', TRUE, 100),
-  (1305, 1205, '홈라이트 얼리버드', '고속충전 LED 스탠드', 220000, DATE '2026-01-10', TRUE, 150);
+INSERT INTO rewards (id, project_id, name, description, price, estimated_delivery_date, is_active, stock_quantity, version) VALUES
+  (1300, 1200, '오로라 얼리버드 세트', '본체 + 디퓨저 + 패브릭 케이블 구성', 120000, DATE '2026-02-15', TRUE, 200, 0),
+  (1301, 1201, '펄스핏 스타터 패키지', '기본 밴드와 센서 카트리지 2종 포함', 150000, DATE '2026-01-20', TRUE, 250, 0),
+  (1302, 1202, '루멘노트 풀 패키지', '전자노트 + 스타일러스 + 폴리오 커버', 90000, DATE '2025-12-05', FALSE, 0, 0),
+  (1303, 1203, '지오트레일 얼리버드', '태양광 패널과 비상 비컨을 포함한 백팩', 180000, DATE '2025-12-15', TRUE, 180, 0),
+  (1304, 1204, '테이스트키트 얼리버드', '즉석 조리 키트 샘플', 50000, DATE '2025-12-30', TRUE, 100, 0),
+  (1305, 1205, '홈라이트 얼리버드', '고속충전 LED 스탠드', 220000, DATE '2026-01-10', TRUE, 150, 0);
 
 -- 주문
 INSERT INTO orders (id, order_id, order_name, user_id, project_id, status, total_amount,
