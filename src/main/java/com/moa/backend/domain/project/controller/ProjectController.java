@@ -13,6 +13,7 @@ import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.service.ProjectCommandService;
 import com.moa.backend.domain.project.service.ProjectService;
 import com.moa.backend.domain.project.service.ProjectTempService;
+import com.moa.backend.domain.tracking.service.ProjectTrafficQueryService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/project")
@@ -34,6 +36,8 @@ public class ProjectController {
     // 한글 설명: 서포터 → 프로젝트 찜/해제 로직을 담당하는 서비스(follow 도메인).
     private final SupporterProjectBookmarkService supporterProjectBookmarkService;
 
+    // ✅ 한글 설명: 프로젝트 트래픽/뷰 기록용 서비스
+    private final ProjectTrafficQueryService projectTrafficQueryService;
     // ====================== 프로젝트 생성 / 조회 ======================
 
     //프로젝트 생성
@@ -60,19 +64,45 @@ public class ProjectController {
     @GetMapping("/id/{projectId}")
     public ResponseEntity<ProjectDetailResponse> getProjectById(
             @PathVariable Long projectId,
-            @AuthenticationPrincipal JwtUserPrincipal principal
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            jakarta.servlet.http.HttpServletRequest request // ✅ HttpServletRequest 주입
     ) {
-        // 한글 설명: 기본 프로젝트 상세 정보 조회
+        // ✅ 1) 로그인 유저 여부
+        Long userId = (principal != null) ? principal.getId() : null;
+
+        // ✅ 2) 세션 ID (지금은 간단히 userId 또는 IP 기반으로 구성)
+        String sessionId = resolveSessionId(request, userId);
+
+        // ✅ 3) 프로젝트 뷰 트래킹 기록
+        //    - userId는 ProjectTrafficQueryService 쪽에서 필요하면 User 엔티티로 조회해서 사용
+        projectTrafficQueryService.trackProjectView(
+                projectId,
+                userId,   // ← User 대신 Long userId 버전으로 바꾸는 게 편함(아래 설명)
+                sessionId,
+                request
+        );
+
+        // ✅ 4) 기본 프로젝트 상세 정보 조회
         ProjectDetailResponse response = projectService.getById(projectId);
 
-        // 한글 설명: 로그인 유저가 있으면 북마크 상태 조회, 없으면 userId = null 처리
-        Long userId = (principal != null) ? principal.getId() : null;
+        // ✅ 5) 북마크 상태 조회
         var bookmarkStatus = supporterProjectBookmarkService.getStatus(userId, projectId);
-
         response.setBookmarked(bookmarkStatus.bookmarked());
         response.setBookmarkCount(bookmarkStatus.bookmarkCount());
 
         return ResponseEntity.ok(response);
+    }
+    // 한글 설명: 유저/세션 기준으로 간단한 sessionId 생성 헬퍼
+    private String resolveSessionId(jakarta.servlet.http.HttpServletRequest request, Long userId) {
+        // 로그인 유저면 userId 기반, 비로그인 유저면 IP + UA 기반
+        if (userId != null) {
+            return "USER-" + userId;
+        }
+        String ip = Optional.ofNullable(request.getHeader("X-Forwarded-For"))
+                .map(v -> v.split(",")[0].trim())
+                .orElse(request.getRemoteAddr());
+        String ua = Optional.ofNullable(request.getHeader("User-Agent")).orElse("UNKNOWN");
+        return ("ANON-" + ip + "-" + ua).substring(0, Math.min(100, ("ANON-" + ip + "-" + ua).length()));
     }
 
     //제목 검색

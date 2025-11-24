@@ -3,10 +3,12 @@ package com.moa.backend.domain.project.controller;
 import com.moa.backend.domain.project.dto.ProjectListResponse;
 import com.moa.backend.domain.project.dto.TrendingProjectResponse;
 import com.moa.backend.domain.project.service.ProjectService;
+import com.moa.backend.domain.tracking.service.ProjectTrafficQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.List;
 
 // 한글 설명: 홈/공개 화면에서 사용하는 프로젝트 조회 전용 컨트롤러.
@@ -16,6 +18,7 @@ import java.util.List;
 public class PublicProjectController {
 
     private final ProjectService projectService;
+    private final ProjectTrafficQueryService projectTrafficQueryService;
 
     // 한글 설명: 홈 화면 상단 '지금 뜨는 프로젝트' 섹션 데이터를 조회하는 API.
     // - 기본 size=10, 쿼리 파라미터로 조절 가능 (예: /public/projects/trending?size=12)
@@ -51,6 +54,7 @@ public class PublicProjectController {
         List<ProjectListResponse> result = projectService.getNewlyUploadedProjects(size);
         return ResponseEntity.ok(result);
     }
+
     // ===================== 성공 메이커의 새 프로젝트 =====================
 
     // 한글 설명: 과거에 성공 이력이 있는 메이커들의
@@ -93,12 +97,60 @@ public class PublicProjectController {
         return ResponseEntity.ok(result);
     }
 
+    // ===================== 예정된 펀딩 =====================
+
     @GetMapping("/scheduled")
     public ResponseEntity<List<ProjectListResponse>> getScheduledProjects(
             @RequestParam(name = "size", defaultValue = "6") int size
     ) {
         // 한글 설명: 지정된 개수만큼 공개 예정 프로젝트 목록을 조회한다.
         List<ProjectListResponse> result = projectService.getScheduledProjects(size);
+        return ResponseEntity.ok(result);
+    }
+
+    // ===================== 지금 많이 보고 있는 프로젝트 =====================
+
+    /**
+     * 📈 지금 많이 보고 있는 프로젝트
+     * 예: /public/projects/most-viewed?minutes=60&size=6
+     */
+    @GetMapping("/most-viewed")
+    public ResponseEntity<List<ProjectListResponse>> getMostViewedProjects(
+            @RequestParam(name = "minutes", defaultValue = "60") long minutes,
+            @RequestParam(name = "size", defaultValue = "6") int size
+    ) {
+        Duration window = Duration.ofMinutes(minutes);
+
+        String windowLabel;
+        if (minutes < 60) {
+            windowLabel = "최근 " + minutes + "분";
+        } else {
+            long hours = minutes / 60;
+            windowLabel = "최근 " + hours + "시간";
+        }
+
+        // ✅ 한글 설명: 트래킹 서비스에서 이미 ProjectListResponse로 내려준다.
+        List<ProjectListResponse> result =
+                projectTrafficQueryService.getMostViewedProjects(window, size, windowLabel);
+
+        return ResponseEntity.ok(result);
+    }
+
+    // ===================== 점수 기반 트렌딩 프로젝트 =====================
+
+    /**
+     * 🔥 지금 뜨는 프로젝트 (점수 기반 버전)
+     * 예: /public/projects/trending-scored?size=10
+     *
+     * 기존 /trending (찜 순) 은 그대로 두고,
+     * FE에서 이 API로 교체해도 되고, 둘 다 써도 됨.
+     */
+    @GetMapping("/trending-scored")
+    public ResponseEntity<List<ProjectListResponse>> getTrendingScored(
+            @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        List<ProjectListResponse> result =
+                projectTrafficQueryService.getTrendingProjectsWithScore(size);
         return ResponseEntity.ok(result);
     }
 

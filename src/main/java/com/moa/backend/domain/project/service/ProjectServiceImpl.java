@@ -1,36 +1,30 @@
 package com.moa.backend.domain.project.service;
 
 import com.moa.backend.domain.follow.service.SupporterProjectBookmarkService;
-import com.moa.backend.domain.maker.entity.Maker;
-import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.order.repository.OrderRepository;
 import com.moa.backend.domain.project.dto.ProjectDetailResponse;
 import com.moa.backend.domain.project.dto.ProjectListResponse;
 import com.moa.backend.domain.project.dto.StatusSummaryResponse;
 import com.moa.backend.domain.project.dto.TempProject.TempProjectResponse;
+import com.moa.backend.domain.project.dto.TrendingProjectResponse;
 import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
+import com.moa.backend.domain.project.entity.ProjectResultStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
-import com.moa.backend.global.error.AppException;
-import com.moa.backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.moa.backend.domain.project.entity.ProjectResultStatus;
-import org.springframework.data.domain.PageRequest;
 
-import java.awt.image.PixelGrabber;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
-import com.moa.backend.domain.project.dto.TrendingProjectResponse;
-import org.springframework.data.domain.PageRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +32,6 @@ import org.springframework.data.domain.PageRequest;
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
-    private final MakerRepository makerRepository;
     private final SupporterProjectBookmarkService supporterProjectBookmarkService;
 
     // 결제 완료(PAID) 주문 기준으로 펀딩 금액을 합산하기 위해 OrderRepository 사용.
@@ -47,6 +40,10 @@ public class ProjectServiceImpl implements ProjectService {
     // 프로젝트 + 모금액 + 달성률(0.0 ~ n.n)을 담는 내부용 레코드.
     private record ProjectProgress(Project project, long fundedAmount, double progressRate) { }
 
+    // 한글 설명: 홈 섹션 등에서 size 파라미터를 1~30 범위로 제한하는 유틸 메서드.
+    private int clampSize(int size) {
+        return Math.max(1, Math.min(size, 30));
+    }
 
     //프로젝트 전체조회
     @Override
@@ -63,6 +60,25 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트을 찾을 수없습니다. id=" + projectId));
 
         return ProjectDetailResponse.from(project);
+    }
+
+    //프로젝트 단일 조회 (로그인 사용자 기준 북마크 정보 포함)
+    @Override
+    @Transactional(readOnly = true)
+    public ProjectDetailResponse getById(Long projectId, Long userId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new NoSuchElementException("프로젝트를 찾을 수 없습니다."));
+
+        ProjectDetailResponse response = ProjectDetailResponse.from(project);
+
+        // ✔ follow 도메인에 있는 북마크 서비스 사용
+        SupporterProjectBookmarkService.BookmarkStatus status =
+                supporterProjectBookmarkService.getStatus(userId, projectId);
+
+        response.setBookmarked(status.bookmarked());
+        response.setBookmarkCount(status.bookmarkCount());
+
+        return response;
     }
 
     //제목 검색
@@ -101,7 +117,6 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
     }
 
-
     //프로젝트 상태별 요약
     @Override
     @Transactional(readOnly = true)
@@ -122,53 +137,21 @@ public class ProjectServiceImpl implements ProjectService {
     public List<?> getProjectByStatus(Long userId, ProjectLifecycleStatus lifecycle, ProjectReviewStatus review) {
         List<Project> projects = projectRepository.findAllByMakerIdAndLifecycleStatusAndReviewStatus(userId, lifecycle, review);
 
-        // 작성중 상태
+        // 작성중 상태: 임시 프로젝트 응답 DTO 사용
         if (lifecycle == ProjectLifecycleStatus.DRAFT && review == ProjectReviewStatus.NONE) {
             return projects.stream()
                     .map(TempProjectResponse::from)
                     .toList();
         }
 
-        // 나머지 상태
+        // 나머지 상태: 공통 카드 형태로 내려준다.
         return projects.stream()
-                .map(project -> switch (project.getReviewStatus()) {
-                    case REVIEW -> ProjectListResponse.fromReview(project);
-                    case APPROVED -> switch (project.getLifecycleStatus()) {
-                        case SCHEDULED -> ProjectListResponse.fromScheduled(project);
-                        case LIVE -> ProjectListResponse.fromLive(project);
-                        case ENDED -> ProjectListResponse.fromEnded(project);
-                        default -> ProjectListResponse.fromApproved(project);
-                    };
-                    case REJECTED -> ProjectListResponse.fromRejected(project);
-                    default -> ProjectListResponse.fromDraft(project); // 위에서 이미 작성중 처리됨(실행안됨)
-                })
+                .map(project -> ProjectListResponse.base(project).build())
                 .toList();
     }
 
     private long count(Long userId, ProjectLifecycleStatus lifecycle, ProjectReviewStatus review) {
         return projectRepository.countByMakerIdAndLifecycleStatusAndReviewStatus(userId, lifecycle, review);
-    }
-
-    private Maker findMakerByOwnerId(Long ownerUserId) {
-        return makerRepository.findByOwner_Id(ownerUserId)
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "메이커 정보를 찾을 수 없습니다."));
-    }
-    @Override
-    @Transactional(readOnly = true)
-    public ProjectDetailResponse getById(Long projectId, Long userId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new NoSuchElementException("프로젝트를 찾을 수 없습니다."));
-
-        ProjectDetailResponse response = ProjectDetailResponse.from(project);
-
-        // ✔ follow 도메인에 있는 북마크 서비스 사용
-        SupporterProjectBookmarkService.BookmarkStatus status =
-                supporterProjectBookmarkService.getStatus(userId, projectId);
-
-        response.setBookmarked(status.bookmarked());
-        response.setBookmarkCount(status.bookmarkCount());
-
-        return response;
     }
 
     // 홈 화면 '지금 뜨는 프로젝트' 섹션용 인기 프로젝트 조회.
@@ -177,8 +160,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<TrendingProjectResponse> getTrendingProjects(int size) {
-        // 최소/최대 사이즈 방어 코드
-        int safeSize = Math.max(1, Math.min(size, 30));
+        int safeSize = clampSize(size);
 
         List<ProjectLifecycleStatus> statuses = List.of(
                 ProjectLifecycleStatus.LIVE,
@@ -199,7 +181,7 @@ public class ProjectServiceImpl implements ProjectService {
     //  - 라이프사이클: SCHEDULED(공개 예정), LIVE(진행 중)만 대상
     @Override
     public List<ProjectListResponse> getNewlyUploadedProjects(int size) {
-        int safeSize = Math.max(1, Math.min(size, 30));
+        int safeSize = clampSize(size);
         LocalDateTime createdAfter = LocalDateTime.now().minusDays(3);
         List<ProjectLifecycleStatus> statuses = List.of(
                 ProjectLifecycleStatus.SCHEDULED,
@@ -223,12 +205,11 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
     }
 
-
     // 한글 설명: 과거에 성공(SUCCESS)한 프로젝트가 있는 메이커들의
     // 새 프로젝트(공개 예정 / 진행 중)를 조회한다.
     @Override
     public List<ProjectListResponse> getSuccessfulMakersNewProjects(int size) {
-        int safeSize = Math.max(1, Math.min(size, 30));
+        int safeSize = clampSize(size);
 
         List<ProjectLifecycleStatus> statuses = List.of(
                 ProjectLifecycleStatus.SCHEDULED,
@@ -256,7 +237,7 @@ public class ProjectServiceImpl implements ProjectService {
     // 현재 공개 예정 / 진행 중 프로젝트를 조회한다.
     @Override
     public List<ProjectListResponse> getFirstChallengeMakerProjects(int size) {
-        int safeSize = Math.max(1, Math.min(size, 30));
+        int safeSize = clampSize(size);
 
         List<ProjectLifecycleStatus> statuses = List.of(
                 ProjectLifecycleStatus.SCHEDULED,
@@ -287,7 +268,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<ProjectListResponse> getNearGoalProjects(int size) {
-        int safeSize = Math.max(1, Math.min(size, 30));
+        int safeSize = clampSize(size);
 
         // 1) LIVE + APPROVED 상태 프로젝트만 후보로 가져온다.
         List<Project> candidates = projectRepository.findByLifecycleStatusAndReviewStatus(
@@ -322,12 +303,15 @@ public class ProjectServiceImpl implements ProjectService {
                     Project project = pp.project();
                     int percentage = (int) Math.floor(pp.progressRate() * 100); // 예: 0.83 -> 83
 
+                    // 한글 설명: 카드 공통 정보 + 달성률만 추가 세팅.
                     return ProjectListResponse.base(project)
-                            .achievementRate(percentage)   // ✅ 여기서만 달성률 채워줌
+                            .fundedAmount(pp.fundedAmount())
+                            .achievementRate(percentage)
                             .build();
                 })
                 .toList();
     }
+
     // ===================== 홈 섹션: 예정되어 있는 펀딩 =====================
 
     /**
@@ -342,7 +326,7 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Override
     public List<ProjectListResponse> getScheduledProjects(int size) {
-        int safeSize = Math.max(1, Math.min(size, 30));
+        int safeSize = clampSize(size);
 
         // 한글 설명: '예정되어 있는 펀딩' 기준 시각 (현재 시각)
         LocalDateTime now = LocalDateTime.now();
@@ -353,12 +337,8 @@ public class ProjectServiceImpl implements ProjectService {
                         now,
                         PageRequest.of(0, safeSize)
                 ).stream()
-                // 한글 설명: 공개 예정 상태이므로 fromScheduled를 사용해서 카드 데이터를 만든다.
-                .map(ProjectListResponse::fromScheduled)
+                // 한글 설명: 공개 예정 상태이므로 카드 공통 형태로 내려준다.
+                .map(project -> ProjectListResponse.base(project).build())
                 .toList();
     }
-
-
-
-
 }
