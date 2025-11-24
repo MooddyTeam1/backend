@@ -100,5 +100,17 @@ public class Reward {
         rewardSets.add(rewardSet);
         rewardSet.setReward(this);
     }
+
+    public void increaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "추가 수량은 1 이상이어야 합니다.");
+        }
+
+        if (this.stockQuantity == null) {
+            this.stockQuantity = quantity;
+        } else {
+            this.stockQuantity += quantity;
+        }
+    }
 }
 
