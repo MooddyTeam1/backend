@@ -44,6 +44,12 @@ ALTER TABLE supporter_profiles
   ADD COLUMN IF NOT EXISTS acquisition_channel varchar(30),
   ADD COLUMN IF NOT EXISTS acquisition_channel_etc varchar(100);
 
+-- 💡 reward 정보고시(전자상거래) 컬럼 ---------------------------------
+ALTER TABLE rewards
+  ADD COLUMN IF NOT EXISTS disclosure_category varchar(50),
+  ADD COLUMN IF NOT EXISTS disclosure_common_json text,
+  ADD COLUMN IF NOT EXISTS disclosure_category_specific_json text;
+
 -- ---------------------------------------------------------------------
 
 -- 2. 공통 비밀번호 (bcrypt 해시)
@@ -419,6 +425,7 @@ INSERT INTO platform_wallets (
    TIMESTAMP '2024-11-12 09:00:00');
 
 -- 10. rewards ------------------------------------------------------------
+-- 한글 설명: 리워드 정보고시(disclosure_*) 컬럼까지 포함한 시드 데이터
 INSERT INTO rewards (
   id,
   project_id,
@@ -427,39 +434,62 @@ INSERT INTO rewards (
   price,
   estimated_delivery_date,
   is_active,
-  stock_quantity
+  stock_quantity,
+  disclosure_category,
+  disclosure_common_json,
+  disclosure_category_specific_json
 ) VALUES
-  (1300, 1200,
+  (
+   1300, 1200,
    '오로라 얼리버드 세트',
    '본체 + 디퓨저 + 패브릭 케이블 구성',
    120000,
    DATE '2026-02-15',
    TRUE,
-   200),
+   200,
+   'OTHER',
+   '{"manufacturer":"메이커원 스튜디오","originCountry":"대한민국","asContact":"010-1111-0001"}',
+   '{"note":"조명/인테리어 소형 가전 데모 데이터"}'
+  ),
 
-  (1301, 1201,
+  (
+   1301, 1201,
    '펄스핏 스타터 패키지',
    '기본 밴드와 센서 카트리지 2종 포함',
    150000,
    DATE '2026-01-20',
    TRUE,
-   250),
+   250,
+   'OTHER',
+   '{"manufacturer":"메이커원 스튜디오","originCountry":"대한민국","asContact":"010-1111-0001"}',
+   '{"note":"웨어러블 디바이스 데모 데이터"}'
+  ),
 
-  (1302, 1202,
+  (
+   1302, 1202,
    '루멘노트 풀 패키지',
    '전자노트 + 스타일러스 + 폴리오 커버',
    90000,
    DATE '2025-12-05',
    FALSE,
-   0),
+   0,
+   'OTHER',
+   '{"manufacturer":"메이커원 스튜디오","originCountry":"대한민국","asContact":"010-1111-0001"}',
+   '{"note":"전자 필기장 데모 데이터"}'
+  ),
 
-  (1303, 1203,
+  (
+   1303, 1203,
    '지오트레일 얼리버드',
    '태양광 패널과 비상 비컨을 포함한 백팩',
    180000,
    DATE '2025-12-15',
    TRUE,
-   180);
+   180,
+   'BAG',
+   '{"manufacturer":"트레일랩스","originCountry":"대한민국","asContact":"010-1111-0002"}',
+   '{"note":"아웃도어 백팩 데모 데이터"}'
+  );
 
 -- =====================================================================
 -- maker1( maker_id = 1003 ) 상태별 테스트 프로젝트 4개

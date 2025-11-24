@@ -8,7 +8,10 @@ import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.user.entity.SupporterProfile;
 import com.moa.backend.domain.user.repository.SupporterProfileRepository;
+import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,11 +33,25 @@ public class SupporterFollowService {
     private final MakerRepository makerRepository;
 
     /**
-     * 현재 로그인한 서포터 프로필 조회
-     * TODO: 실제 구현에서는 SecurityContext 에서 userId 꺼내서 supporterProfileRepository.findByUserId(...)로 조회
+     * 한글 설명: 현재 로그인한 서포터 프로필 조회 유틸 메서드.
+     * - SecurityContext 에서 JwtUserPrincipal 꺼내서 userId 얻기
+     * - userId로 SupporterProfile 조회
      */
     private SupporterProfile getCurrentSupporter() {
-        throw new UnsupportedOperationException("SupporterFollowService.getCurrentSupporter()를 구현하세요.");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("인증된 서포터만 팔로우 기능을 사용할 수 있습니다.");
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof JwtUserPrincipal jwtUserPrincipal)) {
+            throw new IllegalStateException("유효한 인증 정보를 찾을 수 없습니다.");
+        }
+
+        Long userId = jwtUserPrincipal.getId();
+        return supporterProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("서포터 프로필을 찾을 수 없습니다. userId=" + userId));
     }
 
     // ========== 서포터 ↔ 서포터 팔로우 ==========
@@ -50,7 +67,8 @@ public class SupporterFollowService {
 
         boolean already = supporterFollowSupporterRepository.existsByFollowerAndFollowing(me, target);
         if (already) {
-            return; // 이미 팔로우 중이면 무시
+            // 이미 팔로우 중이면 조용히 무시 (idempotent).
+            return;
         }
 
         supporterFollowSupporterRepository.save(SupporterFollowSupporter.of(me, target));
@@ -72,8 +90,14 @@ public class SupporterFollowService {
         Maker maker = makerRepository.findById(makerId)
                 .orElseThrow(() -> new NoSuchElementException("존재하지 않는 메이커입니다."));
 
+        // 자기 자신의 메이커 팔로우 방지
+        if (maker.getOwner() != null && maker.getOwner().getId().equals(me.getUserId())) {
+            throw new IllegalArgumentException("자기 자신의 메이커는 팔로우할 수 없습니다.");
+        }
+
         boolean already = supporterFollowMakerRepository.existsBySupporterAndMaker(me, maker);
         if (already) {
+            // 이미 팔로우 중이면 조용히 무시
             return;
         }
 

@@ -52,6 +52,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     List<Order> findAllByProjectIdAndStatus(Long projectId, OrderStatus status);
 
+    // ================== 👇 추가: 배송 요약 카드용 카운트 메서드 ==================
+
+    /**
+     * 한글 설명: 특정 프로젝트에서 주어진 결제 상태(PAID 등)를 가진 주문 개수.
+     * - 배송 요약 카드의 "총 주문 수" 계산에 사용 (보통 PAID 기준).
+     */
+    long countByProjectIdAndStatus(Long projectId, OrderStatus status);
+
+    /**
+     * 한글 설명: 특정 프로젝트에서 특정 배송 상태(DELIVERED, SHIPPING 등)를 가진 주문 개수.
+     * - 배송 요약 카드의 "배송 준비중 / 배송중 / 배송 완료 / 문제" 카운트에 사용.
+     */
+    long countByProjectIdAndDeliveryStatus(Long projectId, DeliveryStatus deliveryStatus);
+
+    // ========================================================================
+
     /**
      * 배송 완료 후 일정 시간이 지난 주문 조회(자동 구매확정 대상).
      */
@@ -463,4 +479,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("endDateTime") LocalDateTime endDateTime
     );
+
 }
