@@ -356,4 +356,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             @Param("now") LocalDateTime now,
             Pageable pageable
     );
+
+    /**
+     * 한글 설명:
+     * - 프로젝트 ID와 메이커 소유자(user.id)로 권한 체크용 존재 여부 확인.
+     * - ownerUserId == users.id (Maker.owner.id)
+     */
+    boolean existsByIdAndMaker_Owner_Id(Long projectId, Long ownerUserId);
 }
