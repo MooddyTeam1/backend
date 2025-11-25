@@ -87,7 +87,9 @@ public class SecurityConfig {
                                 // 🔥 새로 추가한 공개 프로젝트 홈용 API
                                 "/public/projects/**",
                                 "/notifications/subscribe",
-                                "/notifications/test/**"
+                                "/notifications/test/**",
+                                "/public/**",
+                                "/api/makers/**"
 
                         ).permitAll()
                         .anyRequest().authenticated()
