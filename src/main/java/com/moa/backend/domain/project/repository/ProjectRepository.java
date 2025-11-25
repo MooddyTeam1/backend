@@ -363,4 +363,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * - ownerUserId == users.id (Maker.owner.id)
      */
     boolean existsByIdAndMaker_Owner_Id(Long projectId, Long ownerUserId);
+
+    /**
+     * 한글 설명: 특정 메이커(maker.id)에 속한 모든 프로젝트 조회.
+     * - 메이커 마이페이지(내 프로젝트 관리)에서 기본 데이터 소스로 사용한다.
+     */
+    List<Project> findAllByMakerId(Long makerId);
 }
