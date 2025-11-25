@@ -1,5 +1,6 @@
 package com.moa.backend.domain.user.service;
 
+import com.moa.backend.domain.email.service.AuthSupportService;
 import com.moa.backend.domain.user.dto.*;
 import com.moa.backend.domain.user.entity.RefreshToken;
 import com.moa.backend.domain.user.entity.User;
@@ -34,6 +35,7 @@ import java.time.LocalDateTime;
 public class AuthService {
 
     private final UserService userService;
+    private final AuthSupportService authSupportService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -49,6 +51,8 @@ public class AuthService {
         if (userService.findByEmail(request.email()).isPresent()) {
             throw new AppException(ErrorCode.BUSINESS_CONFLICT, "이미 가입된 이메일입니다.");
         }
+
+        authSupportService.verifyCode(request.email(), request.verificationCode());
 
         User saved = userService.registerUser(
                 request.email(),

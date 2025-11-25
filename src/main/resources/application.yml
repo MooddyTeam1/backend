@@ -22,16 +22,20 @@ spring:
       data-locations: classpath:data-postgres.sql
 
   mail:
-    host: localhost
-    port: 1025
-    username: ""
-    password: ""
+    host: smtp.naver.com                # 한글 설명: 네이버 SMTP 서버 주소
+    port: 465                           # 한글 설명: SSL 포트 (587 + starttls 도 가능)
+    username: ${NAVER_MAIL_USERNAME}    # 한글 설명: 네이버 메일 주소 (예: mymail@naver.com)
+    password: ${NAVER_MAIL_PASSWORD}    # 한글 설명: 앱 비밀번호 또는 계정 비밀번호(권장 X)
+    protocol: smtp
     properties:
       mail:
         smtp:
-          auth: false
+          auth: true                    # 한글 설명: SMTP 인증 사용
+          ssl:
+            enable: true                # 한글 설명: SSL 사용 (465 포트인 경우)
           starttls:
-            enable: false
+            enable: false               # 한글 설명: 465+SSL 쓸 거면 false, 587이면 true
+    default-encoding: UTF-8
 
   security:
     oauth2:
@@ -89,5 +93,10 @@ logging:
     org.springframework.web.client.RestTemplate: DEBUG
 
 app:
+  email:
+    verification-expiration-minutes: 10
+  password-reset:
+    base-url: "http://localhost:5173/password/reset"
+    token-validity-minutes: 60
   file-storage:
     root-dir: ./uploads

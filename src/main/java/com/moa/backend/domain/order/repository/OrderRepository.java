@@ -479,5 +479,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("endDateTime") LocalDateTime endDateTime
     );
+    /**
+     * 한글 설명: 특정 프로젝트에서 결제 상태 기준(PAID 등) 고유 서포터 수 집계.
+     * - 메이커 프로젝트 카드의 supporterCount 계산에 사용된다.
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT o.user.id)
+        FROM Order o
+        WHERE o.project.id = :projectId
+          AND o.status = :status
+        """)
+    Long countDistinctSupporterByProjectAndStatus(
+            @Param("projectId") Long projectId,
+            @Param("status") OrderStatus status
+    );
 
 }
