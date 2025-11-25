@@ -44,6 +44,11 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
     List<Settlement> findByProjectIdIn(List<Long> projectIds);
 
     /**
+     * 메이커 ID로 정산 목록 조회 (페이지네이션)
+     */
+    org.springframework.data.domain.Page<Settlement> findByMaker_Id(Long makerId, org.springframework.data.domain.Pageable pageable);
+
+    /**
      * 상태·기간별 netAmount 합계 (maker/project 필터)
      */
     @Query("""
