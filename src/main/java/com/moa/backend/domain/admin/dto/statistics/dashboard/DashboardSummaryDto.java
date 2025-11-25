@@ -3,6 +3,7 @@ package com.moa.backend.domain.admin.dto.statistics.dashboard;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ import java.util.List;
 @Getter
 @Builder
 @AllArgsConstructor
+@Schema(description = "대시보드 요약")
 public class DashboardSummaryDto {
 
     private KpiSummaryDto kpiSummary;                    // KPI 6개 요약

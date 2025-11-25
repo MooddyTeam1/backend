@@ -10,6 +10,8 @@ import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -27,6 +29,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
+@Tag(name = "Auth", description = "회원가입/로그인/JWT 갱신/내 프로필 조회")
 public class AuthController {
 
     private final AuthService authService;
@@ -38,6 +41,7 @@ public class AuthController {
 
     @PostMapping("/auth/signup")
     @ResponseBody // <-- JSON 응답
+    @Operation(summary = "회원가입", description = "이메일/패스워드 기반 회원을 생성하고 JWT를 반환합니다.")
     public ResponseEntity<SignUpResponse> signUp(@Valid @RequestBody SignUpRequest request) {
         log.info("📝 회원가입 요청: {}", request.getEmail());
         SignUpResponse response = authService.signUp(request);
@@ -46,6 +50,7 @@ public class AuthController {
 
     @PostMapping("/auth/login")
     @ResponseBody
+    @Operation(summary = "로그인", description = "이메일/패스워드로 로그인하고 액세스/리프레시 토큰을 발급합니다.")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         log.info("🔐 로그인 요청: {}", request.getEmail());
         LoginResponse response = authService.login(request);
@@ -54,6 +59,7 @@ public class AuthController {
 
     @PostMapping("/auth/refresh")
     @ResponseBody
+    @Operation(summary = "토큰 재발급", description = "리프레시 토큰으로 액세스/리프레시 토큰을 재발급합니다.")
     public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         log.info("♻️ 토큰 재발급 요청");
         LoginResponse response = authService.refresh(request);
@@ -62,6 +68,7 @@ public class AuthController {
 
     @GetMapping("/profile/me")
     @ResponseBody
+    @Operation(summary = "내 프로필 조회", description = "JWT로 인증된 사용자의 프로필 정보를 조회합니다.")
     public UserProfileResponse getMyProfile(
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {

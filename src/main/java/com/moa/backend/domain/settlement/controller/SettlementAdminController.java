@@ -6,6 +6,8 @@ import com.moa.backend.domain.settlement.repository.SettlementRepository;
 import com.moa.backend.domain.settlement.service.SettlementService;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/admin/settlements")
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Settlement-Admin", description = "정산 생성/선지급/잔금/조회 (ADMIN)")
 public class SettlementAdminController {
 
     private final SettlementService settlementService;
@@ -32,7 +35,8 @@ public class SettlementAdminController {
      * 특정 프로젝트의 정산 정보를 새로 생성한다.
      */
     @PostMapping("/{projectId}")
-    public ResponseEntity<SettlementResponse> create(@PathVariable Long projectId) {
+    @Operation(summary = "정산 생성", description = "프로젝트 ID로 정산 레코드를 생성합니다.")
+    public ResponseEntity<SettlementResponse> create(@Parameter(example = "1200") @PathVariable Long projectId) {
         Settlement settlement = settlementService.createSettlement(projectId);
         return ResponseEntity.ok(SettlementResponse.from(settlement));
     }
@@ -41,7 +45,8 @@ public class SettlementAdminController {
      * 선지급(First Payout)을 수동으로 실행한다.
      */
     @PostMapping("/{settlementId}/first-payout")
-    public ResponseEntity<SettlementResponse> payFirst(@PathVariable Long settlementId) {
+    @Operation(summary = "정산 선지급 실행", description = "FIRST_PAYOUT을 수동으로 실행합니다.")
+    public ResponseEntity<SettlementResponse> payFirst(@Parameter(example = "1601") @PathVariable Long settlementId) {
         Settlement settlement = settlementService.payFirstPayout(settlementId);
         return ResponseEntity.ok(SettlementResponse.from(settlement));
     }
@@ -50,7 +55,8 @@ public class SettlementAdminController {
      * 잔금(Final Payout)을 수동으로 실행한다.
      */
     @PostMapping("/{settlementId}/final-payout")
-    public ResponseEntity<SettlementResponse> payFinal(@PathVariable Long settlementId) {
+    @Operation(summary = "정산 잔금 지급", description = "FINAL_PAYOUT을 수동으로 실행합니다.")
+    public ResponseEntity<SettlementResponse> payFinal(@Parameter(example = "1601") @PathVariable Long settlementId) {
         Settlement settlement = settlementService.payFinalPayout(settlementId);
         return ResponseEntity.ok(SettlementResponse.from(settlement));
     }
@@ -59,7 +65,8 @@ public class SettlementAdminController {
      * 잔금 준비 상태(FINAL_READY)로 수동으로 전환한다.
      */
     @PostMapping("/{settlementId}/final-ready")
-    public ResponseEntity<SettlementResponse> markFinalReady(@PathVariable Long settlementId) {
+    @Operation(summary = "잔금 준비 상태 전환", description = "정산을 FINAL_READY 상태로 전환합니다.")
+    public ResponseEntity<SettlementResponse> markFinalReady(@Parameter(example = "1601") @PathVariable Long settlementId) {
         Settlement settlement = settlementService.markFinalReady(settlementId);
         return ResponseEntity.ok(SettlementResponse.from(settlement));
     }
@@ -68,7 +75,8 @@ public class SettlementAdminController {
      * 정산 단건 상세를 조회한다.
      */
     @GetMapping("/{settlementId}")
-    public ResponseEntity<SettlementResponse> get(@PathVariable Long settlementId) {
+    @Operation(summary = "정산 상세 조회")
+    public ResponseEntity<SettlementResponse> get(@Parameter(example = "1601") @PathVariable Long settlementId) {
         Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
         return ResponseEntity.ok(SettlementResponse.from(settlement));

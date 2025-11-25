@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 // 한글 설명: 프로젝트 카드(홈/검색/카테고리/마이페이지/트래킹 섹션) 전용 DTO.
 // - 상세 페이지용 정보(summary, storyMarkdown, rewards 등)는 포함하지 않는다.
 // - JsonInclude.NON_NULL: null 필드는 JSON 응답에서 제외.
@@ -22,6 +24,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description = "프로젝트 카드/리스트 응답")
 public class ProjectListResponse {
 
     // ================== 기본 정보(카드 공통) ==================

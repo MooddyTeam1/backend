@@ -80,6 +80,10 @@ public class SecurityConfig {
                                 "/project/closing-soon",
                                 "/project/id/**",
                                 "/uploads/**",
+                                // ✅ API 문서 접근 허용 (Swagger / SpringDoc)
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
                                 // 🔥 새로 추가한 공개 프로젝트 홈용 API
                                 "/public/projects/**",
                                 "/notifications/subscribe",

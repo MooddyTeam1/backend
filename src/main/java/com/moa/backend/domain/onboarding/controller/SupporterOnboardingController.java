@@ -5,6 +5,8 @@ import com.moa.backend.domain.onboarding.dto.SupporterOnboardingStep1Request;
 import com.moa.backend.domain.onboarding.dto.SupporterOnboardingStep2Request;
 import com.moa.backend.domain.onboarding.service.SupporterOnboardingService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/supporter/onboarding") // 👈 여기 /api 추가
 @RequiredArgsConstructor
+@Tag(name = "Onboarding", description = "서포터 온보딩 상태/입력")
 public class SupporterOnboardingController {
 
     private final SupporterOnboardingService onboardingService;
@@ -30,6 +33,7 @@ public class SupporterOnboardingController {
      * 한글 설명: 온보딩 상태 및 Step1/2 완료 여부 조회
      */
     @GetMapping("/status")
+    @Operation(summary = "온보딩 상태 조회")
     public ResponseEntity<SupporterOnboardingStatusResponse> getStatus(
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {
@@ -43,6 +47,7 @@ public class SupporterOnboardingController {
      * 한글 설명: 온보딩 Step1 저장 (관심 카테고리 + 선호 프로젝트 스타일)
      */
     @PostMapping("/step1")
+    @Operation(summary = "온보딩 1단계 저장")
     public ResponseEntity<Void> saveStep1(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestBody SupporterOnboardingStep1Request request
@@ -55,6 +60,7 @@ public class SupporterOnboardingController {
      * 한글 설명: 온보딩 Step2 저장 (추가 정보 + 알림 설정) 및 온보딩 완료 처리
      */
     @PostMapping("/step2")
+    @Operation(summary = "온보딩 2단계 저장 및 완료")
     public ResponseEntity<Void> saveStep2(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestBody SupporterOnboardingStep2Request request
@@ -67,6 +73,7 @@ public class SupporterOnboardingController {
      * 한글 설명: 온보딩 스킵 ("나중에 하기")
      */
     @PostMapping("/skip")
+    @Operation(summary = "온보딩 스킵")
     public ResponseEntity<Void> skip(
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {

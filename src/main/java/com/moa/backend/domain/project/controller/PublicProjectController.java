@@ -4,6 +4,8 @@ import com.moa.backend.domain.project.dto.ProjectListResponse;
 import com.moa.backend.domain.project.dto.TrendingProjectResponse;
 import com.moa.backend.domain.project.service.ProjectService;
 import com.moa.backend.domain.tracking.service.ProjectTrafficQueryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/public/projects")
+@Tag(name = "Project-Public", description = "공개 프로젝트 조회(홈/트렌딩/카테고리 등)")
 public class PublicProjectController {
 
     private final ProjectService projectService;
@@ -23,6 +26,7 @@ public class PublicProjectController {
     // 한글 설명: 홈 화면 상단 '지금 뜨는 프로젝트' 섹션 데이터를 조회하는 API.
     // - 기본 size=10, 쿼리 파라미터로 조절 가능 (예: /public/projects/trending?size=12)
     @GetMapping("/trending")
+    @Operation(summary = "트렌딩 프로젝트 조회")
     public ResponseEntity<List<TrendingProjectResponse>> getTrendingProjects(
             @RequestParam(name = "size", defaultValue = "5") int size
     ) {
@@ -35,6 +39,7 @@ public class PublicProjectController {
     // 마감까지 7일 이내로 남은 진행 중(LIVE) + 승인된(APPROVED) 프로젝트 목록을 반환한다.
     // - 홈 화면 '곧 마감되는 프로젝트' 섹션에서 사용한다.
     @GetMapping("/closing-soon")
+    @Operation(summary = "마감 임박 프로젝트 조회")
     public ResponseEntity<List<ProjectListResponse>> getClosingSoonProjects() {
         List<ProjectListResponse> result = projectService.getClosingSoon();
         return ResponseEntity.ok(result);
@@ -48,6 +53,7 @@ public class PublicProjectController {
     // - 응답이 빈 배열([])이면, 프론트에서
     //   "신규 프로젝트가 없습니다." 메시지를 노출하면 된다.
     @GetMapping("/newly-uploaded")
+    @Operation(summary = "신규 업로드 프로젝트 조회")
     public ResponseEntity<List<ProjectListResponse>> getNewlyUploadedProjects(
             @RequestParam(name = "size", defaultValue = "10") int size
     ) {
@@ -61,6 +67,7 @@ public class PublicProjectController {
     // 현재 공개 예정/진행 중 프로젝트 목록을 반환한다.
     // - 프론트 문구: "성공 메이커의 새 프로젝트"
     @GetMapping("/success-maker-new")
+    @Operation(summary = "성공 메이커의 새 프로젝트 조회")
     public ResponseEntity<List<ProjectListResponse>> getSuccessfulMakersNewProjects(
             @RequestParam(name = "size", defaultValue = "10") int size
     ) {
@@ -74,6 +81,7 @@ public class PublicProjectController {
     // - 현재 LIVE 또는 SCHEDULED 상태 + APPROVED 조건을 만족하는 프로젝트만 대상.
     // - 프론트 문구: "첫 도전 메이커 응원하기"
     @GetMapping("/first-challenge")
+    @Operation(summary = "첫 도전 메이커 프로젝트 조회")
     public ResponseEntity<List<ProjectListResponse>> getFirstChallengeMakerProjects(
             @RequestParam(name = "size", defaultValue = "10") int size
     ) {
@@ -90,6 +98,7 @@ public class PublicProjectController {
     //   🧾 "목표 달성에 가까운 프로젝트"
     //   🔢 "달성률순 전체 보기"
     @GetMapping("/near-goal")
+    @Operation(summary = "목표 달성률 높은 프로젝트 조회")
     public ResponseEntity<List<ProjectListResponse>> getNearGoalProjects(
             @RequestParam(name = "size", defaultValue = "10") int size
     ) {
@@ -100,6 +109,7 @@ public class PublicProjectController {
     // ===================== 예정된 펀딩 =====================
 
     @GetMapping("/scheduled")
+    @Operation(summary = "공개 예정 프로젝트 조회")
     public ResponseEntity<List<ProjectListResponse>> getScheduledProjects(
             @RequestParam(name = "size", defaultValue = "6") int size
     ) {
@@ -115,6 +125,7 @@ public class PublicProjectController {
      * 예: /public/projects/most-viewed?minutes=60&size=6
      */
     @GetMapping("/most-viewed")
+    @Operation(summary = "지금 많이 보고 있는 프로젝트 조회")
     public ResponseEntity<List<ProjectListResponse>> getMostViewedProjects(
             @RequestParam(name = "minutes", defaultValue = "60") long minutes,
             @RequestParam(name = "size", defaultValue = "6") int size
@@ -146,6 +157,7 @@ public class PublicProjectController {
      * FE에서 이 API로 교체해도 되고, 둘 다 써도 됨.
      */
     @GetMapping("/trending-scored")
+    @Operation(summary = "점수 기반 트렌딩 프로젝트 조회")
     public ResponseEntity<List<ProjectListResponse>> getTrendingScored(
             @RequestParam(name = "size", defaultValue = "10") int size
     ) {

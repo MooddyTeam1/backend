@@ -3,6 +3,7 @@ package com.moa.backend.domain.admin.dto.statistics.dashboard;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * KPI 요약 DTO (6개 항목)
@@ -10,6 +11,7 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
+@Schema(description = "대시보드 KPI 요약(6개 항목)")
 public class KpiSummaryDto {
 
     private KpiItemDto totalFundingAmount;      // 총 펀딩 금액

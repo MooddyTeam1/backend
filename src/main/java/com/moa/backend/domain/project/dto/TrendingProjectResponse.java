@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -17,24 +18,37 @@ import java.time.temporal.ChronoUnit;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description = "트렌딩 프로젝트 카드 응답")
 public class TrendingProjectResponse {
 
     // 기본 카드 정보 -----------------------------
+    @Schema(description = "프로젝트 ID", example = "1201")
     private Long id;                            // 프로젝트 ID
+    @Schema(description = "제목", example = "펄스핏 모듈 밴드")
     private String title;                       // 제목
+    @Schema(description = "요약", example = "센서를 교체하며 데이터를 맞춤 수집하는 피트니스 밴드")
     private String summary;                     // 요약 설명
+    @Schema(description = "커버 이미지 URL", example = "https://cdn.moa.dev/projects/pulsefit/cover.png")
     private String coverImageUrl;               // 커버 이미지
+    @Schema(description = "카테고리", example = "TECH")
     private Category category;                  // 카테고리
+    @Schema(description = "라이프사이클 상태", example = "LIVE")
     private ProjectLifecycleStatus lifecycleStatus; // 라이프사이클 상태
 
+    @Schema(description = "북마크 수", example = "123")
     private long bookmarkCount;                 // 북마크 수 (COUNT)
 
     // 배지/상태 계산용 플래그 -------------------
+    @Schema(description = "진행중 여부", example = "true")
     private boolean live;                       // 진행중 여부
+    @Schema(description = "공개 예정 여부", example = "false")
     private boolean scheduled;                  // 공개 예정 여부
+    @Schema(description = "종료까지 남은 일수", example = "20")
     private long daysLeft;                      // 종료까지 남은 일수
 
+    @Schema(description = "펀딩 시작일", example = "2025-11-01")
     private LocalDate startDate;                // 펀딩 시작일 (필요 시 프론트에서 쓸 수도 있음)
+    @Schema(description = "펀딩 종료일", example = "2025-12-15")
     private LocalDate endDate;                  // 펀딩 종료일
 
     // 🔥 JPQL constructor expression에서 사용하는 전용 생성자

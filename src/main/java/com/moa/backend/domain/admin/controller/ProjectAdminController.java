@@ -5,6 +5,9 @@ import com.moa.backend.domain.admin.service.AdminService;
 import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
 import com.moa.backend.domain.project.dto.ProjectDetailResponse;
 import com.moa.backend.domain.admin.dto.ProjectStatusResponse;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,14 +19,16 @@ import java.util.List;
 @RequestMapping("/admin/project")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Tag(name = "Project-Admin", description = "프로젝트 심사/승인/반려 (ADMIN)")
 public class ProjectAdminController {
 
     private final AdminService adminService;
 
     //프로젝트 승인
     @PatchMapping("/{projectId}/approve")
+    @Operation(summary = "프로젝트 승인")
     public ResponseEntity<ProjectStatusResponse> approveProject(
-            @PathVariable Long projectId
+            @Parameter(example = "1200") @PathVariable Long projectId
     ) {
         ProjectStatusResponse response = adminService.approveProject(projectId);
         return ResponseEntity.ok(response);
@@ -31,8 +36,9 @@ public class ProjectAdminController {
 
     //프로젝트 반려 (심사중, 승인됨, 공개예정 반려가능)
     @PatchMapping("/{projectId}/reject")
+    @Operation(summary = "프로젝트 반려")
     public ResponseEntity<ProjectStatusResponse> rejectProject(
-            @PathVariable Long projectId,
+            @Parameter(example = "1200") @PathVariable Long projectId,
             @RequestBody RejectProjectRequest request
     ) {
         ProjectStatusResponse response = adminService.rejectProject(projectId, request.getReason());
@@ -41,14 +47,16 @@ public class ProjectAdminController {
 
     //프로젝트 승인 대기 조회
     @GetMapping("/review")
+    @Operation(summary = "승인 대기 프로젝트 목록 조회")
     public ResponseEntity<List<CreateProjectResponse>> reviewProject() {
         return ResponseEntity.ok(adminService.getReviewProjects());
     }
 
     //프로젝트 승인대기 조회(검토페이지)
     @GetMapping("/review/{projectId}")
+    @Operation(summary = "승인 대기 프로젝트 상세 조회")
     public ResponseEntity<ProjectDetailResponse> projectDetailsReview(
-            @PathVariable Long projectId
+            @Parameter(example = "1200") @PathVariable Long projectId
     ) {
         return ResponseEntity.ok(adminService.getProjectDetailsReview(projectId));
     }
