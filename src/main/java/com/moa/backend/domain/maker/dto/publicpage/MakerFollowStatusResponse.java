@@ -1,4 +1,4 @@
-package com.moa.backend.domain.maker.dto;
+package com.moa.backend.domain.maker.dto.publicpage;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

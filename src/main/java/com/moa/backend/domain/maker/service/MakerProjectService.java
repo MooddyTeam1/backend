@@ -1,8 +1,8 @@
 package com.moa.backend.domain.maker.service;
 
-import com.moa.backend.domain.maker.dto.MakerProjectListItemResponse;
-import com.moa.backend.domain.maker.dto.MakerProjectListResponse;
-import com.moa.backend.domain.maker.dto.ProjectSummaryStatsResponse;
+import com.moa.backend.domain.maker.dto.manageproject.MakerProjectListItemResponse;
+import com.moa.backend.domain.maker.dto.manageproject.MakerProjectListResponse;
+import com.moa.backend.domain.maker.dto.manageproject.ProjectSummaryStatsResponse;
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.order.entity.OrderStatus;

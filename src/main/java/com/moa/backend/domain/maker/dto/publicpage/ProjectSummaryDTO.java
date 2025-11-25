@@ -1,4 +1,4 @@
-package com.moa.backend.domain.maker.dto;
+package com.moa.backend.domain.maker.dto.publicpage;
 
 /**
  * 한글 설명: 메이커 프로젝트 요약 DTO.

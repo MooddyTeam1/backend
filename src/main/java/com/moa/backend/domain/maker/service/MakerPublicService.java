@@ -1,7 +1,7 @@
 package com.moa.backend.domain.maker.service;
 
 import com.moa.backend.domain.follow.repository.SupporterFollowMakerRepository;
-import com.moa.backend.domain.maker.dto.*;
+import com.moa.backend.domain.maker.dto.publicpage.*;
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.user.entity.SupporterProfile;

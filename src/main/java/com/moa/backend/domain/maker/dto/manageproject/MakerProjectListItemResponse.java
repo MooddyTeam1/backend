@@ -1,4 +1,4 @@
-package com.moa.backend.domain.maker.dto;
+package com.moa.backend.domain.maker.dto.manageproject;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.moa.backend.domain.project.entity.Category;
