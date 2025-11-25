@@ -48,7 +48,7 @@ public class AuthSupportService {
     @Value("${app.password-reset.token-validity-minutes:60}")
     private long resetTokenValidityMinutes;
 
-    // 🔥 추가: spring.mail.username 주입해서 From 주소로 사용
+    // 한글 설명: 보내는 사람 주소 (spring.mail.username 사용)
     @Value("${spring.mail.username}")
     private String fromAddress;
 
@@ -158,9 +158,7 @@ public class AuthSupportService {
         message.setTo(to);
         message.setSubject(subject);
         message.setText(content);
-
-        // 🔥 중요: 보내는 사람 주소를 네이버 계정 이메일과 동일하게 설정
-        message.setFrom(fromAddress);
+        message.setFrom(fromAddress); // 중요
 
         mailSender.send(message);
     }
