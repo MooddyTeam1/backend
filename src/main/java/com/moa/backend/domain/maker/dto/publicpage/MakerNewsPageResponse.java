@@ -1,6 +1,7 @@
-package com.moa.backend.domain.maker.dto;
+package com.moa.backend.domain.maker.dto.publicpage;
 
 import java.util.List;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**

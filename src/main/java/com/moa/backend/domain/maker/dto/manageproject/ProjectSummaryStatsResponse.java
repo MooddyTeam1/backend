@@ -1,4 +1,4 @@
-package com.moa.backend.domain.maker.dto;
+package com.moa.backend.domain.maker.dto.manageproject;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

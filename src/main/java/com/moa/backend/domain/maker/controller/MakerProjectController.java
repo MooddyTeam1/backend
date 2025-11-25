@@ -1,7 +1,7 @@
 package com.moa.backend.api.maker.controller;
 
-import com.moa.backend.domain.maker.dto.MakerProjectListResponse;
-import com.moa.backend.domain.maker.dto.ProjectSummaryStatsResponse;
+import com.moa.backend.domain.maker.dto.manageproject.MakerProjectListResponse;
+import com.moa.backend.domain.maker.dto.manageproject.ProjectSummaryStatsResponse;
 import com.moa.backend.domain.maker.service.MakerProjectService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import lombok.RequiredArgsConstructor;

@@ -1,9 +1,9 @@
 package com.moa.backend.domain.maker.controller;
 
-import com.moa.backend.domain.maker.dto.MakerDetailInfoResponse;
-import com.moa.backend.domain.maker.dto.MakerNewsPageResponse;
-import com.moa.backend.domain.maker.dto.MakerProjectsPageResponse;
-import com.moa.backend.domain.maker.dto.MakerPublicProfileResponse;
+import com.moa.backend.domain.maker.dto.publicpage.MakerDetailInfoResponse;
+import com.moa.backend.domain.maker.dto.publicpage.MakerNewsPageResponse;
+import com.moa.backend.domain.maker.dto.publicpage.MakerProjectsPageResponse;
+import com.moa.backend.domain.maker.dto.publicpage.MakerPublicProfileResponse;
 import com.moa.backend.domain.maker.service.MakerPublicService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
