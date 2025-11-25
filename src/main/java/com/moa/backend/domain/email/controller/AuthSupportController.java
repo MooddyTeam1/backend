@@ -1,6 +1,7 @@
 package com.moa.backend.domain.email.controller;
 
 import com.moa.backend.domain.email.dto.EmailRequest;
+import com.moa.backend.domain.email.dto.PasswordResetByCodeRequest;
 import com.moa.backend.domain.email.dto.PasswordResetRequest;
 import com.moa.backend.domain.email.service.AuthSupportService;
 import jakarta.validation.Valid;
@@ -41,6 +42,18 @@ public class AuthSupportController {
     @PostMapping("/password/reset")
     public ResponseEntity<Map<String, String>> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
         authSupportService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "비밀번호를 변경했습니다."));
+    }
+
+    @PostMapping("/password/code/send")
+    public ResponseEntity<Map<String, String>> sendPasswordResetCode(@RequestBody @Valid EmailRequest request) {
+        authSupportService.sendPasswordResetCode(request.getEmail());
+        return ResponseEntity.ok(Map.of("message", "비밀번호 재설정 인증번호를 전송했습니다."));
+    }
+
+    @PostMapping("/password/code/reset")
+    public ResponseEntity<Map<String, String>> resetPasswordByCode(@RequestBody @Valid PasswordResetByCodeRequest request) {
+        authSupportService.resetPasswordByCode(request.getEmail(), request.getCode(), request.getNewPassword());
         return ResponseEntity.ok(Map.of("message", "비밀번호를 변경했습니다."));
     }
 }
