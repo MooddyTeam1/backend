@@ -49,6 +49,27 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
     org.springframework.data.domain.Page<Settlement> findByMaker_Id(Long makerId, org.springframework.data.domain.Pageable pageable);
 
     /**
+     * 상태별 합계 조회 (전체)
+     */
+    @Query("""
+        SELECT s.status, COUNT(s), COALESCE(SUM(s.netAmount), 0)
+        FROM Settlement s
+        GROUP BY s.status
+    """)
+    java.util.List<Object[]> sumAmountGroupByStatus();
+
+    /**
+     * 상태별 합계 조회 (메이커)
+     */
+    @Query("""
+        SELECT s.status, COUNT(s), COALESCE(SUM(s.netAmount), 0)
+        FROM Settlement s
+        WHERE s.maker.id = :makerId
+        GROUP BY s.status
+    """)
+    java.util.List<Object[]> sumAmountGroupByStatusAndMaker(@Param("makerId") Long makerId);
+
+    /**
      * 상태·기간별 netAmount 합계 (maker/project 필터)
      */
     @Query("""

@@ -18,8 +18,12 @@ public class SettlementResponse {
     private final Long settlementId;
     @Schema(description = "프로젝트 ID", example = "101")
     private final Long projectId;
+    @Schema(description = "프로젝트명", example = "펄스핏 모듈 밴드")
+    private final String projectTitle;
     @Schema(description = "메이커 ID", example = "10")
     private final Long makerId;
+    @Schema(description = "메이커명", example = "메이커원 스튜디오")
+    private final String makerName;
     @Schema(description = "총 주문 금액", example = "10000000")
     private final Long totalOrderAmount;
     @Schema(description = "PG 수수료", example = "300000")
@@ -49,7 +53,9 @@ public class SettlementResponse {
         return SettlementResponse.builder()
                 .settlementId(settlement.getId())
                 .projectId(settlement.getProject().getId())
+                .projectTitle(settlement.getProject().getTitle())
                 .makerId(settlement.getMaker().getId())
+                .makerName(settlement.getMaker().getBusinessName())
                 .totalOrderAmount(settlement.getTotalOrderAmount())
                 .tossFeeAmount(settlement.getTossFeeAmount())
                 .platformFeeAmount(settlement.getPlatformFeeAmount())
