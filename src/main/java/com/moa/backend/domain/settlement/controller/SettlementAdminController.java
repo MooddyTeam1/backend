@@ -2,6 +2,7 @@ package com.moa.backend.domain.settlement.controller;
 
 import com.moa.backend.domain.settlement.dto.SettlementResponse;
 import com.moa.backend.domain.settlement.entity.Settlement;
+import com.moa.backend.domain.settlement.dto.SettlementListItemResponse;
 import com.moa.backend.domain.settlement.repository.SettlementRepository;
 import com.moa.backend.domain.settlement.service.SettlementService;
 import com.moa.backend.global.error.AppException;
@@ -16,6 +17,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * 관리자용 정산 수동 처리 API.
@@ -30,6 +35,25 @@ public class SettlementAdminController {
 
     private final SettlementService settlementService;
     private final SettlementRepository settlementRepository;
+
+    /**
+     * 정산 목록(페이지네이션) 조회.
+     * 기본 정렬: updatedAt DESC.
+     */
+    @GetMapping
+    @Operation(summary = "정산 목록 조회 (페이지네이션)")
+    public ResponseEntity<Page<SettlementListItemResponse>> list(
+            @Parameter(description = "0부터 시작하는 페이지", example = "0") Integer page,
+            @Parameter(description = "페이지 크기", example = "20") Integer size
+    ) {
+        int pageNumber = (page == null || page < 0) ? 0 : page;
+        int pageSize = (size == null || size <= 0) ? 20 : size;
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "updatedAt"));
+
+        Page<SettlementListItemResponse> result = settlementRepository.findAll(pageable)
+                .map(SettlementListItemResponse::from);
+        return ResponseEntity.ok(result);
+    }
 
     /**
      * 특정 프로젝트의 정산 정보를 새로 생성한다.
