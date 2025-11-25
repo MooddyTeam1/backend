@@ -20,8 +20,14 @@ public class ProjectDetailResponse {
 
     @Schema(description = "프로젝트 ID", example = "101")
     private Long id;
+
+    // 한글 설명: 메이커 ID (프로필 페이지 이동 등에 사용)
+    @Schema(description = "메이커 ID", example = "1003")
+    private Long makerId;
+
     @Schema(description = "메이커 이름(사업자명)", example = "모아 스튜디오")
     private String maker;                 // 메이커 이름(사업자명)
+
     @Schema(description = "프로젝트 제목", example = "친환경 텀블러 프로젝트")
     private String title;                 // 프로젝트 제목
     @Schema(description = "요약 설명", example = "재활용 소재로 만든 가벼운 텀블러")
@@ -72,7 +78,7 @@ public class ProjectDetailResponse {
     @Schema(description = "리워드 목록")
     private List<RewardResponse> rewards; // 리워드 목록
 
-    // 👇 여기부터 북마크 관련 필드 추가
+    // 👇 여기부터 북마크 관련 필드
 
     // 한글 설명: 현재 로그인한 서포터 기준으로 이 프로젝트를 찜했는지 여부.
     @Schema(description = "내가 찜했는지 여부", example = "false")
@@ -86,6 +92,8 @@ public class ProjectDetailResponse {
     public static ProjectDetailResponse from(Project project) {
         return ProjectDetailResponse.builder()
                 .id(project.getId())
+                // ✅ 메이커 ID 매핑
+                .makerId(project.getMaker().getId())
                 .maker(project.getMaker().getBusinessName())
                 .title(project.getTitle())
                 .summary(project.getSummary())
