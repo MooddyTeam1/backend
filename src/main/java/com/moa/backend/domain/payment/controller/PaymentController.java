@@ -4,6 +4,9 @@ import com.moa.backend.domain.payment.dto.ConfirmPaymentRequest;
 import com.moa.backend.domain.payment.dto.ConfirmPaymentResponse;
 import com.moa.backend.domain.payment.entity.Payment;
 import com.moa.backend.domain.payment.service.PaymentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
+@Tag(name = "Payment", description = "결제 승인/취소")
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -26,6 +30,7 @@ public class PaymentController {
      * 프론트엔드가 이 API를 호출해서 결제를 승인합니다.
      */
     @PostMapping("/confirm")
+    @Operation(summary = "결제 승인")
     public ResponseEntity<ConfirmPaymentResponse> confirmPayment(
             @RequestBody ConfirmPaymentRequest request
     ) {
@@ -44,8 +49,9 @@ public class PaymentController {
      * 관리자 또는 사용자가 결제를 취소할 때 사용합니다.
      */
     @PostMapping("/{paymentId}/cancel")
+    @Operation(summary = "결제 취소")
     public ResponseEntity<Void> cancelPayment(
-            @PathVariable Long paymentId,
+            @Parameter(example = "1500") @PathVariable Long paymentId,
             @RequestParam(required = false, defaultValue = "사용자 요청") String reason
     ) {
         paymentService.cancelPayment(paymentId, reason);

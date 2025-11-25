@@ -3,6 +3,9 @@ package com.moa.backend.domain.shipment.controller;
 import com.moa.backend.domain.shipment.dto.*;
 import com.moa.backend.domain.shipment.service.ShipmentConsoleService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,14 +20,16 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/maker/projects/{projectId}/shipments")
+@Tag(name = "Shipment-Console", description = "메이커 배송 콘솔 요약/목록/상태/송장/메모")
 public class ShipmentConsoleController {
 
     private final ShipmentConsoleService shipmentConsoleService;
 
     // 한글 설명: 상단 요약 카드 데이터 조회
     @GetMapping("/summary")
+    @Operation(summary = "배송 요약 조회")
     public ResponseEntity<ShipmentSummaryResponse> getSummary(
-            @PathVariable Long projectId,
+            @Parameter(example = "1201") @PathVariable Long projectId,
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {
         Long ownerUserId = principal.getId(); // users.id
@@ -35,11 +40,12 @@ public class ShipmentConsoleController {
 
     // 한글 설명: 배송 목록 조회
     @GetMapping
+    @Operation(summary = "배송 목록 조회")
     public ResponseEntity<ShipmentListResponse> getShipments(
-            @PathVariable Long projectId,
+            @Parameter(example = "1201") @PathVariable Long projectId,
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestParam(defaultValue = "ALL") String status,
-            @RequestParam(required = false) Long rewardId,
+            @RequestParam(required = false) @Parameter(example = "1301") Long rewardId,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "orderDate") String sortBy,
             @RequestParam(defaultValue = "desc") String sortOrder,
@@ -64,9 +70,10 @@ public class ShipmentConsoleController {
 
     // 한글 설명: 단일 주문 배송 상태 변경
     @PutMapping("/{orderId}/status")
+    @Operation(summary = "배송 상태 변경(단건)")
     public ResponseEntity<Void> updateStatus(
-            @PathVariable Long projectId,
-            @PathVariable Long orderId,
+            @Parameter(example = "1201") @PathVariable Long projectId,
+            @Parameter(example = "1400") @PathVariable Long orderId,
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestBody UpdateDeliveryStatusRequest request
     ) {
@@ -77,8 +84,9 @@ public class ShipmentConsoleController {
 
     // 한글 설명: 여러 주문 배송 상태 일괄 변경
     @PutMapping("/bulk-status")
+    @Operation(summary = "배송 상태 변경(일괄)")
     public ResponseEntity<Void> bulkUpdateStatus(
-            @PathVariable Long projectId,
+            @Parameter(example = "1201") @PathVariable Long projectId,
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestBody BulkUpdateDeliveryStatusRequest request
     ) {
@@ -89,9 +97,10 @@ public class ShipmentConsoleController {
 
     // 한글 설명: 송장/택배사 정보 수정
     @PutMapping("/{orderId}/tracking")
+    @Operation(summary = "송장/택배사 정보 수정")
     public ResponseEntity<Void> updateTracking(
-            @PathVariable Long projectId,
-            @PathVariable Long orderId,
+            @Parameter(example = "1201") @PathVariable Long projectId,
+            @Parameter(example = "1400") @PathVariable Long orderId,
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestBody UpdateTrackingInfoRequest request
     ) {
@@ -102,9 +111,10 @@ public class ShipmentConsoleController {
 
     // 한글 설명: 배송 메모 수정
     @PutMapping("/{orderId}/memo")
+    @Operation(summary = "배송 메모 수정")
     public ResponseEntity<Void> updateMemo(
-            @PathVariable Long projectId,
-            @PathVariable Long orderId,
+            @Parameter(example = "1201") @PathVariable Long projectId,
+            @Parameter(example = "1400") @PathVariable Long orderId,
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestBody UpdateDeliveryMemoRequest request
     ) {

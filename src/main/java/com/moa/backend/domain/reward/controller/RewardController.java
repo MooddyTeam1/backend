@@ -4,6 +4,9 @@ import com.moa.backend.domain.reward.dto.RewardStockIncreaseRequest;
 import com.moa.backend.domain.reward.dto.RewardStockIncreaseResponse;
 import com.moa.backend.domain.reward.service.RewardService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/reward")
 @RequiredArgsConstructor
+@Tag(name = "Reward", description = "리워드 재고/설정 (메이커/관리자)")
 public class RewardController {
 
     private final RewardService rewardService;
@@ -24,8 +28,9 @@ public class RewardController {
      */
     @PreAuthorize("hasRole('MAKER') or hasRole('ADMIN')")
     @PatchMapping("/{rewardId}/stock/increase")
+    @Operation(summary = "리워드 재고 추가")
     public ResponseEntity<RewardStockIncreaseResponse> increaseStock(
-            @PathVariable Long rewardId,
+            @Parameter(example = "1300") @PathVariable Long rewardId,
             @Valid @RequestBody RewardStockIncreaseRequest request,
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {

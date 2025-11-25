@@ -5,6 +5,9 @@ import com.moa.backend.domain.maker.dto.MakerNewsPageResponse;
 import com.moa.backend.domain.maker.dto.MakerProjectsPageResponse;
 import com.moa.backend.domain.maker.dto.MakerPublicProfileResponse;
 import com.moa.backend.domain.maker.service.MakerPublicService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/public/makers")
 @RequiredArgsConstructor
+@Tag(name = "Maker-Public", description = "메이커 공개 프로필/프로젝트/소식 조회")
 public class MakerPublicController {
 
     // 한글 설명: 메이커 공개 정보(프로필/프로젝트/소식/상세)를 제공하는 서비스 빈.
@@ -28,8 +32,9 @@ public class MakerPublicController {
      * - GET /public/makers/{makerId}
      */
     @GetMapping("/{makerId}")
+    @Operation(summary = "메이커 공개 프로필 조회")
     public ResponseEntity<MakerPublicProfileResponse> getMakerPublicProfile(
-            @PathVariable Long makerId
+            @Parameter(example = "1003") @PathVariable Long makerId
     ) {
         return ResponseEntity.ok(makerPublicService.getMakerPublicProfile(makerId));
     }
@@ -41,8 +46,9 @@ public class MakerPublicController {
      * - GET /public/makers/{makerId}/projects
      */
     @GetMapping("/{makerId}/projects")
+    @Operation(summary = "메이커 프로젝트 목록 조회")
     public ResponseEntity<MakerProjectsPageResponse> getMakerProjects(
-            @PathVariable Long makerId,
+            @Parameter(example = "1003") @PathVariable Long makerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String status
@@ -75,8 +81,9 @@ public class MakerPublicController {
      * - GET /public/makers/{makerId}/info
      */
     @GetMapping("/{makerId}/info")
+    @Operation(summary = "메이커 사업자 정보 조회")
     public ResponseEntity<MakerDetailInfoResponse> getMakerInfo(
-            @PathVariable Long makerId
+            @Parameter(example = "1003") @PathVariable Long makerId
     ) {
         return ResponseEntity.ok(makerPublicService.getMakerDetailInfo(makerId));
     }
