@@ -100,3 +100,9 @@ app:
     token-validity-minutes: 60
   file-storage:
     root-dir: ./uploads
+    image-dir: images
+
+openai:
+  base-url: https://api.openai.com        # 한글 설명: OpenAI API 기본 URL
+  api-key: ${OPENAI_API_KEY}             # 한글 설명: 환경변수에서 주입 (운영 서버/로컬에 export 필요)
+  model: gpt-4o-mini
