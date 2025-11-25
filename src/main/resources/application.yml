@@ -82,6 +82,11 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha        # 태그를 알파벳 순으로 정렬 (Auth가 최상단)
+    operations-sorter: alpha  # 같은 태그 내 엔드포인트를 알파벳 순 정렬
+
 logging:
   level:
     org.springframework.security.oauth2.client: DEBUG

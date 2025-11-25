@@ -5,6 +5,9 @@ import com.moa.backend.domain.order.dto.OrderDetailResponse;
 import com.moa.backend.domain.order.dto.OrderPageResponse;
 import com.moa.backend.domain.order.service.OrderService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
+@Tag(name = "Order", description = "주문 생성/조회/취소 API")
 public class OrderController {
 
     private final OrderService orderService;
@@ -33,6 +37,7 @@ public class OrderController {
      * 서포터가 주문을 신규 생성한다.
      */
     @PostMapping
+    @Operation(summary = "주문 생성", description = "로그인한 서포터가 리워드/배송지 정보를 포함해 주문을 생성합니다.")
     public ResponseEntity<OrderDetailResponse> createOrder(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @Valid @RequestBody OrderCreateRequest request
@@ -45,9 +50,10 @@ public class OrderController {
      * 주문 상세 정보를 조회한다.
      */
     @GetMapping("/{orderId}")
+    @Operation(summary = "주문 상세 조회", description = "로그인 사용자가 자신의 주문 상세 정보를 조회합니다.")
     public ResponseEntity<OrderDetailResponse> getOrder(
             @AuthenticationPrincipal JwtUserPrincipal principal,
-            @PathVariable Long orderId
+            @Parameter(example = "1400") @PathVariable Long orderId
     ) {
         OrderDetailResponse response = orderService.getOrder(principal.getId(), orderId);
         return ResponseEntity.ok(response);
@@ -57,6 +63,7 @@ public class OrderController {
      * 로그인 사용자의 전체 주문 목록(요약)을 조회한다.
      */
     @GetMapping
+    @Operation(summary = "주문 목록 조회", description = "로그인 사용자의 주문 목록을 페이지로 조회합니다.")
     public ResponseEntity<OrderPageResponse> getOrders(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
@@ -70,9 +77,10 @@ public class OrderController {
      * 로그인 사용자가 자신의 주문을 취소한다.
      */
     @PostMapping("/{orderId}/cancel")
+    @Operation(summary = "주문 취소", description = "로그인 사용자가 자신의 주문을 취소합니다.")
     public ResponseEntity<Void> cancelOrder(
             @AuthenticationPrincipal JwtUserPrincipal principal,
-            @PathVariable Long orderId,
+            @Parameter(example = "1400") @PathVariable Long orderId,
             @RequestParam(required = false, defaultValue = "사용자 취소") String reason
     ) {
         orderService.cancelOrder(principal.getId(), orderId, reason);

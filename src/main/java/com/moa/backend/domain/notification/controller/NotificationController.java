@@ -7,6 +7,9 @@ import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.notification.sse.service.SseNotificationService;
 import com.moa.backend.global.security.jwt.JwtTokenProvider;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +21,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/notifications")
+@Tag(name = "Notification", description = "알림 구독/조회/읽음 처리")
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -29,6 +33,7 @@ public class NotificationController {
      * 로그인 한 유저가 구독하면 서버가 알림을 push함
      */
     @GetMapping(value = "/subscribe", produces = "text/event-stream")
+    @Operation(summary = "알림 SSE 구독")
     public SseEmitter subscribe(@RequestParam String token) {
         Long userId = jwtTokenProvider.getUserId(token);
         return sseNotificationService.connect(userId);
@@ -36,6 +41,7 @@ public class NotificationController {
 
     // 알림 목록 전체 조회 (최신순)
     @GetMapping
+    @Operation(summary = "알림 전체 조회")
     public ResponseEntity<List<NotificationResponse>> getAll(
             @AuthenticationPrincipal JwtUserPrincipal principal
             ) {
@@ -44,6 +50,7 @@ public class NotificationController {
 
     // 읽지 않은 알림 갯수 조회
     @GetMapping("/unread-count")
+    @Operation(summary = "읽지 않은 알림 개수 조회")
     public ResponseEntity<Integer> unreadCount(
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {
@@ -52,6 +59,7 @@ public class NotificationController {
 
     // 읽지 않은 알림 전체 읽음 처리
     @PatchMapping("/read/all")
+    @Operation(summary = "알림 전체 읽음 처리")
     public ResponseEntity<Void> readAll(
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {
@@ -61,8 +69,9 @@ public class NotificationController {
 
     // 읽지 않은 알림 읽음 처리
     @PatchMapping("/read/{id}")
+    @Operation(summary = "알림 단건 읽음 처리")
     public ResponseEntity<Void> readOne(
-            @PathVariable Long id,
+            @Parameter(example = "1") @PathVariable Long id,
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {
         notificationService.readOne(id, principal.getId());

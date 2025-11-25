@@ -4,6 +4,9 @@ import com.moa.backend.domain.order.entity.Order;
 import com.moa.backend.domain.order.repository.OrderRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/supporter/orders")
+@Tag(name = "Shipment-Supporter", description = "서포터 배송 확정")
 public class SupporterDeliveryController {
 
     private final OrderRepository orderRepository;
@@ -28,8 +32,9 @@ public class SupporterDeliveryController {
      * 예: PATCH /api/supporter/orders/{orderId}/delivery/confirm
      */
     @PatchMapping("/{orderId}/delivery/confirm")
+    @Operation(summary = "서포터 배송 수령확정")
     public ResponseEntity<Void> confirmDelivery(
-            @PathVariable Long orderId
+            @Parameter(example = "1400") @PathVariable Long orderId
             // , @AuthenticationPrincipal CustomUserPrincipal user
     ) {
         Long userId = 0L; // TODO: 인증 컨텍스트에서 실제 로그인 유저 ID 꺼내기
