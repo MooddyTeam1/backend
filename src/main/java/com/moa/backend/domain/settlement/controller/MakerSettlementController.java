@@ -76,7 +76,9 @@ public class MakerSettlementController {
                 .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
         // 소유자 검증: ADMIN은 통과, MAKER는 본인 소유만
-        if (!principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin) {
             Long ownerUserId = settlement.getMaker().getOwner().getId();
             if (!ownerUserId.equals(principal.getId())) {
                 throw new AppException(ErrorCode.ACCESS_DENIED);
