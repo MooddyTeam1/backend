@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -369,4 +371,30 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * - 메이커 마이페이지(내 프로젝트 관리)에서 기본 데이터 소스로 사용한다.
      */
     List<Project> findAllByMakerId(Long makerId);
+
+    /**
+     * 한글 설명:
+     * 메이커 홈(공개 화면)에서 사용할 프로젝트 목록 조회용 쿼리.
+     *
+     * 포함되는 프로젝트:
+     *  - lifecycleStatus = SCHEDULED (공개 예정)
+     *  - lifecycleStatus = LIVE (진행 중)
+     *  - lifecycleStatus = ENDED 이면서 resultStatus = SUCCESS (성공 종료)
+     *
+     * 정렬은 Pageable의 Sort 설정을 그대로 사용한다.
+     */
+    @Query("""
+        select p
+        from Project p
+        where p.maker.id = :makerId
+          and (
+              p.lifecycleStatus = com.moa.backend.domain.project.entity.ProjectLifecycleStatus.SCHEDULED
+              or p.lifecycleStatus = com.moa.backend.domain.project.entity.ProjectLifecycleStatus.LIVE
+              or (
+                    p.lifecycleStatus = com.moa.backend.domain.project.entity.ProjectLifecycleStatus.ENDED
+                and p.resultStatus = com.moa.backend.domain.project.entity.ProjectResultStatus.SUCCESS
+              )
+          )
+        """)
+    Page<Project> findMakerPublicProjects(@Param("makerId") Long makerId, Pageable pageable);
 }
