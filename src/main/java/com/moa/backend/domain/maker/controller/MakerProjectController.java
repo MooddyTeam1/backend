@@ -1,7 +1,10 @@
-package com.moa.backend.api.maker.controller;
+// 파일: src/main/java/com/moa/backend/domain/maker/controller/MakerProjectController.java
+package com.moa.backend.domain.maker.controller;
 
+import com.moa.backend.domain.maker.dto.manageproject.MakerProjectDetailResponse;
 import com.moa.backend.domain.maker.dto.manageproject.MakerProjectListResponse;
 import com.moa.backend.domain.maker.dto.manageproject.ProjectSummaryStatsResponse;
+import com.moa.backend.domain.maker.service.MakerProjectManageService;
 import com.moa.backend.domain.maker.service.MakerProjectService;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -11,10 +14,11 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * 한글 설명:
- * - 메이커 마이페이지 > 내 프로젝트 목록/통계 전용 컨트롤러.
+ * - 메이커 마이페이지 > 내 프로젝트 목록/통계/상세 관리용 컨트롤러.
  * - URL:
- *   - GET /api/maker/projects
- *   - GET /api/maker/projects/stats/summary
+ *   - GET  /api/maker/projects                      : 메이커의 프로젝트 목록
+ *   - GET  /api/maker/projects/stats/summary        : 메이커 프로젝트 통계 요약
+ *   - GET  /api/maker/projects/{projectId}          : 특정 프로젝트 상세 관리 데이터
  */
 @RestController
 @RequestMapping("/api/maker/projects")
@@ -22,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class MakerProjectController {
 
     private final MakerProjectService makerProjectService;
+    private final MakerProjectManageService makerProjectManageService;
 
     /**
      * 한글 설명:
@@ -65,5 +70,20 @@ public class MakerProjectController {
 
         ProjectSummaryStatsResponse stats = makerProjectService.getProjectSummaryStats(userId);
         return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * 한글 설명:
+     * - 메이커 프로젝트 상세 관리 화면 데이터 조회 API.
+     * - 명세서의 `/api/maker/projects/{projectId}` 엔드포인트에 해당.
+     */
+    @GetMapping("/{projectId}")
+    public ResponseEntity<MakerProjectDetailResponse> getMakerProjectDetail(
+            @PathVariable Long projectId,
+            @AuthenticationPrincipal JwtUserPrincipal principal
+    ) {
+        Long loginUserId = principal.getId();
+        MakerProjectDetailResponse response = makerProjectManageService.getMakerProjectDetail(projectId, loginUserId);
+        return ResponseEntity.ok(response);
     }
 }
