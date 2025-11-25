@@ -1,4 +1,4 @@
-package com.moa.backend.domain.news.entity;
+package com.moa.backend.domain.maker.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,7 +16,7 @@ public class ProjectNewsImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // S3 URL
+    // 한글 설명: 이미지 S3 URL
     @Column(nullable = false)
     private String imageUrl;
 

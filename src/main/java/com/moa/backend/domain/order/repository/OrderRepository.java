@@ -6,6 +6,7 @@ import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.project.entity.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,13 +14,17 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
  * 주문 조회/검색을 담당하는 리포지토리.
  */
 public interface OrderRepository extends JpaRepository<Order, Long> {
+
+    // ===================== 기본 조회 메서드 =====================
 
     /**
      * 주문 코드로 단건 조회
@@ -52,21 +57,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     List<Order> findAllByProjectIdAndStatus(Long projectId, OrderStatus status);
 
-    // ================== 👇 추가: 배송 요약 카드용 카운트 메서드 ==================
+    // ================== 배송 요약 카드용 카운트 메서드 ==================
 
     /**
-     * 한글 설명: 특정 프로젝트에서 주어진 결제 상태(PAID 등)를 가진 주문 개수.
-     * - 배송 요약 카드의 "총 주문 수" 계산에 사용 (보통 PAID 기준).
+     * 특정 프로젝트에서 주어진 결제 상태(PAID 등)를 가진 주문 개수.
      */
     long countByProjectIdAndStatus(Long projectId, OrderStatus status);
 
     /**
-     * 한글 설명: 특정 프로젝트에서 특정 배송 상태(DELIVERED, SHIPPING 등)를 가진 주문 개수.
-     * - 배송 요약 카드의 "배송 준비중 / 배송중 / 배송 완료 / 문제" 카운트에 사용.
+     * 특정 프로젝트에서 특정 배송 상태(DELIVERED, SHIPPING 등)를 가진 주문 개수.
      */
     long countByProjectIdAndDeliveryStatus(Long projectId, DeliveryStatus deliveryStatus);
 
-    // ========================================================================
+    // ================== 자동 구매확정, 잔금 지급 검증 ==================
 
     /**
      * 배송 완료 후 일정 시간이 지난 주문 조회(자동 구매확정 대상).
@@ -96,6 +99,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("projectId") Long projectId,
             @Param("status") DeliveryStatus status
     );
+
+    // ================== 배송 관련 스케줄링 조회 ==================
 
     /**
      * 배송 예정일이 오늘인 주문 목록 조회.
@@ -131,6 +136,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             """)
     List<Order> findOrdersToDelivered(LocalDateTime deliveryDate);
 
+    // ================== 프로젝트별 펀딩 합계 ==================
+
     /**
      * 특정 프로젝트에 대해 현재까지 결제(지불) 완료된 모금액 총합을 조회한다.
      */
@@ -138,11 +145,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             SELECT COALESCE(SUM(o.totalAmount), 0)
             FROM Order o
             WHERE o.project.id = :projectId
-            AND o.status = 'PAID'
+              AND o.status = 'PAID'
             """)
     Long getTotalFundedAmount(Long projectId);
 
-    // ========== 통계 API용 메서드 ==========
+    // ================== 통계 API용 메서드 (기간 / 카테고리 등) ==================
 
     /**
      * 기간별 PAID 주문 총액 합계
@@ -186,7 +193,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     );
 
     /**
-     * 기간별 전체 주문 건수 (상태 무관, 시도 횟수 대용)
+     * 기간별 전체 주문 건수 (상태 무관)
      */
     Long countByCreatedAtBetween(
             LocalDateTime startDateTime,
@@ -239,7 +246,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                COUNT(o) as orderCount
         FROM Order o
         WHERE o.status = :status
-        AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND o.createdAt BETWEEN :startDateTime AND :endDateTime
         GROUP BY CAST(o.createdAt AS date)
         ORDER BY CAST(o.createdAt AS date)
         """)
@@ -251,7 +258,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * 일별 프로젝트 수 (주문이 발생한 고유 프로젝트 기준)
-     * 결과: Object[] {날짜(DATE), 프로젝트수(LONG)}
      */
     @Query("""
         SELECT CAST(o.createdAt AS date) as date,
@@ -259,7 +265,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         FROM Order o
         JOIN o.project p
         WHERE o.status = :status
-        AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND o.createdAt BETWEEN :startDateTime AND :endDateTime
         GROUP BY CAST(o.createdAt AS date)
         ORDER BY CAST(o.createdAt AS date)
         """)
@@ -271,7 +277,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * 카테고리별 통계 (카테고리, 펀딩액, 프로젝트 수, 주문 건수)
-     * 결과: Object[] {카테고리(STRING), 총액(LONG), 프로젝트수(LONG), 주문건수(LONG)}
      */
     @Query("""
             SELECT p.category as category,
@@ -281,7 +286,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             FROM Order o
             JOIN o.project p
             WHERE o.status = :status
-            AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+              AND o.createdAt BETWEEN :startDateTime AND :endDateTime
             GROUP BY p.category
             ORDER BY COALESCE(SUM(o.totalAmount), 0) DESC
             """)
@@ -293,8 +298,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * 프로젝트별 펀딩 통계 (Top N)
-     * 결과: Object[] {프로젝트ID(LONG), 프로젝트명(STRING), 메이커명(STRING),
-     * 총펀딩액(LONG), 목표금액(LONG), 달성률(DOUBLE), 남은일수(INT)}
+     * 결과: Object[] {projectId, projectName, makerName, fundingAmount, goalAmount, achievementRate, remainingDays}
      */
     @Query("""
         SELECT p.id as projectId,
@@ -308,7 +312,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         JOIN o.project p
         JOIN p.maker m
         WHERE o.status = :status
-        AND o.createdAt BETWEEN :startDateTime AND :endDateTime
+          AND o.createdAt BETWEEN :startDateTime AND :endDateTime
         GROUP BY p.id, p.title, m.name, p.goalAmount, p.endDate
         ORDER BY COALESCE(SUM(o.totalAmount), 0) DESC
         """)
@@ -479,9 +483,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("endDateTime") LocalDateTime endDateTime
     );
+
     /**
-     * 한글 설명: 특정 프로젝트에서 결제 상태 기준(PAID 등) 고유 서포터 수 집계.
-     * - 메이커 프로젝트 카드의 supporterCount 계산에 사용된다.
+     * 특정 프로젝트에서 결제 상태 기준(PAID 등) 고유 서포터 수 집계.
      */
     @Query("""
         SELECT COUNT(DISTINCT o.user.id)
@@ -494,4 +498,201 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("status") OrderStatus status
     );
 
+    // 한글 설명: 특정 프로젝트의 특정 상태 주문 전체 (통계 계산용)
+    List<Order> findByProject_IdAndStatus(Long projectId, OrderStatus status);
+
+    // 한글 설명: 특정 프로젝트의 최근 주문 10개 (recentOrders 섹션)
+    List<Order> findTop10ByProject_IdOrderByCreatedAtDesc(Long projectId);
+
+    // 한글 설명: 플랫폼 전체에서 특정 상태(PAID) 주문 (재후원자 비율 계산용)
+    List<Order> findByStatus(OrderStatus status);
+
+    // =========================
+    // 1) 서포터 수 / 재후원자 관련
+    // =========================
+
+    /**
+     * 특정 프로젝트를 결제 완료한 서포터 수(중복 제거).
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT o.user.id)
+        FROM Order o
+        WHERE o.project.id = :projectId
+          AND o.status = :status
+    """)
+    Integer countDistinctSupporterByProjectIdAndStatus(
+            @Param("projectId") Long projectId,
+            @Param("status") OrderStatus status
+    );
+
+    /**
+     * 특정 프로젝트를 결제 완료한 서포터들의 ID 목록.
+     */
+    @Query("""
+        SELECT DISTINCT o.user.id
+        FROM Order o
+        WHERE o.project.id = :projectId
+          AND o.status = :status
+    """)
+    List<Long> findDistinctSupporterIdsByProjectIdAndStatus(
+            @Param("projectId") Long projectId,
+            @Param("status") OrderStatus status
+    );
+
+    /**
+     * 한 서포터가 결제 완료한 프로젝트의 개수(중복 제거).
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT o.project.id)
+        FROM Order o
+        WHERE o.user.id = :supporterId
+          AND o.status = :status
+    """)
+    int countDistinctProjectIdBySupporterIdAndStatus(
+            @Param("supporterId") Long supporterId,
+            @Param("status") OrderStatus status
+    );
+
+    // =========================
+    // 2) 일별 신규 서포터 수 / 모금액
+    // =========================
+
+    /**
+     * 특정 날짜(date)에, 해당 프로젝트에 "첫 결제"를 한 서포터 수를 카운트한다.
+     * - 여기서는 createdAt 을 결제 시각으로 취급.
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT o.user.id)
+        FROM Order o
+        WHERE o.project.id = :projectId
+          AND o.status = com.moa.backend.domain.order.entity.OrderStatus.PAID
+          AND FUNCTION('DATE', o.createdAt) = :date
+          AND o.createdAt = (
+              SELECT MIN(o2.createdAt)
+              FROM Order o2
+              WHERE o2.project.id = :projectId
+                AND o2.user.id = o.user.id
+                AND o2.status = com.moa.backend.domain.order.entity.OrderStatus.PAID
+          )
+    """)
+    Integer countNewSupportersForProjectOnDate(
+            @Param("projectId") Long projectId,
+            @Param("date") LocalDate date
+    );
+
+    /**
+     * 특정 날짜(date)에 결제 완료(PAID)된 주문들의 totalAmount 합계를 반환.
+     * - 여기서도 createdAt 을 결제 시각으로 취급.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(o.totalAmount), 0)
+        FROM Order o
+        WHERE o.project.id = :projectId
+          AND o.status = com.moa.backend.domain.order.entity.OrderStatus.PAID
+          AND FUNCTION('DATE', o.createdAt) = :date
+    """)
+    Long sumPaidAmountForProjectOnDate(
+            @Param("projectId") Long projectId,
+            @Param("date") LocalDate date
+    );
+
+    // =========================
+    // 3) 리워드별 판매 통계
+    // =========================
+
+    /**
+     * 리워드별 판매 수량 및 금액 집계용 Raw 데이터.
+     * - Object[] {rewardId, rewardName, salesCount, totalAmount}
+     */
+    @Query("""
+        SELECT 
+            r.id AS rewardId,
+            r.name AS rewardName,
+            SUM(oi.quantity) AS salesCount,
+            SUM(oi.subtotal) AS totalAmount
+        FROM Order o
+        JOIN o.orderItems oi
+        JOIN oi.reward r
+        WHERE o.project.id = :projectId
+          AND o.status = com.moa.backend.domain.order.entity.OrderStatus.PAID
+        GROUP BY r.id, r.name
+        ORDER BY SUM(oi.quantity) DESC
+    """)
+    List<Object[]> findRewardSalesStatsByProjectId(@Param("projectId") Long projectId);
+
+    /**
+     * 리워드별 판매 수량만 Raw로 가져오기.
+     * - Object[] {rewardId, salesCount}
+     */
+    @Query("""
+        SELECT 
+            r.id AS rewardId,
+            SUM(oi.quantity) AS salesCount
+        FROM Order o
+        JOIN o.orderItems oi
+        JOIN oi.reward r
+        WHERE o.project.id = :projectId
+          AND o.status = com.moa.backend.domain.order.entity.OrderStatus.PAID
+        GROUP BY r.id
+    """)
+    List<Object[]> findRewardSalesCountRawByProjectId(@Param("projectId") Long projectId);
+
+    /**
+     * Raw 결과를 <rewardId, salesCount> 맵으로 변환.
+     */
+    default Map<Long, Long> findRewardSalesCountMapByProjectId(Long projectId) {
+        List<Object[]> rows = findRewardSalesCountRawByProjectId(projectId);
+        Map<Long, Long> map = new HashMap<>();
+        if (rows == null) {
+            return map;
+        }
+        for (Object[] row : rows) {
+            Long rewardId = (Long) row[0];
+            Long salesCount = (Long) row[1];
+            map.put(rewardId, salesCount != null ? salesCount : 0L);
+        }
+        return map;
+    }
+
+    // =========================
+    // 4) 최근 주문 목록 (최신 N개)
+    // =========================
+
+    /**
+     * 특정 프로젝트의 주문을 최신순으로 조회.
+     */
+    Page<Order> findByProject_IdOrderByCreatedAtDesc(Long projectId, Pageable pageable);
+
+    @Query(value = """
+            SELECT *
+            FROM orders o
+            WHERE o.project_id = :projectId
+            ORDER BY o.created_at DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Order> findRecentOrdersForProject(@Param("projectId") Long projectId,
+                                           @Param("limit") int limit);
+
+
+
+    /**
+     * 한글 설명:
+     *  - 메이커 콘솔용 주문 리스트 조회
+     *  - paymentStatus, deliveryStatus 가 null이면 해당 조건은 무시
+     *  - createdAt DESC 기준 최신 순 정렬
+     */
+    @Query("""
+        SELECT o
+        FROM Order o
+        WHERE o.project.id = :projectId
+          AND (:paymentStatus IS NULL OR o.status = :paymentStatus)
+          AND (:deliveryStatus IS NULL OR o.deliveryStatus = :deliveryStatus)
+        ORDER BY o.createdAt DESC
+        """)
+    Page<Order> findOrdersForMakerConsole(
+            @Param("projectId") Long projectId,
+            @Param("paymentStatus") OrderStatus paymentStatus,
+            @Param("deliveryStatus") DeliveryStatus deliveryStatus,
+            Pageable pageable
+    );
 }
