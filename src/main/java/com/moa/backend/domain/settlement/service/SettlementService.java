@@ -7,6 +7,7 @@ import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.settlement.entity.Settlement;
 import com.moa.backend.domain.settlement.entity.SettlementPayoutStatus;
 import com.moa.backend.domain.settlement.entity.SettlementStatus;
+import com.moa.backend.domain.settlement.dto.SettlementSummaryResponse;
 import com.moa.backend.domain.settlement.repository.SettlementRepository;
 import com.moa.backend.domain.wallet.service.MakerWalletService;
 import com.moa.backend.domain.wallet.service.PlatformWalletService;
@@ -160,5 +161,61 @@ public class SettlementService {
         settlement.markFinalPaymentDone();
         log.info("Settlement 잔금 완료: settlementId={}, amount={}", settlementId, finalAmount);
         return settlement;
+    }
+
+    @Transactional(readOnly = true)
+    public SettlementSummaryResponse getSummary() {
+        long pendingCount = 0, pendingAmount = 0;
+        long firstPaidCount = 0, firstPaidAmount = 0;
+        long finalReadyCount = 0, finalReadyAmount = 0;
+        long completedCount = 0, completedAmount = 0;
+
+        for (Object[] row : settlementRepository.sumAmountGroupByStatus()) {
+            SettlementStatus status = (SettlementStatus) row[0];
+            long count = ((Number) row[1]).longValue();
+            long amount = ((Number) row[2]).longValue();
+            switch (status) {
+                case PENDING -> { pendingCount = count; pendingAmount = amount; }
+                case FIRST_PAID -> { firstPaidCount = count; firstPaidAmount = amount; }
+                case FINAL_READY -> { finalReadyCount = count; finalReadyAmount = amount; }
+                case COMPLETED -> { completedCount = count; completedAmount = amount; }
+                default -> {}
+            }
+        }
+
+        return SettlementSummaryResponse.builder()
+                .pendingCount(pendingCount).pendingAmount(pendingAmount)
+                .firstPaidCount(firstPaidCount).firstPaidAmount(firstPaidAmount)
+                .finalReadyCount(finalReadyCount).finalReadyAmount(finalReadyAmount)
+                .completedCount(completedCount).completedAmount(completedAmount)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public SettlementSummaryResponse getSummaryByMaker(Long makerId) {
+        long pendingCount = 0, pendingAmount = 0;
+        long firstPaidCount = 0, firstPaidAmount = 0;
+        long finalReadyCount = 0, finalReadyAmount = 0;
+        long completedCount = 0, completedAmount = 0;
+
+        for (Object[] row : settlementRepository.sumAmountGroupByStatusAndMaker(makerId)) {
+            SettlementStatus status = (SettlementStatus) row[0];
+            long count = ((Number) row[1]).longValue();
+            long amount = ((Number) row[2]).longValue();
+            switch (status) {
+                case PENDING -> { pendingCount = count; pendingAmount = amount; }
+                case FIRST_PAID -> { firstPaidCount = count; firstPaidAmount = amount; }
+                case FINAL_READY -> { finalReadyCount = count; finalReadyAmount = amount; }
+                case COMPLETED -> { completedCount = count; completedAmount = amount; }
+                default -> {}
+            }
+        }
+
+        return SettlementSummaryResponse.builder()
+                .pendingCount(pendingCount).pendingAmount(pendingAmount)
+                .firstPaidCount(firstPaidCount).firstPaidAmount(firstPaidAmount)
+                .finalReadyCount(finalReadyCount).finalReadyAmount(finalReadyAmount)
+                .completedCount(completedCount).completedAmount(completedAmount)
+                .build();
     }
 }

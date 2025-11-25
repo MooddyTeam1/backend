@@ -37,6 +37,15 @@ public class SettlementAdminController {
     private final SettlementRepository settlementRepository;
 
     /**
+     * 정산 요약 (상태별 건수/금액)
+     */
+    @GetMapping("/summary")
+    @Operation(summary = "정산 요약 조회")
+    public ResponseEntity<com.moa.backend.domain.settlement.dto.SettlementSummaryResponse> summary() {
+        return ResponseEntity.ok(settlementService.getSummary());
+    }
+
+    /**
      * 정산 목록(페이지네이션) 조회.
      * 기본 정렬: updatedAt DESC.
      */

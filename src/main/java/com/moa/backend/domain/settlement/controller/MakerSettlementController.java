@@ -4,6 +4,7 @@ import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.settlement.dto.MakerSettlementListItemResponse;
 import com.moa.backend.domain.settlement.dto.SettlementResponse;
+import com.moa.backend.domain.settlement.dto.SettlementSummaryResponse;
 import com.moa.backend.domain.settlement.entity.Settlement;
 import com.moa.backend.domain.settlement.repository.SettlementRepository;
 import com.moa.backend.global.error.AppException;
@@ -38,7 +39,20 @@ public class MakerSettlementController {
 
     private final SettlementRepository settlementRepository;
     private final MakerRepository makerRepository;
+    private final com.moa.backend.domain.settlement.service.SettlementService settlementService;
 
+    /**
+     * 정산 요약(내 프로젝트 기준)
+     */
+    @GetMapping("/summary")
+    @Operation(summary = "메이커 정산 요약 조회")
+    public ResponseEntity<SettlementSummaryResponse> summary(
+            @AuthenticationPrincipal JwtUserPrincipal principal
+    ) {
+        Maker maker = makerRepository.findByOwner_Id(principal.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.MAKER_NOT_FOUND));
+        return ResponseEntity.ok(settlementService.getSummaryByMaker(maker.getId()));
+    }
     /**
      * 정산 목록(페이지네이션) 조회 - 현재 로그인한 메이커 소유자 기준
      */
