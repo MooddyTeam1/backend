@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 public class ProjectStatusResponse {
     @Schema(description = "프로젝트 ID", example = "1200")
     private Long id;
-    @Schema(description = "라이프사이클 상태", example = "APPROVED")
+    @Schema(description = "라이프사이클 상태", example = "LIVE")
     private ProjectLifecycleStatus lifecycleStatus;
     @Schema(description = "심사 상태", example = "APPROVED")
     private ProjectReviewStatus reviewStatus;

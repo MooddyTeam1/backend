@@ -4,6 +4,7 @@ import com.moa.backend.domain.project.entity.Category;
 import com.moa.backend.domain.reward.dto.RewardRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -61,5 +62,6 @@ public class CreateProjectRequest {
     private List<String> tags;
 
     @Schema(description = "리워드 생성 요청 목록")
+    @NotEmpty(message = "최소 1개 이상의 리워드가 필요합니다")
     private List<RewardRequest> rewardRequests;
 }

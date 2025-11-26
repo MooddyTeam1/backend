@@ -38,6 +38,4 @@ out/
 ### VS Code ###
 .vscode/
 /docs/
-REWARD_CHANGES.md
-AGENTS.md
-HOME_SECTIONS_API_CHANGES.md
+*.md

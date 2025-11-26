@@ -66,13 +66,18 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 .endDate(request.getEndDate())
                 .category(request.getCategory())
                 .lifecycleStatus(ProjectLifecycleStatus.DRAFT)
-                .reviewStatus(ProjectReviewStatus.REVIEW)   // 한글 설명: 생성과 동시에 심사요청 상태로 설정
+                .reviewStatus(ProjectReviewStatus.REVIEW) // 한글 설명: 생성과 동시에 심사요청 상태로 설정
                 .requestAt(LocalDateTime.now())
                 .coverImageUrl(request.getCoverImageUrl())
                 .coverGallery(request.getCoverGallery())
                 .tags(request.getTags())
                 .maker(maker)
                 .build();
+
+        // 한글 설명: 리워드 목록이 null이거나 비어있으면 예외 발생
+        if (request.getRewardRequests() == null || request.getRewardRequests().isEmpty()) {
+            throw new AppException(ErrorCode.REWARD_REQUIRED);
+        }
 
         for (RewardRequest r : request.getRewardRequests()) {
             project.addReward(rewardFactory.createReward(project, r));
@@ -96,19 +101,18 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     // 프로젝트 취소(심사중, 승인됨, 공개예정)
     @Override
-    @Transactional  // 한글 설명: 클래스 레벨 readOnly=true를 덮어쓰고, 쓰기 트랜잭션으로 실행
+    @Transactional // 한글 설명: 클래스 레벨 readOnly=true를 덮어쓰고, 쓰기 트랜잭션으로 실행
     public ProjectListResponse canceledProject(Long userId, Long projectId) {
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
 
         // 한글 설명: 취소 가능 상태 체크
-        boolean canCancel =
-                (project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
-                        project.getReviewStatus() == ProjectReviewStatus.REVIEW)
-                        || (project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
+        boolean canCancel = (project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
+                project.getReviewStatus() == ProjectReviewStatus.REVIEW)
+                || (project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
                         project.getReviewStatus() == ProjectReviewStatus.APPROVED)
-                        || (project.getLifecycleStatus() == ProjectLifecycleStatus.SCHEDULED &&
+                || (project.getLifecycleStatus() == ProjectLifecycleStatus.SCHEDULED &&
                         project.getReviewStatus() == ProjectReviewStatus.APPROVED);
 
         if (!canCancel) {

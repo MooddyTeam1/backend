@@ -27,8 +27,8 @@ public class RewardFactory {
 
     /**
      * 한글 설명:
-     *  - 하나의 RewardRequest 를 받아 Reward 엔티티를 생성한다.
-     *  - 기본 정보 + 옵션 그룹 + 세트 + 정보고시(disclosure)를 모두 세팅한다.
+     * - 하나의 RewardRequest 를 받아 Reward 엔티티를 생성한다.
+     * - 기본 정보 + 옵션 그룹 + 세트 + 정보고시(disclosure)를 모두 세팅한다.
      */
     public Reward createReward(Project project, RewardRequest dto) {
         // 1) 기본 리워드 필드 세팅
@@ -49,15 +49,30 @@ public class RewardFactory {
 
             // 공통 항목 JSON 직렬화
             try {
-                String commonJson = objectMapper.writeValueAsString(dto.getDisclosure().toCommonMap());
-                reward.setDisclosureCommonJson(commonJson);
+                if (dto.getDisclosure().getCommon() != null) {
+                    String commonJson = objectMapper.writeValueAsString(dto.getDisclosure().getCommon());
+                    reward.setDisclosureCommonJson(commonJson);
+                } else {
+                    reward.setDisclosureCommonJson(null);
+                }
             } catch (Exception e) {
                 // 한글 설명: 직렬화 실패 시 전체 로직이 죽지 않도록 null 로 처리 (로그는 별도 처리 가능)
                 reward.setDisclosureCommonJson(null);
             }
 
-            // 카테고리별 상세 JSON 그대로 저장
-            reward.setDisclosureCategorySpecificJson(dto.getDisclosure().getCategorySpecificJson());
+            // 카테고리별 상세 정보 JSON 직렬화
+            try {
+                if (dto.getDisclosure().getCategorySpecific() != null) {
+                    String categorySpecificJson = objectMapper
+                            .writeValueAsString(dto.getDisclosure().getCategorySpecific());
+                    reward.setDisclosureCategorySpecificJson(categorySpecificJson);
+                } else {
+                    reward.setDisclosureCategorySpecificJson(null);
+                }
+            } catch (Exception e) {
+                // 한글 설명: 직렬화 실패 시 전체 로직이 죽지 않도록 null 로 처리 (로그는 별도 처리 가능)
+                reward.setDisclosureCategorySpecificJson(null);
+            }
         }
 
         // 3) 옵션 그룹 매핑 (직접 옵션이 달린 구조)
@@ -83,8 +98,8 @@ public class RewardFactory {
 
     /**
      * 한글 설명:
-     *  - OptionGroupRequest DTO 를 실제 OptionGroup 엔티티로 변환한다.
-     *  - 내부에 포함된 OptionValue 들도 같이 생성해서 연관관계를 맺는다.
+     * - OptionGroupRequest DTO 를 실제 OptionGroup 엔티티로 변환한다.
+     * - 내부에 포함된 OptionValue 들도 같이 생성해서 연관관계를 맺는다.
      */
     private OptionGroup toOptionGroup(OptionGroupRequest g) {
         OptionGroup group = OptionGroup.builder()
@@ -107,8 +122,8 @@ public class RewardFactory {
 
     /**
      * 한글 설명:
-     *  - RewardSetRequest DTO 를 실제 RewardSet 엔티티로 변환한다.
-     *  - 세트 안에 포함된 OptionGroup 들도 함께 생성하여 연관관계를 맺는다.
+     * - RewardSetRequest DTO 를 실제 RewardSet 엔티티로 변환한다.
+     * - 세트 안에 포함된 OptionGroup 들도 함께 생성하여 연관관계를 맺는다.
      */
     private RewardSet toRewardSet(RewardSetRequest s) {
         RewardSet rewardSet = RewardSet.builder()
