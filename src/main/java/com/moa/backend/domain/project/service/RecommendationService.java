@@ -48,7 +48,7 @@ public class RecommendationService {
                 .sorted(Comparator.comparingDouble(ScoredProject::score).reversed())
                 .limit(30)
                 .map(ScoredProject::project)
-                .map(ProjectListResponse::fromRecommendation)
+                .map(project -> ProjectListResponse.base(project).build())
                 .toList();
     }
 
