@@ -139,14 +139,36 @@ public class ProjectListResponse {
                 .build();
     }
 
+    /**
+     * Most-viewed 카드 + 모금/후원 지표까지 포함하는 빌더.
+     * - raised(fundedAmount), backerCount(supporterCount), achievementRate 세팅
+     * - recentViewCount, trafficWindowLabel 함께 제공
+     */
+    public static ProjectListResponse fromMostViewedWithFunding(Project project,
+                                                               long viewCount,
+                                                               String windowLabel,
+                                                               long paidAmount,
+                                                               long supporterCount,
+                                                               Integer achievementRate) {
+        return ProjectListResponse.base(project)
+                .fundedAmount(paidAmount)
+                .supporterCount(supporterCount)
+                .achievementRate(achievementRate)
+                .recentViewCount(viewCount)
+                .trafficWindowLabel(windowLabel)
+                .build();
+    }
+
     public static ProjectListResponse fromTrending(Project project,
                                                    long recentViewCount,
                                                    long bookmarkCount,
                                                    long paidAmount,
+                                                   long supporterCount,
                                                    double score,
                                                    Integer achievementRate) {
         return ProjectListResponse.base(project)
                 .fundedAmount(paidAmount)
+                .supporterCount(supporterCount)
                 .bookmarkCount(bookmarkCount)
                 .recentViewCount(recentViewCount)
                 .trendingScore(score)
