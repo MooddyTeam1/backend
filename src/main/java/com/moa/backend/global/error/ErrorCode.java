@@ -47,6 +47,7 @@ public enum ErrorCode {
     PROJECT_NOT_REQUEST("PRJ-400", HttpStatus.BAD_REQUEST, "요청하실 수 없습니다."),
     PROJECT_NOT_REJECTABLE("PROJECT-400", HttpStatus.BAD_REQUEST, "반려할 수 없는 프로젝트 상태입니다."),
     PROJECT_NOT_CANCELED("PROJECT-400", HttpStatus.BAD_REQUEST, "취소할 수 없는 프로젝트 상태입니다."),
+    PROJECT_NOT_IN_REVIEW("PROJECT-400", HttpStatus.BAD_REQUEST, "심사 중인 프로젝트만 승인/반려할 수 있습니다."),
 
     INVALID_REWARD_NAME("RWD-400", HttpStatus.BAD_REQUEST, "리워드 이름은 필수입니다."),
     INVALID_REWARD_PRICE("RWD-400", HttpStatus.BAD_REQUEST, "리워드 가격은 0보다 커야 합니다."),
