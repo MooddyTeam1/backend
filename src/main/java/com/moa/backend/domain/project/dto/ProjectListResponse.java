@@ -183,4 +183,15 @@ public class ProjectListResponse {
                 .achievementRate(achievementRate)
                 .build();
     }
+
+    /**
+     * 한글 설명:
+     *  - 개인화 추천 알고리즘 기반 프로젝트 카드 생성.
+     *  - 기본 카드 정보만 포함하고, 금액/찜/트래킹/뱃지 등은 추후 알고리즘 확장에 따라 추가 가능.
+     *  - 기본값: base(project) 결과만 사용.
+     */
+    public static ProjectListResponse fromRecommendation(Project project) {
+        return ProjectListResponse.base(project)
+                .build();
+    }
 }
