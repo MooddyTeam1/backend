@@ -1,8 +1,11 @@
 package com.moa.backend.domain.reward.service;
 
+import java.util.List;
+
 import com.moa.backend.domain.maker.entity.Maker;
-import com.moa.backend.domain.reward.dto.RewardStockIncreaseResponse;
+import com.moa.backend.domain.reward.dto.RewardResponse;
 import com.moa.backend.domain.reward.dto.RewardStockIncreaseRequest;
+import com.moa.backend.domain.reward.dto.RewardStockIncreaseResponse;
 import com.moa.backend.domain.reward.entity.Reward;
 import com.moa.backend.domain.reward.repository.RewardRepository;
 import com.moa.backend.global.error.AppException;
@@ -32,5 +35,13 @@ public class RewardServiceImpl implements RewardService {
         reward.increaseStock(request.getQuantity());
 
         return new RewardStockIncreaseResponse(reward.getId(), reward.getStockQuantity());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RewardResponse> getRewardsWithDisclosureByProjectId(Long projectId) {
+        return rewardRepository.findByProject_Id(projectId).stream()
+                .map(RewardResponse::fromWithDisclosure)
+                .toList();
     }
 }

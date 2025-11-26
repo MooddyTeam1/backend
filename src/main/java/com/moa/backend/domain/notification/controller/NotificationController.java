@@ -2,6 +2,7 @@ package com.moa.backend.domain.notification.controller;
 
 import com.moa.backend.domain.notification.dto.NotificationResponse;
 import com.moa.backend.domain.notification.entity.Notification;
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.notification.sse.service.SseNotificationService;
@@ -79,14 +80,15 @@ public class NotificationController {
     }
 
     //테스트용
-    @PostMapping("/test/preparing")
-    public void testPreparing() {
+    @PostMapping("/test/preparing/{orderId}")
+    public void testPreparing(@PathVariable Long orderId) {
         notificationService.send(
-                1000L,  // 테스트 userId
+                1000L,
                 "배송 준비중",
                 "주문하신 상품이 곧 출고될 예정입니다.",
-                NotificationType.SUPPORTER
+                NotificationType.SUPPORTER,
+                NotificationTargetType.ORDER,
+                orderId
         );
     }
-
 }

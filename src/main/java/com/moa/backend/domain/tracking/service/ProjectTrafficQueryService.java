@@ -145,8 +145,38 @@ public class ProjectTrafficQueryService {
                 log.info("[MOST_VIEWED ROW] projectId={}, viewCount={}", r[0], r[1])
         );
 
+        // 📉 조회 이력이 없으면 최신 공개/진행 프로젝트로 대체해 빈 섹션을 막는다.
         if (rows.isEmpty()) {
-            return List.of();
+            List<Project> fallback = projectRepository.findNewProjectsForHome(
+                    List.of(ProjectLifecycleStatus.LIVE, ProjectLifecycleStatus.SCHEDULED),
+                    ProjectReviewStatus.APPROVED,
+                    PageRequest.of(0, safeSize)
+            );
+
+            if (fallback.isEmpty()) {
+                return List.of();
+            }
+
+            return fallback.stream()
+                    .map(project -> {
+                        long funded = orderRepository
+                                .sumTotalAmountByProjectIdAndStatus(project.getId(), OrderStatus.PAID)
+                                .orElse(0L);
+                        long supporters = getPaidSupporterCount(project.getId());
+                        Integer achievementRate = null;
+                        Long goal = project.getGoalAmount();
+                        if (goal != null && goal > 0) {
+                            achievementRate = (int) Math.floor((funded * 100.0) / goal);
+                        }
+                        return ProjectListResponse.base(project)
+                                .fundedAmount(funded)
+                                .supporterCount(supporters)
+                                .achievementRate(achievementRate)
+                                .recentViewCount(0L)
+                                .trafficWindowLabel("최근 24시간 조회 없음")
+                                .build();
+                    })
+                    .toList();
         }
 
         // 2) 조회 결과에서 projectId 목록 추출
@@ -172,17 +202,41 @@ public class ProjectTrafficQueryService {
 
             long safeViewCount = (viewCount != null) ? viewCount : 0L;
 
+            // Include funding metrics for most-viewed cards
+            long paidAmount = orderRepository
+                    .sumTotalAmountByProjectIdAndStatus(project.getId(), OrderStatus.PAID)
+                    .orElse(0L);
+            long supporterCount = getPaidSupporterCount(project.getId());
+
+            Integer achievementRate = null;
+            Long goal = project.getGoalAmount();
+            if (goal != null && goal > 0) {
+                double rate = (double) paidAmount / goal;
+                achievementRate = (int) Math.floor(rate * 100);
+            }
+
             // ✅ 한글 설명: 공통 카드 + 트래픽 필드를 담은 ProjectListResponse로 변환
             result.add(
-                    ProjectListResponse.fromMostViewed(
+                    ProjectListResponse.fromMostViewedWithFunding(
                             project,
                             safeViewCount,
-                            windowLabel
+                            windowLabel,
+                            paidAmount,
+                            supporterCount,
+                            achievementRate
                     )
             );
         }
 
         return result;
+    }
+
+    private long getPaidSupporterCount(Long projectId) {
+        Integer count = orderRepository.countDistinctSupporterByProjectIdAndStatus(
+                projectId,
+                OrderStatus.PAID
+        );
+        return count != null ? count : 0L;
     }
 
     // ==========================
@@ -340,11 +394,13 @@ public class ProjectTrafficQueryService {
                     }
 
                     // ✅ 공통 카드 + 트래킹/결제 지표를 함께 세팅한 ProjectListResponse 생성
+                    long supporterCount = getPaidSupporterCount(project.getId());
                     return ProjectListResponse.fromTrending(
                             project,
                             raw.recentViewCount(),
                             raw.bookmarkCount(),
                             raw.paidAmount(),
+                            supporterCount,
                             raw.score(),
                             achievementRate
                     );

@@ -570,7 +570,9 @@ public class StatisticsServiceImpl implements StatisticsService {
                     Long fundingAmount = ((Number) row[3]).longValue();
                     Long goalAmount = ((Number) row[4]).longValue();
                     Double achievementRate = ((Number) row[5]).doubleValue();
-                    Integer remainingDays = ((Number) row[6]).intValue();
+                    LocalDate endDate = (LocalDate) row[6];
+                    Integer remainingDays = endDate == null ? 0 :
+                            (int) ChronoUnit.DAYS.between(LocalDate.now(), endDate);
 
                     return TopProjectDto.builder()
                             .projectId(projectId)

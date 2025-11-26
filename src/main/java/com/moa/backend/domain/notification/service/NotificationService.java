@@ -2,6 +2,7 @@ package com.moa.backend.domain.notification.service;
 
 import com.moa.backend.domain.notification.dto.NotificationResponse;
 import com.moa.backend.domain.notification.entity.Notification;
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 
 import java.util.List;
@@ -9,7 +10,8 @@ import java.util.List;
 public interface NotificationService {
 
     // 알림 전송
-    Notification send(Long receiverId, String title, String message, NotificationType type);
+    Notification send(Long receiverId, String title, String message, NotificationType type,
+                      NotificationTargetType targetType, Long targetId);
 
     // 읽지 않은 알림 갯수
     int getUnreadCount(Long receiverId);

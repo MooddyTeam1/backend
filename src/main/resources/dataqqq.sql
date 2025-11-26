@@ -1,3 +1,4 @@
+
 -- 개발용 H2 시드 데이터 (통계/정산/지갑/발표 시연용 풀 세트)
 -- 용도: /api/admin/statistics*, 정산/지갑 화면, 스케줄러 로컬 스모크 테스트
 -- 대표 계정:
@@ -14,22 +15,28 @@
 -- 리셋: TRUNCATE 후 insert, 시퀀스/IDENTITY RESTART 포함
 -- 비밀번호 "test1234"의 bcrypt 해시: $2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC
 
-SET REFERENTIAL_INTEGRITY FALSE;
-TRUNCATE TABLE order_items;
-TRUNCATE TABLE orders;
-TRUNCATE TABLE payments;
-TRUNCATE TABLE refunds;
-TRUNCATE TABLE platform_wallet_transactions;
-TRUNCATE TABLE settlements;
-TRUNCATE TABLE maker_wallets;
-TRUNCATE TABLE platform_wallets;
-TRUNCATE TABLE project_tag;
-TRUNCATE TABLE rewards;
-TRUNCATE TABLE projects;
-TRUNCATE TABLE makers;
-TRUNCATE TABLE supporter_profiles;
-TRUNCATE TABLE users;
-SET REFERENTIAL_INTEGRITY TRUE;
+BEGIN;
+TRUNCATE TABLE
+  supporter_bookmarks_project,
+  wallet_transactions,
+  project_wallet_transactions,
+  project_wallets,
+  order_items,
+  orders,
+  payments,
+  refunds,
+  platform_wallet_transactions,
+  settlements,
+  maker_wallets,
+  platform_wallets,
+  project_tag,
+  rewards,
+  projects,
+  makers,
+  supporter_profiles,
+  users
+RESTART IDENTITY CASCADE;
+
 
 INSERT INTO users (id, email, password, name, role, onboarding_status, created_at, updated_at, last_login_at, image_url, provider) VALUES
   (1000, 'user1@test.com',  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC', '서포터1', 'USER', 'NOT_STARTED',
@@ -121,67 +128,67 @@ INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount,
                       cover_image_url, cover_gallery, created_at, updated_at,
                       live_start_at, live_end_at)
 VALUES
-  (1200, 1003, '오로라 자동조명',
-   '하루 리듬에 맞춰 색온도를 조절하는 책상 조명입니다.',
-   '## 오로라 자동조명' || CHAR(10) || '재택 근무자에게 건강한 빛 환경을 제공합니다.',
-   2000000, DATE '2025-11-13', DATE '2026-01-20',
-   'TECH', 'SCHEDULED', 'APPROVED', 'NONE',
-   TIMESTAMP '2025-11-05 09:00:00', TIMESTAMP '2025-11-07 15:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/aurora/cover.png',
-   '["https://cdn.moa.dev/projects/aurora/gallery-1.png","https://cdn.moa.dev/projects/aurora/gallery-2.png"]',
-   TIMESTAMP '2025-11-01 09:00:00', TIMESTAMP '2025-11-12 11:00:00',
-   TIMESTAMP '2025-12-10 09:00:00', TIMESTAMP '2026-01-20 23:59:00'),
+    (1200, 1003, '오로라 자동조명',
+     '하루 리듬에 맞춰 색온도를 조절하는 책상 조명입니다.',
+     '## 오로라 자동조명' || chr(10) || '재택 근무자에게 건강한 빛 환경을 제공합니다.',
+     2000000, DATE '2025-11-13', DATE '2026-01-20',
+     'TECH', 'SCHEDULED', 'APPROVED', 'NONE',
+     TIMESTAMP '2025-11-05 09:00:00', TIMESTAMP '2025-11-07 15:00:00', NULL, NULL,
+     'https://sc04.alicdn.com/kf/H841af957bb36427890809ffac6a80929j.jpg',
+     '["https://sc04.alicdn.com/kf/H841af957bb36427890809ffac6a80929j.jpg"]',
+     TIMESTAMP '2025-11-01 09:00:00', TIMESTAMP '2025-11-12 11:00:00',
+     TIMESTAMP '2025-12-10 09:00:00', TIMESTAMP '2026-01-20 23:59:00'),
 
-  (1201, 1003, '펄스핏 모듈 밴드',
-   '센서를 교체하며 데이터를 맞춤 수집하는 피트니스 밴드입니다.',
-   '## 펄스핏 모듈 밴드' || CHAR(10) || '스타일을 유지하면서도 유의미한 바이오 데이터를 기록합니다.',
-   3000000, DATE '2025-11-01', DATE '2025-12-15',
-   'TECH', 'LIVE', 'APPROVED', 'NONE',
-   TIMESTAMP '2025-10-20 10:00:00', TIMESTAMP '2025-10-22 13:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/pulsefit/cover.png',
-   '["https://cdn.moa.dev/projects/pulsefit/gallery-1.png","https://cdn.moa.dev/projects/pulsefit/gallery-2.png"]',
-   TIMESTAMP '2025-10-15 09:30:00', TIMESTAMP '2025-11-12 11:10:00',
-   TIMESTAMP '2025-11-01 10:00:00', TIMESTAMP '2025-12-15 23:59:00'),
+    (1201, 1003, '펄스핏 모듈 밴드',
+     '센서를 교체하며 데이터를 맞춤 수집하는 피트니스 밴드입니다.',
+     '## 펄스핏 모듈 밴드' || chr(10) || '스타일을 유지하면서도 유의미한 바이오 데이터를 기록합니다.',
+     3000000, DATE '2025-11-01', DATE '2025-12-15',
+     'TECH', 'LIVE', 'APPROVED', 'NONE',
+     TIMESTAMP '2025-10-20 10:00:00', TIMESTAMP '2025-10-22 13:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1576243345690-4e4b79b63288?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=1000&q=80","https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-15 09:30:00', TIMESTAMP '2025-11-12 11:10:00',
+     TIMESTAMP '2025-11-01 10:00:00', TIMESTAMP '2025-12-15 23:59:00'),
 
-  (1202, 1003, '루멘노트 전자노트',
-   '종이 질감을 살리고 배터리 걱정이 없는 전자 필기장입니다.',
-   '## 루멘노트' || CHAR(10) || '종이 같은 필기감과 클라우드 동기화를 동시에 제공합니다.',
-   1500000, DATE '2025-09-01', DATE '2025-10-01',
-   'DESIGN', 'ENDED', 'APPROVED', 'SUCCESS',
-   TIMESTAMP '2025-08-01 08:00:00', TIMESTAMP '2025-08-03 14:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/lumennote/cover.png',
-   '["https://cdn.moa.dev/projects/lumennote/gallery-1.png","https://cdn.moa.dev/projects/lumennote/gallery-2.png"]',
-   TIMESTAMP '2025-07-28 11:45:00', TIMESTAMP '2025-10-05 12:00:00',
-   TIMESTAMP '2025-09-01 10:00:00', TIMESTAMP '2025-10-01 23:59:00'),
+    (1202, 1003, '루멘노트 전자노트',
+     '종이 질감을 살리고 배터리 걱정이 없는 전자 필기장입니다.',
+     '## 루멘노트' || chr(10) || '종이 같은 필기감과 클라우드 동기화를 동시에 제공합니다.',
+     1500000, DATE '2025-09-01', DATE '2025-10-01',
+     'DESIGN', 'ENDED', 'APPROVED', 'SUCCESS',
+     TIMESTAMP '2025-08-01 08:00:00', TIMESTAMP '2025-08-03 14:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1000&q=80","https://images.unsplash.com/photo-1585247226801-bc613c441316?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-07-28 11:45:00', TIMESTAMP '2025-10-05 12:00:00',
+     TIMESTAMP '2025-09-01 10:00:00', TIMESTAMP '2025-10-01 23:59:00'),
 
-  (1203, 1004, '지오트레일 스마트 백팩',
-   '태양광 패널과 LTE 트래커를 내장한 여행용 백팩입니다.',
-   '## 지오트레일 스마트 백팩' || CHAR(10) || '밤길에서도 안전하게 이동하고 언제든 위치를 확인하세요.',
-   2500000, DATE '2025-10-25', DATE '2025-11-19',
-   'FASHION', 'LIVE', 'APPROVED', 'NONE',
-   TIMESTAMP '2025-10-18 11:00:00', TIMESTAMP '2025-10-21 09:30:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/geotrail/cover.png',
-   '["https://cdn.moa.dev/projects/geotrail/gallery-1.png","https://cdn.moa.dev/projects/geotrail/gallery-2.png"]',
-   TIMESTAMP '2025-10-12 10:00:00', TIMESTAMP '2025-11-12 11:20:00',
-   TIMESTAMP '2025-10-25 09:30:00', TIMESTAMP '2025-11-19 23:59:00'),
+    (1203, 1004, '지오트레일 스마트 백팩',
+     '태양광 패널과 LTE 트래커를 내장한 여행용 백팩입니다.',
+     '## 지오트레일 스마트 백팩' || chr(10) || '밤길에서도 안전하게 이동하고 언제든 위치를 확인하세요.',
+     2500000, DATE '2025-10-25', DATE '2025-11-19',
+     'FASHION', 'LIVE', 'APPROVED', 'NONE',
+     TIMESTAMP '2025-10-18 11:00:00', TIMESTAMP '2025-10-21 09:30:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1622979135225-d2ba269fb1ac?auto=format&fit=crop&w=1000&q=80","https://images.unsplash.com/photo-1501555088652-021faa106b9b?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-12 10:00:00', TIMESTAMP '2025-11-12 11:20:00',
+     TIMESTAMP '2025-10-25 09:30:00', TIMESTAMP '2025-11-19 23:59:00'),
 
-  -- 위험 샘플: FOOD, 목표 2,000,000, 종료까지 5일 남은 가정(달성률 낮음)
-  (1204, 1004, '테이스트키트', '즉석 조리 키트', '## 테이스트키트', 2000000, DATE '2025-11-01', DATE '2025-11-10',
-   'FOOD', 'LIVE', 'APPROVED', 'NONE',
-   TIMESTAMP '2025-10-25 09:00:00', TIMESTAMP '2025-10-27 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/tastekit/cover.png',
-   '["https://cdn.moa.dev/projects/tastekit/gallery-1.png"]',
-   TIMESTAMP '2025-10-24 09:00:00', TIMESTAMP '2025-11-05 09:00:00',
-   TIMESTAMP '2025-11-01 09:00:00', TIMESTAMP '2025-11-10 23:59:00'),
+    -- 위험 샘플: FOOD, 목표 2,000,000, 종료까지 5일 남은 가정(달성률 낮음)
+    (1204, 1004, '테이스트키트', '즉석 조리 키트', '## 테이스트키트', 2000000, DATE '2025-11-01', DATE '2025-11-10',
+     'FOOD', 'LIVE', 'APPROVED', 'NONE',
+     TIMESTAMP '2025-10-25 09:00:00', TIMESTAMP '2025-10-27 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1493770348161-369560ae357d?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-24 09:00:00', TIMESTAMP '2025-11-05 09:00:00',
+     TIMESTAMP '2025-11-01 09:00:00', TIMESTAMP '2025-11-10 23:59:00'),
 
-  -- 기회 샘플: HOME_LIVING, 목표 150,000, 남은일 > 14, 달성률 높음
-  (1205, 1003, '홈라이트', '고속충전 LED 스탠드', '## 홈라이트', 150000, DATE '2025-11-01', DATE '2025-12-15',
-   'HOME_LIVING', 'LIVE', 'APPROVED', 'NONE',
-   TIMESTAMP '2025-10-20 09:00:00', TIMESTAMP '2025-10-22 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/homelight/cover.png',
-   '["https://cdn.moa.dev/projects/homelight/gallery-1.png"]',
-   TIMESTAMP '2025-10-19 09:00:00', TIMESTAMP '2025-11-06 09:00:00',
-   TIMESTAMP '2025-11-01 09:00:00', TIMESTAMP '2025-12-15 23:59:00');
+    -- 기회 샘플: HOME_LIVING, 목표 150,000, 남은일 > 14, 달성률 높음
+    (1205, 1003, '홈라이트', '고속충전 LED 스탠드', '## 홈라이트', 150000, DATE '2025-11-01', DATE '2025-12-15',
+     'HOME_LIVING', 'LIVE', 'APPROVED', 'NONE',
+     TIMESTAMP '2025-10-20 09:00:00', TIMESTAMP '2025-10-22 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1534073828943-f801091a7d58?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-19 09:00:00', TIMESTAMP '2025-11-06 09:00:00',
+     TIMESTAMP '2025-11-01 09:00:00', TIMESTAMP '2025-12-15 23:59:00');
 
 -- 프로젝트 지갑 (정산 스케줄러/지갑 화면용 샘플 금액)
 -- 1201은 부분정산 반영: 총 주문액 450k 중 수수료/환불 제외한 net 382.5k 기준으로 1차 150k 지급 → released=150k, pending_release=232.5k, escrow에는 남은 net(232.5k)을 표시
@@ -216,25 +223,25 @@ INSERT INTO orders (id, order_id, order_name, user_id, project_id, status, total
 VALUES
   (1400, 'ORD-20251101-AAA', '펄스핏 스타터 패키지', 1000, 1201, 'PAID', 150000,
    '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236',
-   'NONE', TIMESTAMP '2025-11-01 10:15:00', TIMESTAMP '2025-11-01 10:20:00'),
+   'PREPARING', TIMESTAMP '2025-11-01 10:15:00', TIMESTAMP '2025-11-01 10:20:00'),
   (1401, 'ORD-20251102-BBB', '펄스핏 스타터 패키지', 1001, 1201, 'PAID', 300000,
    '서포터2', '010-2000-0002', '서울시 강남구 테헤란로 212', '902호', '06102',
-   'NONE', TIMESTAMP '2025-11-02 11:30:00', TIMESTAMP '2025-11-02 11:35:00'),
+   'PREPARING', TIMESTAMP '2025-11-02 11:30:00', TIMESTAMP '2025-11-02 11:35:00'),
   (1402, 'ORD-20251103-CCC', '지오트레일 얼리버드', 1002, 1203, 'CANCELED', 180000,
    '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018',
-   'NONE', TIMESTAMP '2025-11-03 12:00:00', TIMESTAMP '2025-11-03 12:10:00'),
+   'PREPARING', TIMESTAMP '2025-11-03 12:00:00', TIMESTAMP '2025-11-03 12:10:00'),
   (1403, 'ORD-20251005-DDD', '루멘노트 풀 패키지', 1000, 1202, 'PAID', 270000,
    '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236',
-   'NONE', TIMESTAMP '2025-10-05 09:15:00', TIMESTAMP '2025-10-05 09:20:00'),
+   'PREPARING', TIMESTAMP '2025-10-05 09:15:00', TIMESTAMP '2025-10-05 09:20:00'),
   (1404, 'ORD-20251104-EEE', '지오트레일 얼리버드', 1010, 1203, 'PAID', 180000,
    '신규서포터1', '010-3000-0001', '서울시 강남구 언주로 100', '1층', '06000',
-   'NONE', TIMESTAMP '2025-11-04 09:10:00', TIMESTAMP '2025-11-04 09:12:00'),
+   'PREPARING', TIMESTAMP '2025-11-04 09:10:00', TIMESTAMP '2025-11-04 09:12:00'),
   (1405, 'ORD-20251105-FFF', '테이스트키트 얼리버드', 1011, 1204, 'PAID', 50000,
    '신규서포터2', '010-3000-0002', '서울시 강남구 테헤란로 50', '12층', '06110',
-   'NONE', TIMESTAMP '2025-11-05 10:00:00', TIMESTAMP '2025-11-05 10:02:00'),
+   'PREPARING', TIMESTAMP '2025-11-05 10:00:00', TIMESTAMP '2025-11-05 10:02:00'),
   (1406, 'ORD-20251106-GGG', '홈라이트 얼리버드', 1001, 1205, 'PAID', 220000,
    '서포터2', '010-2000-0002', '서울시 강남구 테헤란로 212', '902호', '06102',
-   'NONE', TIMESTAMP '2025-11-06 11:00:00', TIMESTAMP '2025-11-06 11:05:00');
+   'PREPARING', TIMESTAMP '2025-11-06 11:00:00', TIMESTAMP '2025-11-06 11:05:00');
 
 -- 주문 아이템
 INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
@@ -327,29 +334,29 @@ INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount,
                       cover_image_url, cover_gallery, created_at, updated_at,
                       live_start_at, live_end_at)
 VALUES
-  -- 1206: 성공한 프로젝트 (9월 종료, 달성률 200%)
-  (1206, 1003, '에코캔들 세트',
-   '친환경 왁스로 만든 향초 세트입니다.',
-   '## 에코캔들' || CHAR(10) || '지속 가능한 원료로 만든 프리미엄 향초입니다.',
-   500000, DATE '2025-09-01', DATE '2025-09-30',
-   'HOME_LIVING', 'ENDED', 'APPROVED', 'SUCCESS',
-   TIMESTAMP '2025-08-20 09:00:00', TIMESTAMP '2025-08-22 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/ecocandle/cover.png',
-   '["https://cdn.moa.dev/projects/ecocandle/gallery-1.png"]',
-   TIMESTAMP '2025-08-15 09:00:00', TIMESTAMP '2025-10-01 10:00:00',
-   TIMESTAMP '2025-09-01 10:00:00', TIMESTAMP '2025-09-30 23:59:00'),
+    -- 1206: 성공한 프로젝트 (9월 종료, 달성률 200%)
+    (1206, 1003, '에코캔들 세트',
+     '친환경 왁스로 만든 향초 세트입니다.',
+     '## 에코캔들' || chr(10) || '지속 가능한 원료로 만든 프리미엄 향초입니다.',
+     500000, DATE '2025-09-01', DATE '2025-09-30',
+     'HOME_LIVING', 'ENDED', 'APPROVED', 'SUCCESS',
+     TIMESTAMP '2025-08-20 09:00:00', TIMESTAMP '2025-08-22 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1602826620524-7833878dd329?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-08-15 09:00:00', TIMESTAMP '2025-10-01 10:00:00',
+     TIMESTAMP '2025-09-01 10:00:00', TIMESTAMP '2025-09-30 23:59:00'),
 
-  -- 1207: 실패한 프로젝트 (10월 종료, 달성률 40%)
-  (1207, 1004, '스마트 식물재배기',
-   'IoT 기반 자동 식물 재배 시스템입니다.',
-   '## 스마트 식물재배기' || CHAR(10) || '물과 빛을 자동으로 조절합니다.',
-   1000000, DATE '2025-10-01', DATE '2025-10-31',
-   'HOME_LIVING', 'ENDED', 'APPROVED', 'FAILED',
-   TIMESTAMP '2025-09-20 09:00:00', TIMESTAMP '2025-09-22 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/smartgarden/cover.png',
-   '["https://cdn.moa.dev/projects/smartgarden/gallery-1.png"]',
-   TIMESTAMP '2025-09-15 09:00:00', TIMESTAMP '2025-11-01 10:00:00',
-   TIMESTAMP '2025-10-01 10:00:00', TIMESTAMP '2025-10-31 23:59:00');
+    -- 1207: 실패한 프로젝트 (10월 종료, 달성률 40%)
+    (1207, 1004, '스마트 식물재배기',
+     'IoT 기반 자동 식물 재배 시스템입니다.',
+     '## 스마트 식물재배기' || chr(10) || '물과 빛을 자동으로 조절합니다.',
+     1000000, DATE '2025-10-01', DATE '2025-10-31',
+     'HOME_LIVING', 'ENDED', 'APPROVED', 'FAILED',
+     TIMESTAMP '2025-09-20 09:00:00', TIMESTAMP '2025-09-22 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1556955112-28cde3817b0a?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-09-15 09:00:00', TIMESTAMP '2025-11-01 10:00:00',
+     TIMESTAMP '2025-10-01 10:00:00', TIMESTAMP '2025-10-31 23:59:00');
 
 -- 프로젝트 지갑 추가
 INSERT INTO project_wallets (id, escrow_balance, pending_release, released_total, status, updated_at, project_id) VALUES
@@ -362,9 +369,9 @@ INSERT INTO project_tag (project_id, tag) VALUES
   (1207, 'IoT'), (1207, '스마트홈');
 
 -- 리워드 추가
-INSERT INTO rewards (id, project_id, name, description, price, estimated_delivery_date, is_active, stock_quantity) VALUES
-  (1306, 1206, '에코캔들 기본 세트', '향초 3개 세트', 100000, DATE '2025-10-15', FALSE, 0),
-  (1307, 1207, '스마트 식물재배기 얼리버드', '본체 + 씨앗 키트', 400000, DATE '2025-11-30', FALSE, 0);
+INSERT INTO rewards (id, project_id, name, description, price, estimated_delivery_date, is_active, stock_quantity, version) VALUES
+  (1306, 1206, '에코캔들 기본 세트', '향초 3개 세트', 100000, DATE '2025-10-15', FALSE, 0, 0),
+  (1307, 1207, '스마트 식물재배기 얼리버드', '본체 + 씨앗 키트', 400000, DATE '2025-11-30', FALSE, 0, 0);
 
 -- ============================================================
 -- 10월 주문 추가 (월별 비교 안정화를 위해)
@@ -376,22 +383,22 @@ VALUES
   -- 10-10: 1206 프로젝트 (성공 프로젝트)
   (1407, 'ORD-20251010-HHH', '에코캔들 기본 세트', 1000, 1206, 'PAID', 300000,
    '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236',
-   'NONE', TIMESTAMP '2025-10-10 14:30:00', TIMESTAMP '2025-10-10 14:35:00'),
+   'PREPARING', TIMESTAMP '2025-10-10 14:30:00', TIMESTAMP '2025-10-10 14:35:00'),
 
   -- 10-15: 1206 프로젝트
   (1408, 'ORD-20251015-III', '에코캔들 기본 세트', 1001, 1206, 'PAID', 200000,
    '서포터2', '010-2000-0002', '서울시 강남구 테헤란로 212', '902호', '06102',
-   'NONE', TIMESTAMP '2025-10-15 16:20:00', TIMESTAMP '2025-10-15 16:25:00'),
+   'PREPARING', TIMESTAMP '2025-10-15 16:20:00', TIMESTAMP '2025-10-15 16:25:00'),
 
   -- 10-20: 1206 프로젝트
   (1409, 'ORD-20251020-JJJ', '에코캔들 기본 세트', 1002, 1206, 'PAID', 500000,
    '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018',
-   'NONE', TIMESTAMP '2025-10-20 10:45:00', TIMESTAMP '2025-10-20 10:50:00'),
+   'PREPARING', TIMESTAMP '2025-10-20 10:45:00', TIMESTAMP '2025-10-20 10:50:00'),
 
   -- 10-25: 1207 프로젝트 (실패 프로젝트)
   (1410, 'ORD-20251025-KKK', '스마트 식물재배기 얼리버드', 1000, 1207, 'PAID', 400000,
    '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236',
-   'NONE', TIMESTAMP '2025-10-25 11:15:00', TIMESTAMP '2025-10-25 11:20:00');
+   'PREPARING', TIMESTAMP '2025-10-25 11:15:00', TIMESTAMP '2025-10-25 11:20:00');
 
 -- 주문 아이템 추가 (10월)
 INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
@@ -417,17 +424,17 @@ VALUES
   -- 11-07 14:30 (오후)
   (1411, 'ORD-20251107-LLL', '펄스핏 스타터 패키지', 1002, 1201, 'PAID', 150000,
    '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018',
-   'NONE', TIMESTAMP '2025-11-07 14:30:00', TIMESTAMP '2025-11-07 14:35:00'),
+   'PREPARING', TIMESTAMP '2025-11-07 14:30:00', TIMESTAMP '2025-11-07 14:35:00'),
 
   -- 11-08 19:45 (저녁)
   (1412, 'ORD-20251108-MMM', '지오트레일 얼리버드', 1001, 1203, 'PAID', 360000,
    '서포터2', '010-2000-0002', '서울시 강남구 테헤란로 212', '902호', '06102',
-   'NONE', TIMESTAMP '2025-11-08 19:45:00', TIMESTAMP '2025-11-08 19:50:00'),
+   'PREPARING', TIMESTAMP '2025-11-08 19:45:00', TIMESTAMP '2025-11-08 19:50:00'),
 
   -- 11-09 21:20 (밤)
   (1413, 'ORD-20251109-NNN', '홈라이트 얼리버드', 1000, 1205, 'PAID', 220000,
    '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236',
-   'NONE', TIMESTAMP '2025-11-09 21:20:00', TIMESTAMP '2025-11-09 21:25:00');
+   'PREPARING', TIMESTAMP '2025-11-09 21:20:00', TIMESTAMP '2025-11-09 21:25:00');
 
 -- 주문 아이템 추가 (11월 저녁/밤)
 INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
@@ -451,12 +458,12 @@ VALUES
   -- 11-10: PENDING (결제 시도 중)
   (1414, 'ORD-20251110-OOO', '펄스핏 스타터 패키지', 1010, 1201, 'PENDING', 150000,
    '신규서포터1', '010-3000-0001', '서울시 강남구 언주로 100', '1층', '06000',
-   'NONE', TIMESTAMP '2025-11-10 15:00:00', TIMESTAMP '2025-11-10 15:05:00'),
+   'PREPARING', TIMESTAMP '2025-11-10 15:00:00', TIMESTAMP '2025-11-10 15:05:00'),
 
   -- 11-11: PENDING (PG 오류)
   (1415, 'ORD-20251111-PPP', '지오트레일 얼리버드', 1011, 1203, 'PENDING', 180000,
    '신규서포터2', '010-3000-0002', '서울시 강남구 테헤란로 50', '12층', '06110',
-   'NONE', TIMESTAMP '2025-11-11 16:30:00', TIMESTAMP '2025-11-11 16:35:00');
+   'PREPARING', TIMESTAMP '2025-11-11 16:30:00', TIMESTAMP '2025-11-11 16:35:00');
 
 -- 주문 아이템 추가 (PENDING)
 INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
@@ -478,7 +485,7 @@ INSERT INTO orders (id, order_id, order_name, user_id, project_id, status, total
 VALUES
   (1416, 'ORD-20251112-QQQ', '펄스핏 스타터 패키지', 1002, 1201, 'CANCELED', 150000,
    '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018',
-   'NONE', TIMESTAMP '2025-11-12 10:00:00', TIMESTAMP '2025-11-12 10:30:00');
+   'PREPARING', TIMESTAMP '2025-11-12 10:00:00', TIMESTAMP '2025-11-12 10:30:00');
 
 -- 주문 아이템 추가 (환불)
 INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
@@ -638,6 +645,37 @@ INSERT INTO supporter_profiles (user_id, display_name, bio, image_url, phone, po
    '010-5000-0005', '06005', TIMESTAMP '2025-10-22 09:05:00', TIMESTAMP '2025-10-22 09:10:00',
    '서울시 마포구 연남로 30', '2층', '["ART","PUBLISH"]');
 
+-- 찜 카운트 시뮬레이션용 시드 (유저 500명, 프로젝트당 30~100개)
+INSERT INTO users (id, email, password, name, role, onboarding_status, created_at, updated_at, last_login_at, image_url, provider)
+SELECT
+  2000 + s AS id,
+  'mini_book_' || s || '@test.com' AS email,
+  '$2b$10$JTxQ0TnfmMtfGiEvKVCE3eSLPHBSNBrRO1FoH1ZmJXSBmHjN.OKYC' AS password,
+  '미니북마커 ' || s AS name,
+  'USER' AS role,
+  'COMPLETED' AS onboarding_status,
+  TIMESTAMP '2025-10-25 09:00:00' + (INTERVAL '1 minute' * s) AS created_at,
+  TIMESTAMP '2025-10-25 09:00:00' + (INTERVAL '1 minute' * s) AS updated_at,
+  TIMESTAMP '2025-10-25 09:30:00' + (INTERVAL '1 minute' * s) AS last_login_at,
+  'https://picsum.photos/seed/minibook-' || s || '/200/200' AS image_url,
+  'LOCAL' AS provider
+FROM generate_series(0, 499) AS s;
+
+INSERT INTO supporter_profiles (user_id, display_name, bio, image_url, phone, postal_code, created_at, updated_at, address1, address2, interests)
+SELECT
+  2000 + s AS user_id,
+  '미니북마커 ' || s AS display_name,
+  '찜 카운트 시뮬레이션용 서포터' AS bio,
+  'https://picsum.photos/seed/minibook-' || s || '/200/200' AS image_url,
+  '010-9900-' || LPAD((1000 + s)::text, 4, '0') AS phone,
+  '06050' AS postal_code,
+  TIMESTAMP '2025-10-25 09:05:00' + (INTERVAL '1 minute' * s) AS created_at,
+  TIMESTAMP '2025-10-25 09:05:00' + (INTERVAL '1 minute' * s) AS updated_at,
+  '서울시 가상구 찜로 ' || (s + 1) AS address1,
+  (s + 1) || '동' AS address2,
+  '["BOOKMARK","DEMO"]' AS interests
+FROM generate_series(0, 499) AS s;
+
 -- 신규 메이커
 INSERT INTO makers (id, owner_user_id, maker_type, name, business_name, business_number, representative, established_at, industry_type, location, product_intro, core_competencies, image_url, contact_email, contact_phone, tech_stack, created_at, updated_at) VALUES
   (1006, 1025, 'BUSINESS', '네온라이트 랩스', '네온라이트', '310-11-000001', '오주하', DATE '2022-02-10',
@@ -702,60 +740,71 @@ INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount,
                       cover_image_url, cover_gallery, created_at, updated_at,
                       live_start_at, live_end_at)
 VALUES
-  (1210, 1003, '루멘플로우 스마트 램프',
-   '색온도와 밝기를 자동 조절하는 데스크 램프', '## 루멘플로우' || CHAR(10) || '스마트 홈 연동 조명입니다.',
-   35000000, DATE '2025-10-20', DATE '2025-12-15',
-   'TECH', 'LIVE', 'APPROVED', 'NONE',
-   TIMESTAMP '2025-10-10 09:00:00', TIMESTAMP '2025-10-12 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/lumenflow/cover.png',
-   '["https://cdn.moa.dev/projects/lumenflow/gallery-1.png","https://cdn.moa.dev/projects/lumenflow/gallery-2.png"]',
-   TIMESTAMP '2025-10-09 09:00:00', TIMESTAMP '2025-10-20 09:00:00',
-   TIMESTAMP '2025-10-20 09:00:00', TIMESTAMP '2025-12-15 23:59:00'),
-  (1211, 1003, '코어핏 모듈 밴드 v2',
-   '센서 모듈을 교체하는 모듈형 밴드', '## 코어핏 모듈 밴드 v2' || CHAR(10) || '건강 데이터를 세분화합니다.',
-   25000000, DATE '2025-10-15', DATE '2025-12-10',
-   'TECH', 'LIVE', 'APPROVED', 'NONE',
-   TIMESTAMP '2025-10-05 10:00:00', TIMESTAMP '2025-10-07 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/corefit/cover.png',
-   '["https://cdn.moa.dev/projects/corefit/gallery-1.png","https://cdn.moa.dev/projects/corefit/gallery-2.png"]',
-   TIMESTAMP '2025-10-04 09:00:00', TIMESTAMP '2025-10-15 09:00:00',
-   TIMESTAMP '2025-10-15 09:00:00', TIMESTAMP '2025-12-10 23:59:00'),
-  (1212, 1003, '노바트랙 미니 드론',
-   '실내외 겸용 초경량 드론', '## 노바트랙' || CHAR(10) || '안정화 센서와 접이식 프로펠러',
-   40000000, DATE '2025-10-22', DATE '2025-12-18',
-   'TECH', 'LIVE', 'APPROVED', 'NONE',
-   TIMESTAMP '2025-10-12 10:00:00', TIMESTAMP '2025-10-14 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/novatrack/cover.png',
-   '["https://cdn.moa.dev/projects/novatrack/gallery-1.png"]',
-   TIMESTAMP '2025-10-11 09:00:00', TIMESTAMP '2025-10-22 09:00:00',
-   TIMESTAMP '2025-10-22 09:00:00', TIMESTAMP '2025-12-18 23:59:00'),
-  (1213, 1003, '페더노트 전자페이퍼',
-   '필기감에 집중한 전자페이퍼 노트', '## 페더노트' || CHAR(10) || '펜/필압 인식과 장시간 배터리',
-   20000000, DATE '2025-09-01', DATE '2025-10-01',
-   'DESIGN', 'ENDED', 'APPROVED', 'SUCCESS',
-   TIMESTAMP '2025-08-10 10:00:00', TIMESTAMP '2025-08-12 11:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/feathernote/cover.png',
-   '["https://cdn.moa.dev/projects/feathernote/gallery-1.png"]',
-   TIMESTAMP '2025-08-05 09:00:00', TIMESTAMP '2025-10-02 09:00:00',
-   TIMESTAMP '2025-09-01 09:00:00', TIMESTAMP '2025-10-01 23:59:00'),
-  (1214, 1003, '애쉬그린 폴딩바이크',
-   '도심형 접이식 전동 자전거', '## 애쉬그린' || CHAR(10) || '40km 주행, 마그네슘 프레임',
-   50000000, DATE '2025-09-10', DATE '2025-10-20',
-   'TECH', 'ENDED', 'APPROVED', 'NONE',
-   TIMESTAMP '2025-08-15 10:00:00', TIMESTAMP '2025-08-17 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/ashgreen/cover.png',
-   '["https://cdn.moa.dev/projects/ashgreen/gallery-1.png","https://cdn.moa.dev/projects/ashgreen/gallery-2.png"]',
-   TIMESTAMP '2025-08-12 09:00:00', TIMESTAMP '2025-10-21 09:00:00',
-   TIMESTAMP '2025-09-10 09:00:00', TIMESTAMP '2025-10-20 23:59:00'),
-  (1215, 1003, '사일런트큐브 공기정화기',
-   '저소음 모듈형 공기정화기', '## 사일런트큐브' || CHAR(10) || '필터 모듈 교체형, 저소음 설계',
-   22000000, DATE '2025-12-20', DATE '2026-02-10',
-   'HOME_LIVING', 'SCHEDULED', 'APPROVED', 'NONE',
-   TIMESTAMP '2025-12-01 10:00:00', TIMESTAMP '2025-12-05 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/silentcube/cover.png',
-   '["https://cdn.moa.dev/projects/silentcube/gallery-1.png"]',
-   TIMESTAMP '2025-11-28 09:00:00', TIMESTAMP '2025-12-10 09:00:00',
-   TIMESTAMP '2025-12-20 09:00:00', TIMESTAMP '2026-02-10 23:59:00');
+    -- 1210: 루멘플로우 스마트 램프 (모던한 데스크 램프, 따뜻한 조명)
+    (1210, 1003, '루멘플로우 스마트 램프',
+     '색온도와 밝기를 자동 조절하는 데스크 램프', '## 루멘플로우' || chr(10) || '스마트 홈 연동 조명입니다.',
+     35000000, DATE '2025-10-20', DATE '2025-12-15',
+     'TECH', 'LIVE', 'APPROVED', 'NONE',
+     TIMESTAMP '2025-10-10 09:00:00', TIMESTAMP '2025-10-12 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1513506003013-1943790f1911?auto=format&fit=crop&w=1000&q=80","https://images.unsplash.com/photo-1540932296774-3ed6d13aa325?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-09 09:00:00', TIMESTAMP '2025-10-20 09:00:00',
+     TIMESTAMP '2025-10-20 09:00:00', TIMESTAMP '2025-12-15 23:59:00'),
+
+    -- 1211: 코어핏 모듈 밴드 v2 (피트니스 트래커, 스마트워치)
+    (1211, 1003, '코어핏 모듈 밴드 v2',
+     '센서 모듈을 교체하는 모듈형 밴드', '## 코어핏 모듈 밴드 v2' || chr(10) || '건강 데이터를 세분화합니다.',
+     25000000, DATE '2025-10-15', DATE '2025-12-10',
+     'TECH', 'LIVE', 'APPROVED', 'NONE',
+     TIMESTAMP '2025-10-05 10:00:00', TIMESTAMP '2025-10-07 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1510017803434-a899398421b3?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1510017803434-a899398421b3?auto=format&fit=crop&w=1000&q=80","https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-04 09:00:00', TIMESTAMP '2025-10-15 09:00:00',
+     TIMESTAMP '2025-10-15 09:00:00', TIMESTAMP '2025-12-10 23:59:00'),
+
+    -- 1212: 노바트랙 미니 드론 (드론, 비행)
+    (1212, 1003, '노바트랙 미니 드론',
+     '실내외 겸용 초경량 드론', '## 노바트랙' || chr(10) || '안정화 센서와 접이식 프로펠러',
+     40000000, DATE '2025-10-22', DATE '2025-12-18',
+     'TECH', 'LIVE', 'APPROVED', 'NONE',
+     TIMESTAMP '2025-10-12 10:00:00', TIMESTAMP '2025-10-14 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1521405924368-64c5b84bec60?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-11 09:00:00', TIMESTAMP '2025-10-22 09:00:00',
+     TIMESTAMP '2025-10-22 09:00:00', TIMESTAMP '2025-12-18 23:59:00'),
+
+    -- 1213: 페더노트 전자페이퍼 (이북리더, 태블릿 필기)
+    (1213, 1003, '페더노트 전자페이퍼',
+     '필기감에 집중한 전자페이퍼 노트', '## 페더노트' || chr(10) || '펜/필압 인식과 장시간 배터리',
+     20000000, DATE '2025-09-01', DATE '2025-10-01',
+     'DESIGN', 'ENDED', 'APPROVED', 'SUCCESS',
+     TIMESTAMP '2025-08-10 10:00:00', TIMESTAMP '2025-08-12 11:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1585247226801-bc613c441316?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-08-05 09:00:00', TIMESTAMP '2025-10-02 09:00:00',
+     TIMESTAMP '2025-09-01 09:00:00', TIMESTAMP '2025-10-01 23:59:00'),
+
+    -- 1214: 애쉬그린 폴딩바이크 (전기자전거, 자전거)
+    (1214, 1003, '애쉬그린 폴딩바이크',
+     '도심형 접이식 전동 자전거', '## 애쉬그린' || chr(10) || '40km 주행, 마그네슘 프레임',
+     50000000, DATE '2025-09-10', DATE '2025-10-20',
+     'TECH', 'ENDED', 'APPROVED', 'NONE',
+     TIMESTAMP '2025-08-15 10:00:00', TIMESTAMP '2025-08-17 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1571068316344-75bc76f77890?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1623053896899-0d35e5d36b8a?auto=format&fit=crop&w=1000&q=80","https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-08-12 09:00:00', TIMESTAMP '2025-10-21 09:00:00',
+     TIMESTAMP '2025-09-10 09:00:00', TIMESTAMP '2025-10-20 23:59:00'),
+
+    -- 1215: 사일런트큐브 공기정화기 (공기청정기, 큐브형 가전)
+    (1215, 1003, '사일런트큐브 공기정화기',
+     '저소음 모듈형 공기정화기', '## 사일런트큐브' || chr(10) || '필터 모듈 교체형, 저소음 설계',
+     22000000, DATE '2025-12-20', DATE '2026-02-10',
+     'HOME_LIVING', 'SCHEDULED', 'APPROVED', 'NONE',
+     TIMESTAMP '2025-12-01 10:00:00', TIMESTAMP '2025-12-05 10:00:00', NULL, NULL,
+     'https://img.hankyung.com/photo/201803/01.16326408.1.jpg',
+     '["https://img.hankyung.com/photo/201803/01.16326408.1.jpg"]',
+     TIMESTAMP '2025-11-28 09:00:00', TIMESTAMP '2025-12-10 09:00:00',
+     TIMESTAMP '2025-12-20 09:00:00', TIMESTAMP '2026-02-10 23:59:00');
 
 -- 플래그십 리워드
 INSERT INTO rewards (id, project_id, name, description, price, estimated_delivery_date, is_active, stock_quantity, version) VALUES
@@ -771,26 +820,26 @@ INSERT INTO orders (id, order_id, order_name, user_id, project_id, status, total
                     receiver_name, receiver_phone, address_line1, address_line2, zip_code,
                     delivery_status, created_at, updated_at)
 VALUES
-  (1420, 'ORD-20251020-LF01', '루멘플로우 얼리버드', 1000, 1210, 'PAID', 1800000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-10-20 10:05:00', TIMESTAMP '2025-10-20 10:10:00'),
-  (1421, 'ORD-20251021-LF02', '루멘플로우 얼리버드', 1001, 1210, 'PAID', 2200000, '서포터2', '010-2000-0002', '서울시 강남구 테헤란로 212', '902호', '06102', 'NONE', TIMESTAMP '2025-10-21 11:05:00', TIMESTAMP '2025-10-21 11:10:00'),
-  (1422, 'ORD-20251022-LF03', '루멘플로우 얼리버드', 1002, 1210, 'PAID', 3500000, '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018', 'NONE', TIMESTAMP '2025-10-22 12:05:00', TIMESTAMP '2025-10-22 12:10:00'),
-  (1423, 'ORD-20251023-LF04', '루멘플로우 얼리버드', 1003, 1210, 'PAID', 2400000, '메이커1', '010-1111-0001', '서울시 강남구 역삼로 99', '7층', '06055', 'NONE', TIMESTAMP '2025-10-23 13:05:00', TIMESTAMP '2025-10-23 13:10:00'),
-  (1424, 'ORD-20251024-LF05', '루멘플로우 얼리버드', 1004, 1210, 'PAID', 6500000, '메이커2', '010-1111-0002', '서울시 성동구 왕십리로 12', '1204호', '04799', 'NONE', TIMESTAMP '2025-10-24 14:05:00', TIMESTAMP '2025-10-24 14:10:00'),
-  (1425, 'ORD-20251025-LF06', '루멘플로우 얼리버드', 1005, 1210, 'PAID', 3000000, '관리자', '010-9999-0001', '서울시 중구 을지로 15', '본사 10층', '04524', 'NONE', TIMESTAMP '2025-10-25 15:05:00', TIMESTAMP '2025-10-25 15:10:00'),
-  (1426, 'ORD-20251026-LF07', '루멘플로우 얼리버드', 1010, 1210, 'PAID', 3200000, '신규서포터1', '010-3000-0001', '서울시 강남구 언주로 100', '1층', '06000', 'NONE', TIMESTAMP '2025-10-26 16:05:00', TIMESTAMP '2025-10-26 16:10:00'),
-  (1427, 'ORD-20251027-LF08', '루멘플로우 얼리버드', 1011, 1210, 'PAID', 4200000, '신규서포터2', '010-3000-0002', '서울시 강남구 테헤란로 50', '12층', '06110', 'NONE', TIMESTAMP '2025-10-27 17:05:00', TIMESTAMP '2025-10-27 17:10:00'),
-  (1428, 'ORD-20251028-LF09', '루멘플로우 얼리버드', 1020, 1210, 'PAID', 2700000, '이가온', '010-5000-0001', '서울시 서초구 반포대로 100', '701호', '06001', 'NONE', TIMESTAMP '2025-10-28 18:05:00', TIMESTAMP '2025-10-28 18:10:00'),
-  (1429, 'ORD-20251029-LF10', '루멘플로우 얼리버드', 1021, 1210, 'PAID', 1900000, '최민서', '010-5000-0002', '서울시 강남구 논현로 200', '803호', '06002', 'NONE', TIMESTAMP '2025-10-29 19:05:00', TIMESTAMP '2025-10-29 19:10:00'),
-  (1430, 'ORD-20251030-LF11', '루멘플로우 얼리버드', 1022, 1210, 'PAID', 3600000, '김준호', '010-5000-0003', '서울시 강남구 선릉로 50', '304호', '06003', 'NONE', TIMESTAMP '2025-10-30 20:05:00', TIMESTAMP '2025-10-30 20:10:00'),
-  (1431, 'ORD-20251031-LF12', '루멘플로우 얼리버드', 1023, 1210, 'PAID', 2500000, '유하린', '010-5000-0004', '서울시 송파구 올림픽로 10', '1502호', '06004', 'NONE', TIMESTAMP '2025-10-31 21:05:00', TIMESTAMP '2025-10-31 21:10:00'),
-  (1432, 'ORD-20251101-LF13', '루멘플로우 얼리버드', 1024, 1210, 'PAID', 3300000, '한다니엘', '010-5000-0005', '서울시 마포구 연남로 30', '2층', '06005', 'NONE', TIMESTAMP '2025-11-01 10:15:00', TIMESTAMP '2025-11-01 10:20:00'),
-  (1433, 'ORD-20251102-LF14', '루멘플로우 얼리버드', 1000, 1210, 'PAID', 4800000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-02 11:15:00', TIMESTAMP '2025-11-02 11:20:00'),
-  (1434, 'ORD-20251103-LF15', '루멘플로우 얼리버드', 1001, 1210, 'PAID', 5200000, '서포터2', '010-2000-0002', '서울시 강남구 테헤란로 212', '902호', '06102', 'NONE', TIMESTAMP '2025-11-03 12:15:00', TIMESTAMP '2025-11-03 12:20:00'),
-  (1435, 'ORD-20251104-LF16', '루멘플로우 얼리버드', 1002, 1210, 'PENDING', 2100000, '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018', 'NONE', TIMESTAMP '2025-11-04 13:15:00', TIMESTAMP '2025-11-04 13:20:00'),
-  (1436, 'ORD-20251105-LF17', '루멘플로우 얼리버드', 1010, 1210, 'PENDING', 4000000, '신규서포터1', '010-3000-0001', '서울시 강남구 언주로 100', '1층', '06000', 'NONE', TIMESTAMP '2025-11-05 14:15:00', TIMESTAMP '2025-11-05 14:20:00'),
-  (1437, 'ORD-20251106-LF18', '루멘플로우 얼리버드', 1011, 1210, 'PENDING', 3000000, '신규서포터2', '010-3000-0002', '서울시 강남구 테헤란로 50', '12층', '06110', 'NONE', TIMESTAMP '2025-11-06 15:15:00', TIMESTAMP '2025-11-06 15:20:00'),
-  (1438, 'ORD-20251107-LF19', '루멘플로우 얼리버드', 1020, 1210, 'CANCELED', 3000000, '이가온', '010-5000-0001', '서울시 서초구 반포대로 100', '701호', '06001', 'NONE', TIMESTAMP '2025-11-07 16:15:00', TIMESTAMP '2025-11-07 16:20:00'),
-  (1439, 'ORD-20251108-LF20', '루멘플로우 얼리버드', 1021, 1210, 'CANCELED', 5000000, '최민서', '010-5000-0002', '서울시 강남구 논현로 200', '803호', '06002', 'NONE', TIMESTAMP '2025-11-08 17:15:00', TIMESTAMP '2025-11-08 17:20:00');
+  (1420, 'ORD-20251020-LF01', '루멘플로우 얼리버드', 1000, 1210, 'PAID', 1800000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-10-20 10:05:00', TIMESTAMP '2025-10-20 10:10:00'),
+  (1421, 'ORD-20251021-LF02', '루멘플로우 얼리버드', 1001, 1210, 'PAID', 2200000, '서포터2', '010-2000-0002', '서울시 강남구 테헤란로 212', '902호', '06102', 'PREPARING', TIMESTAMP '2025-10-21 11:05:00', TIMESTAMP '2025-10-21 11:10:00'),
+  (1422, 'ORD-20251022-LF03', '루멘플로우 얼리버드', 1002, 1210, 'PAID', 3500000, '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018', 'PREPARING', TIMESTAMP '2025-10-22 12:05:00', TIMESTAMP '2025-10-22 12:10:00'),
+  (1423, 'ORD-20251023-LF04', '루멘플로우 얼리버드', 1003, 1210, 'PAID', 2400000, '메이커1', '010-1111-0001', '서울시 강남구 역삼로 99', '7층', '06055', 'PREPARING', TIMESTAMP '2025-10-23 13:05:00', TIMESTAMP '2025-10-23 13:10:00'),
+  (1424, 'ORD-20251024-LF05', '루멘플로우 얼리버드', 1004, 1210, 'PAID', 6500000, '메이커2', '010-1111-0002', '서울시 성동구 왕십리로 12', '1204호', '04799', 'PREPARING', TIMESTAMP '2025-10-24 14:05:00', TIMESTAMP '2025-10-24 14:10:00'),
+  (1425, 'ORD-20251025-LF06', '루멘플로우 얼리버드', 1005, 1210, 'PAID', 3000000, '관리자', '010-9999-0001', '서울시 중구 을지로 15', '본사 10층', '04524', 'PREPARING', TIMESTAMP '2025-10-25 15:05:00', TIMESTAMP '2025-10-25 15:10:00'),
+  (1426, 'ORD-20251026-LF07', '루멘플로우 얼리버드', 1010, 1210, 'PAID', 3200000, '신규서포터1', '010-3000-0001', '서울시 강남구 언주로 100', '1층', '06000', 'PREPARING', TIMESTAMP '2025-10-26 16:05:00', TIMESTAMP '2025-10-26 16:10:00'),
+  (1427, 'ORD-20251027-LF08', '루멘플로우 얼리버드', 1011, 1210, 'PAID', 4200000, '신규서포터2', '010-3000-0002', '서울시 강남구 테헤란로 50', '12층', '06110', 'PREPARING', TIMESTAMP '2025-10-27 17:05:00', TIMESTAMP '2025-10-27 17:10:00'),
+  (1428, 'ORD-20251028-LF09', '루멘플로우 얼리버드', 1020, 1210, 'PAID', 2700000, '이가온', '010-5000-0001', '서울시 서초구 반포대로 100', '701호', '06001', 'PREPARING', TIMESTAMP '2025-10-28 18:05:00', TIMESTAMP '2025-10-28 18:10:00'),
+  (1429, 'ORD-20251029-LF10', '루멘플로우 얼리버드', 1021, 1210, 'PAID', 1900000, '최민서', '010-5000-0002', '서울시 강남구 논현로 200', '803호', '06002', 'PREPARING', TIMESTAMP '2025-10-29 19:05:00', TIMESTAMP '2025-10-29 19:10:00'),
+  (1430, 'ORD-20251030-LF11', '루멘플로우 얼리버드', 1022, 1210, 'PAID', 3600000, '김준호', '010-5000-0003', '서울시 강남구 선릉로 50', '304호', '06003', 'PREPARING', TIMESTAMP '2025-10-30 20:05:00', TIMESTAMP '2025-10-30 20:10:00'),
+  (1431, 'ORD-20251031-LF12', '루멘플로우 얼리버드', 1023, 1210, 'PAID', 2500000, '유하린', '010-5000-0004', '서울시 송파구 올림픽로 10', '1502호', '06004', 'PREPARING', TIMESTAMP '2025-10-31 21:05:00', TIMESTAMP '2025-10-31 21:10:00'),
+  (1432, 'ORD-20251101-LF13', '루멘플로우 얼리버드', 1024, 1210, 'PAID', 3300000, '한다니엘', '010-5000-0005', '서울시 마포구 연남로 30', '2층', '06005', 'PREPARING', TIMESTAMP '2025-11-01 10:15:00', TIMESTAMP '2025-11-01 10:20:00'),
+  (1433, 'ORD-20251102-LF14', '루멘플로우 얼리버드', 1000, 1210, 'PAID', 4800000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-02 11:15:00', TIMESTAMP '2025-11-02 11:20:00'),
+  (1434, 'ORD-20251103-LF15', '루멘플로우 얼리버드', 1001, 1210, 'PAID', 5200000, '서포터2', '010-2000-0002', '서울시 강남구 테헤란로 212', '902호', '06102', 'PREPARING', TIMESTAMP '2025-11-03 12:15:00', TIMESTAMP '2025-11-03 12:20:00'),
+  (1435, 'ORD-20251104-LF16', '루멘플로우 얼리버드', 1002, 1210, 'PENDING', 2100000, '서포터3', '010-2000-0003', '서울시 강남구 도산대로 45', '302호', '06018', 'PREPARING', TIMESTAMP '2025-11-04 13:15:00', TIMESTAMP '2025-11-04 13:20:00'),
+  (1436, 'ORD-20251105-LF17', '루멘플로우 얼리버드', 1010, 1210, 'PENDING', 4000000, '신규서포터1', '010-3000-0001', '서울시 강남구 언주로 100', '1층', '06000', 'PREPARING', TIMESTAMP '2025-11-05 14:15:00', TIMESTAMP '2025-11-05 14:20:00'),
+  (1437, 'ORD-20251106-LF18', '루멘플로우 얼리버드', 1011, 1210, 'PENDING', 3000000, '신규서포터2', '010-3000-0002', '서울시 강남구 테헤란로 50', '12층', '06110', 'PREPARING', TIMESTAMP '2025-11-06 15:15:00', TIMESTAMP '2025-11-06 15:20:00'),
+  (1438, 'ORD-20251107-LF19', '루멘플로우 얼리버드', 1020, 1210, 'CANCELED', 3000000, '이가온', '010-5000-0001', '서울시 서초구 반포대로 100', '701호', '06001', 'PREPARING', TIMESTAMP '2025-11-07 16:15:00', TIMESTAMP '2025-11-07 16:20:00'),
+  (1439, 'ORD-20251108-LF20', '루멘플로우 얼리버드', 1021, 1210, 'CANCELED', 5000000, '최민서', '010-5000-0002', '서울시 강남구 논현로 200', '803호', '06002', 'PREPARING', TIMESTAMP '2025-11-08 17:15:00', TIMESTAMP '2025-11-08 17:20:00');
 
 INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
   (1420, 1310, '루멘플로우 얼리버드', 1800000, 1, 1800000, '데일리 주문'),
@@ -913,114 +962,149 @@ INSERT INTO projects (id, maker_id, title, summary, story_markdown, goal_amount,
                       cover_image_url, cover_gallery, created_at, updated_at,
                       live_start_at, live_end_at)
 VALUES
-  (1216, 1006, '에어브릿지 메쉬 라우터', '거실/방까지 끊김 없는 메쉬 라우터', '## 에어브릿지' || CHAR(10) || '메쉬 네트워크 자동 최적화', 30000000, DATE '2025-11-01', DATE '2025-12-20',
-   'TECH', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-20 09:00:00', TIMESTAMP '2025-10-22 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/airbridge/cover.png',
-   '["https://cdn.moa.dev/projects/airbridge/gallery-1.png"]',
-   TIMESTAMP '2025-10-18 11:20:00', TIMESTAMP '2025-11-01 09:00:00',
-   TIMESTAMP '2025-11-01 09:00:00', TIMESTAMP '2025-12-20 23:59:00'),
-  (1217, 1006, '나노파워 배터리팩', '초경량 20000mAh 배터리팩', '## 나노파워' || CHAR(10) || '여행용 고속충전 배터리', 28000000, DATE '2026-01-05', DATE '2026-02-15',
-   'TECH', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-01 09:00:00', TIMESTAMP '2025-12-03 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/nanopower/cover.png',
-   '["https://cdn.moa.dev/projects/nanopower/gallery-1.png"]',
-   TIMESTAMP '2025-11-28 09:00:00', TIMESTAMP '2025-12-05 09:00:00',
-   TIMESTAMP '2026-01-05 09:00:00', TIMESTAMP '2026-02-15 23:59:00'),
-  (1218, 1007, '모노브릭 데스크오거나이저', '책상 위를 정리해주는 모듈형 오거나이저', '## 모노브릭' || CHAR(10) || '알루미늄/우드 하이브리드', 20000000, DATE '2025-11-02', DATE '2025-12-22',
-   'DESIGN', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-21 09:00:00', TIMESTAMP '2025-10-23 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/monobrick/cover.png',
-   '["https://cdn.moa.dev/projects/monobrick/gallery-1.png"]',
-   TIMESTAMP '2025-10-19 09:00:00', TIMESTAMP '2025-11-02 09:00:00',
-   TIMESTAMP '2025-11-02 09:00:00', TIMESTAMP '2025-12-22 23:59:00'),
-  (1219, 1007, '리플폴드 플랜터', '물결 모양 폴딩 플랜터', '## 리플폴드' || CHAR(10) || '접어서 보관하는 실내 플랜터', 22000000, DATE '2026-01-10', DATE '2026-02-28',
-   'DESIGN', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-05 09:00:00', TIMESTAMP '2025-12-07 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/ripplefold/cover.png',
-   '["https://cdn.moa.dev/projects/ripplefold/gallery-1.png"]',
-   TIMESTAMP '2025-11-30 09:00:00', TIMESTAMP '2025-12-10 09:00:00',
-   TIMESTAMP '2026-01-10 09:00:00', TIMESTAMP '2026-02-28 23:59:00'),
-  (1220, 1008, '스모크버터 스테이크 키트', '고온 버터 베이스 스테이크 키트', '## 스모크버터' || CHAR(10) || '건조 숙성 + 향미 버터', 35000000, DATE '2025-11-03', DATE '2025-12-23',
-   'FOOD', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-22 09:00:00', TIMESTAMP '2025-10-24 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/smokebutter/cover.png',
-   '["https://cdn.moa.dev/projects/smokebutter/gallery-1.png"]',
-   TIMESTAMP '2025-10-20 09:00:00', TIMESTAMP '2025-11-03 09:00:00',
-   TIMESTAMP '2025-11-03 09:00:00', TIMESTAMP '2025-12-23 23:59:00'),
-  (1221, 1008, '코코넛바닐라 디저트 세트', '코코넛/바닐라 디저트 4종', '## 코코넛바닐라' || CHAR(10) || '냉동 디저트 큐레이션', 25000000, DATE '2026-01-15', DATE '2026-02-28',
-   'FOOD', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-10 09:00:00', TIMESTAMP '2025-12-12 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/coconutvanilla/cover.png',
-   '["https://cdn.moa.dev/projects/coconutvanilla/gallery-1.png"]',
-   TIMESTAMP '2025-12-01 09:00:00', TIMESTAMP '2025-12-15 09:00:00',
-   TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-02-28 23:59:00'),
-  (1222, 1009, '시에라라인 소프트셸 재킷', '경량 방풍 소프트셸 재킷', '## 시에라라인' || CHAR(10) || '러닝/하이킹 겸용', 40000000, DATE '2025-11-04', DATE '2025-12-24',
-   'FASHION', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-23 09:00:00', TIMESTAMP '2025-10-25 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/sierraline/cover.png',
-   '["https://cdn.moa.dev/projects/sierraline/gallery-1.png"]',
-   TIMESTAMP '2025-10-21 09:00:00', TIMESTAMP '2025-11-04 09:00:00',
-   TIMESTAMP '2025-11-04 09:00:00', TIMESTAMP '2025-12-24 23:59:00'),
-  (1223, 1009, '라이트패스 러닝팩', '야간 러닝용 슬링백', '## 라이트패스' || CHAR(10) || '리플렉티브 + 라이트 가이드', 30000000, DATE '2026-01-20', DATE '2026-03-01',
-   'FASHION', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-15 09:00:00', TIMESTAMP '2025-12-17 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/lightpath/cover.png',
-   '["https://cdn.moa.dev/projects/lightpath/gallery-1.png"]',
-   TIMESTAMP '2025-12-05 09:00:00', TIMESTAMP '2025-12-20 09:00:00',
-   TIMESTAMP '2026-01-20 09:00:00', TIMESTAMP '2026-03-01 23:59:00'),
-  (1224, 1010, '미드나잇 세럼 듀오', '야간 루틴 집중 세럼', '## 미드나잇 듀오' || CHAR(10) || '레티놀 + 세라마이드', 25000000, DATE '2025-11-05', DATE '2025-12-25',
-   'BEAUTY', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-24 09:00:00', TIMESTAMP '2025-10-26 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/midnightserum/cover.png',
-   '["https://cdn.moa.dev/projects/midnightserum/gallery-1.png"]',
-   TIMESTAMP '2025-10-22 09:00:00', TIMESTAMP '2025-11-05 09:00:00',
-   TIMESTAMP '2025-11-05 09:00:00', TIMESTAMP '2025-12-25 23:59:00'),
-  (1225, 1010, '코지바디 아로마미스트', '데일리 아로마 미스트', '## 코지바디' || CHAR(10) || '피부/패브릭 겸용', 20000000, DATE '2026-01-25', DATE '2026-03-05',
-   'BEAUTY', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-20 09:00:00', TIMESTAMP '2025-12-22 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/cozybody/cover.png',
-   '["https://cdn.moa.dev/projects/cozybody/gallery-1.png"]',
-   TIMESTAMP '2025-12-10 09:00:00', TIMESTAMP '2025-12-25 09:00:00',
-   TIMESTAMP '2026-01-25 09:00:00', TIMESTAMP '2026-03-05 23:59:00'),
-  (1226, 1011, '엘름우드 무선 스탠드', '무선 충전 기능이 있는 조명 스탠드', '## 엘름우드' || CHAR(10) || '충전패드 일체형', 30000000, DATE '2025-11-06', DATE '2025-12-26',
-   'HOME_LIVING', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-25 09:00:00', TIMESTAMP '2025-10-27 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/elmwood/cover.png',
-   '["https://cdn.moa.dev/projects/elmwood/gallery-1.png"]',
-   TIMESTAMP '2025-10-23 09:00:00', TIMESTAMP '2025-11-06 09:00:00',
-   TIMESTAMP '2025-11-06 09:00:00', TIMESTAMP '2025-12-26 23:59:00'),
-  (1227, 1011, '웨이브폼 디퓨저', '곡선 디자인 무드 디퓨저', '## 웨이브폼' || CHAR(10) || '조명+디퓨저 2in1', 22000000, DATE '2026-02-01', DATE '2026-03-20',
-   'HOME_LIVING', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-25 09:00:00', TIMESTAMP '2025-12-27 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/waveform/cover.png',
-   '["https://cdn.moa.dev/projects/waveform/gallery-1.png"]',
-   TIMESTAMP '2025-12-15 09:00:00', TIMESTAMP '2025-12-30 09:00:00',
-   TIMESTAMP '2026-02-01 09:00:00', TIMESTAMP '2026-03-20 23:59:00'),
-  (1228, 1012, '아크폴리 전술 보드게임', '세트컬렉션 전략 보드게임', '## 아크폴리' || CHAR(10) || '확장팩 포함 얼리버드', 50000000, DATE '2025-11-07', DATE '2025-12-27',
-   'GAME', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-26 09:00:00', TIMESTAMP '2025-10-28 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/arcpoly/cover.png',
-   '["https://cdn.moa.dev/projects/arcpoly/gallery-1.png"]',
-   TIMESTAMP '2025-10-24 09:00:00', TIMESTAMP '2025-11-07 09:00:00',
-   TIMESTAMP '2025-11-07 09:00:00', TIMESTAMP '2025-12-27 23:59:00'),
-  (1229, 1012, '픽셀노바 카드 컬렉션', '픽셀 아트 카드 수집 시리즈', '## 픽셀노바' || CHAR(10) || '리미티드 프린트 런', 26000000, DATE '2026-02-10', DATE '2026-03-25',
-   'GAME', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2026-01-05 09:00:00', TIMESTAMP '2026-01-07 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/pixelnova/cover.png',
-   '["https://cdn.moa.dev/projects/pixelnova/gallery-1.png"]',
-   TIMESTAMP '2025-12-20 09:00:00', TIMESTAMP '2026-01-10 09:00:00',
-   TIMESTAMP '2026-02-10 09:00:00', TIMESTAMP '2026-03-25 23:59:00'),
-  (1230, 1013, '스펙트럼 실크스크린 프린트', '한정판 실크스크린 포스터', '## 스펙트럼' || CHAR(10) || '2종 세트 에디션', 22000000, DATE '2025-11-08', DATE '2025-12-28',
-   'ART', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-27 09:00:00', TIMESTAMP '2025-10-29 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/spectrum/cover.png',
-   '["https://cdn.moa.dev/projects/spectrum/gallery-1.png"]',
-   TIMESTAMP '2025-10-25 09:00:00', TIMESTAMP '2025-11-08 09:00:00',
-   TIMESTAMP '2025-11-08 09:00:00', TIMESTAMP '2025-12-28 23:59:00'),
-  (1231, 1013, '드리프트 컬러링북', '여행 테마 컬러링북', '## 드리프트' || CHAR(10) || '아트 프린트 포함', 18000000, DATE '2026-02-15', DATE '2026-03-30',
-   'ART', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2026-01-10 09:00:00', TIMESTAMP '2026-01-12 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/drift/cover.png',
-   '["https://cdn.moa.dev/projects/drift/gallery-1.png"]',
-   TIMESTAMP '2025-12-22 09:00:00', TIMESTAMP '2026-01-12 09:00:00',
-   TIMESTAMP '2026-02-15 09:00:00', TIMESTAMP '2026-03-30 23:59:00'),
-  (1232, 1014, '더라이트 포토에세이북', '밤의 도시를 담은 포토에세이', '## 더라이트' || CHAR(10) || '120p 하드커버', 28000000, DATE '2025-11-09', DATE '2025-12-29',
-   'PUBLISH', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-28 09:00:00', TIMESTAMP '2025-10-30 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/theright/cover.png',
-   '["https://cdn.moa.dev/projects/theright/gallery-1.png"]',
-   TIMESTAMP '2025-10-26 09:00:00', TIMESTAMP '2025-11-09 09:00:00',
-   TIMESTAMP '2025-11-09 09:00:00', TIMESTAMP '2025-12-29 23:59:00'),
-  (1233, 1014, '아틀라스 트래블 로그북', '여행 기록용 하드커버 로그북', '## 아틀라스' || CHAR(10) || '스티커/포켓 포함', 24000000, DATE '2026-02-20', DATE '2026-04-05',
-   'PUBLISH', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-17 10:00:00', NULL, NULL,
-   'https://cdn.moa.dev/projects/atlas/cover.png',
-   '["https://cdn.moa.dev/projects/atlas/gallery-1.png"]',
-   TIMESTAMP '2025-12-25 09:00:00', TIMESTAMP '2026-01-17 09:00:00',
-   TIMESTAMP '2026-02-20 09:00:00', TIMESTAMP '2026-04-05 23:59:00');
+    -- 1216: 에어브릿지 메쉬 라우터 (공유기, 화이트 테크)
+    (1216, 1006, '에어브릿지 메쉬 라우터', '거실/방까지 끊김 없는 메쉬 라우터', '## 에어브릿지' || chr(10) || '메쉬 네트워크 자동 최적화', 30000000, DATE '2025-11-01', DATE '2025-12-20',
+     'TECH', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-20 09:00:00', TIMESTAMP '2025-10-22 10:00:00', NULL, NULL,
+     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5o_xjCZcJbLAeDsnSpd94-aulDKPzSSdOSA&s',
+     '["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5o_xjCZcJbLAeDsnSpd94-aulDKPzSSdOSA&s"]',
+     TIMESTAMP '2025-10-18 11:20:00', TIMESTAMP '2025-11-01 09:00:00',
+     TIMESTAMP '2025-11-01 09:00:00', TIMESTAMP '2025-12-20 23:59:00'),
+
+    -- 1217: 나노파워 배터리팩 (보조배터리)
+    (1217, 1006, '나노파워 배터리팩', '초경량 20000mAh 배터리팩', '## 나노파워' || chr(10) || '여행용 고속충전 배터리', 28000000, DATE '2026-01-05', DATE '2026-02-15',
+     'TECH', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-01 09:00:00', TIMESTAMP '2025-12-03 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1622439180706-5b65191f6920?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-11-28 09:00:00', TIMESTAMP '2025-12-05 09:00:00',
+     TIMESTAMP '2026-01-05 09:00:00', TIMESTAMP '2026-02-15 23:59:00'),
+
+    -- 1218: 모노브릭 데스크오거나이저 (데스크테리어, 정리)
+    (1218, 1007, '모노브릭 데스크오거나이저', '책상 위를 정리해주는 모듈형 오거나이저', '## 모노브릭' || chr(10) || '알루미늄/우드 하이브리드', 20000000, DATE '2025-11-02', DATE '2025-12-22',
+     'DESIGN', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-21 09:00:00', TIMESTAMP '2025-10-23 10:00:00', NULL, NULL,
+     'https://cdn.imweb.me/thumbnail/20231004/fdd8b0e15c704.jpg',
+     '["https://cdn.imweb.me/thumbnail/20231004/fdd8b0e15c704.jpg"]',
+     TIMESTAMP '2025-10-19 09:00:00', TIMESTAMP '2025-11-02 09:00:00',
+     TIMESTAMP '2025-11-02 09:00:00', TIMESTAMP '2025-12-22 23:59:00'),
+
+    -- 1219: 리플폴드 플랜터 (화분, 인테리어)
+    (1219, 1007, '리플폴드 플랜터', '물결 모양 폴딩 플랜터', '## 리플폴드' || chr(10) || '접어서 보관하는 실내 플랜터', 22000000, DATE '2026-01-10', DATE '2026-02-28',
+     'DESIGN', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-05 09:00:00', TIMESTAMP '2025-12-07 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1509423350716-97f9360b4e09?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-11-30 09:00:00', TIMESTAMP '2025-12-10 09:00:00',
+     TIMESTAMP '2026-01-10 09:00:00', TIMESTAMP '2026-02-28 23:59:00'),
+
+    -- 1220: 스모크버터 스테이크 키트 (스테이크, 고기)
+    (1220, 1008, '스모크버터 스테이크 키트', '고온 버터 베이스 스테이크 키트', '## 스모크버터' || chr(10) || '건조 숙성 + 향미 버터', 35000000, DATE '2025-11-03', DATE '2025-12-23',
+     'FOOD', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-22 09:00:00', TIMESTAMP '2025-10-24 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1546964124-0cce460f38ef?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-20 09:00:00', TIMESTAMP '2025-11-03 09:00:00',
+     TIMESTAMP '2025-11-03 09:00:00', TIMESTAMP '2025-12-23 23:59:00'),
+
+    -- 1221: 코코넛바닐라 디저트 세트 (케이크, 디저트)
+    (1221, 1008, '코코넛바닐라 디저트 세트', '코코넛/바닐라 디저트 4종', '## 코코넛바닐라' || chr(10) || '냉동 디저트 큐레이션', 25000000, DATE '2026-01-15', DATE '2026-02-28',
+     'FOOD', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-10 09:00:00', TIMESTAMP '2025-12-12 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1579306194872-64d3b7bac4c2?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-12-01 09:00:00', TIMESTAMP '2025-12-15 09:00:00',
+     TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-02-28 23:59:00'),
+
+    -- 1222: 시에라라인 소프트셸 재킷 (아웃도어 재킷)
+    (1222, 1009, '시에라라인 소프트셸 재킷', '경량 방풍 소프트셸 재킷', '## 시에라라인' || chr(10) || '러닝/하이킹 겸용', 40000000, DATE '2025-11-04', DATE '2025-12-24',
+     'FASHION', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-23 09:00:00', TIMESTAMP '2025-10-25 10:00:00', NULL, NULL,
+     'https://ayaq.com/cdn/shop/files/Ayaq_man-windproof-jacket-north-blue-raven-ps1.jpg?v=1760540156&width=1445',
+     '["https://ayaq.com/cdn/shop/files/Ayaq_man-windproof-jacket-north-blue-raven-ps1.jpg?v=1760540156&width=1445"]',
+     TIMESTAMP '2025-10-21 09:00:00', TIMESTAMP '2025-11-04 09:00:00',
+     TIMESTAMP '2025-11-04 09:00:00', TIMESTAMP '2025-12-24 23:59:00'),
+
+    -- 1223: 라이트패스 러닝팩 (러닝, 가방)
+    (1223, 1009, '라이트패스 러닝팩', '야간 러닝용 슬링백', '## 라이트패스' || chr(10) || '리플렉티브 + 라이트 가이드', 30000000, DATE '2026-01-20', DATE '2026-03-01',
+     'FASHION', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-15 09:00:00', TIMESTAMP '2025-12-17 10:00:00', NULL, NULL,
+     'https://images.ctfassets.net/hnk2vsx53n6l/59Qor4xTNGndUpWH7JEpeH/41820ecc8bc867069ba0b129e0d77cd2/682232704ac35632b4e79b8d4b09dd3ebc2ab44f.png?fm=webp',
+     '["https://images.ctfassets.net/hnk2vsx53n6l/59Qor4xTNGndUpWH7JEpeH/41820ecc8bc867069ba0b129e0d77cd2/682232704ac35632b4e79b8d4b09dd3ebc2ab44f.png?fm=webp"]',
+     TIMESTAMP '2025-12-05 09:00:00', TIMESTAMP '2025-12-20 09:00:00',
+     TIMESTAMP '2026-01-20 09:00:00', TIMESTAMP '2026-03-01 23:59:00'),
+
+    -- 1224: 미드나잇 세럼 듀오 (화장품, 세럼)
+    (1224, 1010, '미드나잇 세럼 듀오', '야간 루틴 집중 세럼', '## 미드나잇 듀오' || chr(10) || '레티놀 + 세라마이드', 25000000, DATE '2025-11-05', DATE '2025-12-25',
+     'BEAUTY', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-24 09:00:00', TIMESTAMP '2025-10-26 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1629198762744-245347b744d0?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-22 09:00:00', TIMESTAMP '2025-11-05 09:00:00',
+     TIMESTAMP '2025-11-05 09:00:00', TIMESTAMP '2025-12-25 23:59:00'),
+
+    -- 1225: 코지바디 아로마미스트 (향수, 미스트)
+    (1225, 1010, '코지바디 아로마미스트', '데일리 아로마 미스트', '## 코지바디' || chr(10) || '피부/패브릭 겸용', 20000000, DATE '2026-01-25', DATE '2026-03-05',
+     'BEAUTY', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-20 09:00:00', TIMESTAMP '2025-12-22 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1615397349754-cfa2066a298e?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1595867275464-94b281b379eb?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-12-10 09:00:00', TIMESTAMP '2025-12-25 09:00:00',
+     TIMESTAMP '2026-01-25 09:00:00', TIMESTAMP '2026-03-05 23:59:00'),
+
+    -- 1226: 엘름우드 무선 스탠드 (우드 조명)
+    (1226, 1011, '엘름우드 무선 스탠드', '무선 충전 기능이 있는 조명 스탠드', '## 엘름우드' || chr(10) || '충전패드 일체형', 30000000, DATE '2025-11-06', DATE '2025-12-26',
+     'HOME_LIVING', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-25 09:00:00', TIMESTAMP '2025-10-27 10:00:00', NULL, NULL,
+     'https://img.danawa.com/prod_img/500000/174/463/img/16463174_1.jpg?_v=20240308143545&shrink=360:360',
+     '["https://img.danawa.com/prod_img/500000/174/463/img/16463174_1.jpg?_v=20240308143545&shrink=360:360"]',
+     TIMESTAMP '2025-10-23 09:00:00', TIMESTAMP '2025-11-06 09:00:00',
+     TIMESTAMP '2025-11-06 09:00:00', TIMESTAMP '2025-12-26 23:59:00'),
+
+    -- 1227: 웨이브폼 디퓨저 (디퓨저)
+    (1227, 1011, '웨이브폼 디퓨저', '곡선 디자인 무드 디퓨저', '## 웨이브폼' || chr(10) || '조명+디퓨저 2in1', 22000000, DATE '2026-02-01', DATE '2026-03-20',
+     'HOME_LIVING', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2025-12-25 09:00:00', TIMESTAMP '2025-12-27 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1602928321679-560bb453f190?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1588610582531-df243e86c12b?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-12-15 09:00:00', TIMESTAMP '2025-12-30 09:00:00',
+     TIMESTAMP '2026-02-01 09:00:00', TIMESTAMP '2026-03-20 23:59:00'),
+
+    -- 1228: 아크폴리 전술 보드게임 (보드게임)
+    (1228, 1012, '아크폴리 전술 보드게임', '세트컬렉션 전략 보드게임', '## 아크폴리' || chr(10) || '확장팩 포함 얼리버드', 50000000, DATE '2025-11-07', DATE '2025-12-27',
+     'GAME', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-26 09:00:00', TIMESTAMP '2025-10-28 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1595567557162-43d93d56d90d?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-24 09:00:00', TIMESTAMP '2025-11-07 09:00:00',
+     TIMESTAMP '2025-11-07 09:00:00', TIMESTAMP '2025-12-27 23:59:00'),
+
+    -- 1229: 픽셀노바 카드 컬렉션 (카드 게임)
+    (1229, 1012, '픽셀노바 카드 컬렉션', '픽셀 아트 카드 수집 시리즈', '## 픽셀노바' || chr(10) || '리미티드 프린트 런', 26000000, DATE '2026-02-10', DATE '2026-03-25',
+     'GAME', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2026-01-05 09:00:00', TIMESTAMP '2026-01-07 10:00:00', NULL, NULL,
+     'https://cdn.imweb.me/thumbnail/20250703/e06818262f678.png',
+     '["https://cdn.imweb.me/thumbnail/20250703/e06818262f678.png"]',
+     TIMESTAMP '2025-12-20 09:00:00', TIMESTAMP '2026-01-10 09:00:00',
+     TIMESTAMP '2026-02-10 09:00:00', TIMESTAMP '2026-03-25 23:59:00'),
+
+    -- 1230: 스펙트럼 실크스크린 프린트 (포스터, 아트)
+    (1230, 1013, '스펙트럼 실크스크린 프린트', '한정판 실크스크린 포스터', '## 스펙트럼' || chr(10) || '2종 세트 에디션', 22000000, DATE '2025-11-08', DATE '2025-12-28',
+     'ART', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-27 09:00:00', TIMESTAMP '2025-10-29 10:00:00', NULL, NULL,
+     'https://mblogthumb-phinf.pstatic.net/MjAyMzExMTZfNTkg/MDAxNzAwMTM5NDIxMDc0.KN5NiOk_M71JF7uv2b5WXuDnPEK6bdZkBSN-hnP_5zwg.U93x2yixCRZX7QKbIdWXMibqqkQEuUFaVz_zxkCXV7Mg.JPEG.superlcheshire/KakaoTalk_Photo_2023-11-16-21-56-52_001jpeg.jpeg?type=w800',
+     '["https://mblogthumb-phinf.pstatic.net/MjAyMzExMTZfNTkg/MDAxNzAwMTM5NDIxMDc0.KN5NiOk_M71JF7uv2b5WXuDnPEK6bdZkBSN-hnP_5zwg.U93x2yixCRZX7QKbIdWXMibqqkQEuUFaVz_zxkCXV7Mg.JPEG.superlcheshire/KakaoTalk_Photo_2023-11-16-21-56-52_001jpeg.jpeg?type=w800"]',
+     TIMESTAMP '2025-10-25 09:00:00', TIMESTAMP '2025-11-08 09:00:00',
+     TIMESTAMP '2025-11-08 09:00:00', TIMESTAMP '2025-12-28 23:59:00'),
+
+    -- 1231: 드리프트 컬러링북 (드로잉, 아트)
+    (1231, 1013, '드리프트 컬러링북', '여행 테마 컬러링북', '## 드리프트' || chr(10) || '아트 프린트 포함', 18000000, DATE '2026-02-15', DATE '2026-03-30',
+     'ART', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2026-01-10 09:00:00', TIMESTAMP '2026-01-12 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1517646331032-9e8563c520a1?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-12-22 09:00:00', TIMESTAMP '2026-01-12 09:00:00',
+     TIMESTAMP '2026-02-15 09:00:00', TIMESTAMP '2026-03-30 23:59:00'),
+
+    -- 1232: 더라이트 포토에세이북 (책)
+    (1232, 1014, '더라이트 포토에세이북', '밤의 도시를 담은 포토에세이', '## 더라이트' || chr(10) || '120p 하드커버', 28000000, DATE '2025-11-09', DATE '2025-12-29',
+     'PUBLISH', 'LIVE', 'APPROVED', 'NONE', TIMESTAMP '2025-10-28 09:00:00', TIMESTAMP '2025-10-30 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-10-26 09:00:00', TIMESTAMP '2025-11-09 09:00:00',
+     TIMESTAMP '2025-11-09 09:00:00', TIMESTAMP '2025-12-29 23:59:00'),
+
+    -- 1233: 아틀라스 트래블 로그북 (노트, 다이어리)
+    (1233, 1014, '아틀라스 트래블 로그북', '여행 기록용 하드커버 로그북', '## 아틀라스' || chr(10) || '스티커/포켓 포함', 24000000, DATE '2026-02-20', DATE '2026-04-05',
+     'PUBLISH', 'SCHEDULED', 'APPROVED', 'NONE', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-17 10:00:00', NULL, NULL,
+     'https://images.unsplash.com/photo-1455587734955-081b22074882?auto=format&fit=crop&w=1000&q=80',
+     '["https://images.unsplash.com/photo-1519791883288-dc8bd696e667?auto=format&fit=crop&w=1000&q=80"]',
+     TIMESTAMP '2025-12-25 09:00:00', TIMESTAMP '2026-01-17 09:00:00',
+     TIMESTAMP '2026-02-20 09:00:00', TIMESTAMP '2026-04-05 23:59:00');
 
 -- 전시용 태그
 INSERT INTO project_tag (project_id, tag) VALUES
@@ -1042,6 +1126,50 @@ INSERT INTO project_tag (project_id, tag) VALUES
   (1231, '컬러링'), (1231, '여행'),
   (1232, '포토북'), (1232, '야경'),
   (1233, '로그북'), (1233, '여행');
+
+-- 프로젝트별 찜 (모든 프로젝트 30~100개, 유저 2000~2499 범위 활용)
+WITH params(project_id, qty, minute_offset) AS (
+  VALUES
+    (1200, 70,   0),
+    (1201, 90, 120),
+    (1202, 65, 240),
+    (1203, 80, 360),
+    (1204, 40, 480),
+    (1205, 60, 600),
+    (1206, 35, 720),
+    (1207, 34, 840),
+    (1210, 55, 960),
+    (1211, 38, 1080),
+    (1212, 47, 1200),
+    (1213, 52, 1320),
+    (1214, 44, 1440),
+    (1215, 58, 1560),
+    (1216, 92, 1680),
+    (1217, 78, 1800),
+    (1218, 88, 1920),
+    (1219, 66, 2040),
+    (1220, 95, 2160),
+    (1221, 62, 2280),
+    (1222, 84, 2400),
+    (1223, 50, 2520),
+    (1224, 76, 2640),
+    (1225, 42, 2760),
+    (1226, 70, 2880),
+    (1227, 48, 3000),
+    (1228, 98, 3120),
+    (1229, 36, 3240),
+    (1230, 80, 3360),
+    (1231, 34, 3480),
+    (1232, 90, 3600),
+    (1233, 60, 3720)
+)
+INSERT INTO supporter_bookmarks_project (supporter_user_id, project_id, created_at)
+SELECT
+  2000 + (s % 500) AS supporter_user_id,
+  p.project_id,
+  TIMESTAMP '2025-11-05 09:00:00' + (INTERVAL '1 minute' * (p.minute_offset + s))
+FROM params p
+CROSS JOIN generate_series(0, p.qty - 1) AS s;
 
 -- 전시용 리워드
 INSERT INTO rewards (id, project_id, name, description, price, estimated_delivery_date, is_active, stock_quantity, version) VALUES
@@ -1069,18 +1197,18 @@ INSERT INTO orders (id, order_id, order_name, user_id, project_id, status, total
                     receiver_name, receiver_phone, address_line1, address_line2, zip_code,
                     delivery_status, created_at, updated_at)
 VALUES
-  (1440, 'ORD-20251110-AB01', '에어브릿지 듀얼팩', 1000, 1216, 'PAID', 21000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-10 09:10:00', TIMESTAMP '2025-11-10 09:15:00'),
-  (1441, 'ORD-20251111-AB02', '모노브릭 풀세트', 1000, 1218, 'PAID', 26000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-11 10:10:00', TIMESTAMP '2025-11-11 10:15:00'),
-  (1442, 'ORD-20251112-AB03', '스모크버터 스테이크 키트', 1000, 1220, 'PAID', 52500000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-12 11:10:00', TIMESTAMP '2025-11-12 11:15:00'),
-  (1443, 'ORD-20251113-AB04', '시에라라인 재킷', 1000, 1222, 'PAID', 28000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-13 12:10:00', TIMESTAMP '2025-11-13 12:15:00'),
-  (1444, 'ORD-20251114-AB05', '시에라라인 재킷 추가', 1000, 1222, 'PENDING', 12000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-14 13:10:00', TIMESTAMP '2025-11-14 13:15:00'),
-  (1445, 'ORD-20251115-AB06', '미드나잇 세럼 듀오', 1000, 1224, 'PAID', 27500000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-15 14:10:00', TIMESTAMP '2025-11-15 14:15:00'),
-  (1446, 'ORD-20251116-AB07', '엘름우드 스탠드', 1000, 1226, 'PAID', 21000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-16 15:10:00', TIMESTAMP '2025-11-16 15:15:00'),
-  (1447, 'ORD-20251117-AB08', '엘름우드 스탠드 추가', 1000, 1226, 'PENDING', 9000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-17 16:10:00', TIMESTAMP '2025-11-17 16:15:00'),
-  (1448, 'ORD-20251118-AB09', '아크폴리 얼리버드', 1000, 1228, 'PAID', 55000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-18 17:10:00', TIMESTAMP '2025-11-18 17:15:00'),
-  (1449, 'ORD-20251119-AB10', '스펙트럼 포스터 세트', 1000, 1230, 'PAID', 15400000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-19 09:20:00', TIMESTAMP '2025-11-19 09:25:00'),
-  (1450, 'ORD-20251120-AB11', '스펙트럼 포스터 세트 추가', 1000, 1230, 'PAID', 6600000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-20 10:20:00', TIMESTAMP '2025-11-20 10:25:00'),
-  (1451, 'ORD-20251121-AB12', '더라이트 포토북', 1000, 1232, 'PAID', 36400000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'NONE', TIMESTAMP '2025-11-21 11:20:00', TIMESTAMP '2025-11-21 11:25:00');
+  (1440, 'ORD-20251110-AB01', '에어브릿지 듀얼팩', 1000, 1216, 'PAID', 21000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-10 09:10:00', TIMESTAMP '2025-11-10 09:15:00'),
+  (1441, 'ORD-20251111-AB02', '모노브릭 풀세트', 1000, 1218, 'PAID', 26000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-11 10:10:00', TIMESTAMP '2025-11-11 10:15:00'),
+  (1442, 'ORD-20251112-AB03', '스모크버터 스테이크 키트', 1000, 1220, 'PAID', 52500000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-12 11:10:00', TIMESTAMP '2025-11-12 11:15:00'),
+  (1443, 'ORD-20251113-AB04', '시에라라인 재킷', 1000, 1222, 'PAID', 28000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-13 12:10:00', TIMESTAMP '2025-11-13 12:15:00'),
+  (1444, 'ORD-20251114-AB05', '시에라라인 재킷 추가', 1000, 1222, 'PENDING', 12000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-14 13:10:00', TIMESTAMP '2025-11-14 13:15:00'),
+  (1445, 'ORD-20251115-AB06', '미드나잇 세럼 듀오', 1000, 1224, 'PAID', 27500000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-15 14:10:00', TIMESTAMP '2025-11-15 14:15:00'),
+  (1446, 'ORD-20251116-AB07', '엘름우드 스탠드', 1000, 1226, 'PAID', 21000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-16 15:10:00', TIMESTAMP '2025-11-16 15:15:00'),
+  (1447, 'ORD-20251117-AB08', '엘름우드 스탠드 추가', 1000, 1226, 'PENDING', 9000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-17 16:10:00', TIMESTAMP '2025-11-17 16:15:00'),
+  (1448, 'ORD-20251118-AB09', '아크폴리 얼리버드', 1000, 1228, 'PAID', 55000000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-18 17:10:00', TIMESTAMP '2025-11-18 17:15:00'),
+  (1449, 'ORD-20251119-AB10', '스펙트럼 포스터 세트', 1000, 1230, 'PAID', 15400000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-19 09:20:00', TIMESTAMP '2025-11-19 09:25:00'),
+  (1450, 'ORD-20251120-AB11', '스펙트럼 포스터 세트 추가', 1000, 1230, 'PAID', 6600000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-20 10:20:00', TIMESTAMP '2025-11-20 10:25:00'),
+  (1451, 'ORD-20251121-AB12', '더라이트 포토북', 1000, 1232, 'PAID', 36400000, '서포터1', '010-2000-0001', '서울시 강남구 강남대로 321', '501호', '06236', 'PREPARING', TIMESTAMP '2025-11-21 11:20:00', TIMESTAMP '2025-11-21 11:25:00');
 
 INSERT INTO order_items (order_id, reward_id, reward_name, reward_price, quantity, subtotal, note) VALUES
   (1440, 1316, '에어브릿지 듀얼팩', 21000000, 1, 21000000, '고액 단일 주문'),
@@ -1188,7 +1316,7 @@ INSERT INTO platform_wallet_transactions (wallet_id, type, amount, balance_after
 UPDATE platform_wallets SET total_balance = 38693000, total_platform_fee = 38693000, updated_at = TIMESTAMP '2025-11-21 11:22:00' WHERE id = 1;
 
 -- 시퀀스/IDENTITY RESTART 업데이트 (최대 ID 기준)
-ALTER SEQUENCE user_id_seq RESTART WITH 1100;
+ALTER SEQUENCE user_id_seq RESTART WITH 2600;
 ALTER SEQUENCE maker_id_seq RESTART WITH 1100;
 ALTER SEQUENCE project_id_seq RESTART WITH 1400;
 ALTER SEQUENCE reward_id_seq RESTART WITH 1500;
@@ -1205,3 +1333,4 @@ ALTER TABLE project_wallet_transactions ALTER COLUMN id RESTART WITH 3000;
 ALTER TABLE project_wallets ALTER COLUMN id RESTART WITH 100;
 ALTER TABLE maker_wallets ALTER COLUMN id RESTART WITH 100;
 ALTER TABLE settlements ALTER COLUMN id RESTART WITH 4000;
+COMMIT;

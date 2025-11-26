@@ -3,6 +3,7 @@ package com.moa.backend.domain.notification.service;
 
 import com.moa.backend.domain.notification.dto.NotificationResponse;
 import com.moa.backend.domain.notification.entity.Notification;
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 import com.moa.backend.domain.notification.repository.NotificationRepository;
 import com.moa.backend.domain.notification.sse.service.SseNotificationService;
@@ -25,12 +26,15 @@ public class NotificationServiceImpl implements NotificationService {
     // 알림 전송
     @Override
     @Transactional
-    public Notification send(Long receiverId, String title, String message, NotificationType type) {
+    public Notification send(Long receiverId, String title, String message, NotificationType type,
+                             NotificationTargetType targetType, Long targetId) {
         Notification notification = Notification.builder()
                 .receiverId(receiverId)
                 .title(title)
                 .message(message)
                 .type(type)
+                .targetId(targetId)
+                .targetType(targetType)
                 .build();
 
         notificationRepository.save(notification);

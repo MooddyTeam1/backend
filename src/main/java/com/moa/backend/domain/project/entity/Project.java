@@ -140,4 +140,38 @@ public class Project {
         rewards.add(reward);
         reward.setProject(this);
     }
+
+    /**
+     * 한글 설명: 프로젝트 승인 처리 도메인 메서드.
+     * - reviewStatus 를 APPROVED 로 변경
+     * - approvedAt, updatedAt 설정
+     * - 이전 반려 기록 초기화
+     */
+    public void approve() {
+        if (this.reviewStatus != ProjectReviewStatus.REVIEW) {
+            throw new IllegalStateException("심사 중인 프로젝트만 승인할 수 있습니다.");
+        }
+        this.reviewStatus = ProjectReviewStatus.APPROVED;
+        this.approvedAt = LocalDateTime.now();
+        this.rejectedAt = null;
+        this.rejectedReason = null;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 한글 설명: 프로젝트 반려 처리 도메인 메서드.
+     * - reviewStatus 를 REJECTED 로 변경
+     * - rejectedAt, rejectedReason, updatedAt 설정
+     * - 이전 승인 기록 초기화
+     */
+    public void reject(String reason) {
+        if (this.reviewStatus != ProjectReviewStatus.REVIEW) {
+            throw new IllegalStateException("심사 중인 프로젝트만 반려할 수 있습니다.");
+        }
+        this.reviewStatus = ProjectReviewStatus.REJECTED;
+        this.rejectedAt = LocalDateTime.now();
+        this.rejectedReason = reason;
+        this.approvedAt = null;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
