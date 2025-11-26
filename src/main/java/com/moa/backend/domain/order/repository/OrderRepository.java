@@ -307,7 +307,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                COALESCE(SUM(o.totalAmount), 0) as fundingAmount,
                p.goalAmount as goalAmount,
                (COALESCE(SUM(o.totalAmount), 0) * 100.0 / p.goalAmount) as achievementRate,
-               p.endDate as endDate
+               FUNCTION('timestampdiff', DAY, CURRENT_DATE, p.endDate) as remainingDays
         FROM Order o
         JOIN o.project p
         JOIN p.maker m
@@ -328,7 +328,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 결과: Object[] {hour(INT), count(LONG), amount(LONG)}
      */
     @Query("""
-        SELECT extract(hour from o.createdAt) as hour,
+        SELECT FUNCTION('HOUR', o.createdAt) as hour,
                COUNT(o) as orderCount,
                COALESCE(SUM(o.totalAmount), 0) as totalAmount
         FROM Order o
@@ -337,7 +337,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
           AND o.status = :status
           AND (:category IS NULL OR p.category = :category)
           AND (:makerId IS NULL OR p.maker.id = :makerId)
-        GROUP BY extract(hour from o.createdAt)
+        GROUP BY FUNCTION('HOUR', o.createdAt)
         ORDER BY hour
         """)
     List<Object[]> findHourlyStatsByStatusAndFilters(

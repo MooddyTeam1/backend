@@ -1,7 +1,12 @@
 // 한글 설명: 프로젝트 Q&A 서비스 구현체
 package com.moa.backend.domain.qna.service;
 
+import com.moa.backend.domain.follow.repository.SupporterBookmarkProjectRepository;
 import com.moa.backend.domain.maker.dto.manageproject.ProjectQnaResponse;
+import com.moa.backend.domain.maker.entity.Maker;
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
+import com.moa.backend.domain.notification.entity.NotificationType;
+import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.qna.dto.ProjectQnaAnswerRequest;
@@ -33,6 +38,8 @@ public class ProjectQnaServiceImpl implements ProjectQnaService {
     private final UserRepository userRepository;
     private final ProjectQnaRepository projectQnaRepository;
     private final SupporterProfileRepository supporterProfileRepository; // 한글 설명: 서포터 닉네임 조회용
+    private final SupporterBookmarkProjectRepository supporterBookmarkProjectRepository;
+    private final NotificationService notificationService;
 
     // ==========================
     // 1) 서포터: 질문 생성
@@ -61,6 +68,19 @@ public class ProjectQnaServiceImpl implements ProjectQnaService {
                 .build();
 
         ProjectQna saved = projectQnaRepository.save(qna);
+
+        // QnA 등록 시 메이커에게 알림
+        Maker maker = project.getMaker();
+
+        notificationService.send(
+                maker.getId(),                          // 메이커에게 발송
+                "새 Q&A 질문이 등록되었습니다",
+                "[" + project.getTitle() + "] 새로운 질문이 등록되었습니다: \"" + request.getQuestion() + "\"",
+                NotificationType.MAKER,                 // 메이커 알림 타입
+                NotificationTargetType.QNA,             // QNA 타겟
+                qna.getId()                          // 저장된 QNA ID로 상세 페이지 이동
+        );
+
         return toResponse(saved);
     }
 
@@ -125,6 +145,19 @@ public class ProjectQnaServiceImpl implements ProjectQnaService {
         qna.setAnswer(request.getAnswer());
         qna.setStatus(ProjectQnaStatus.ANSWERED);
         qna.setAnsweredAt(LocalDateTime.now());
+
+        // QnA 답변 시 질문자(서포터)에게 알림
+        User questioner = qna.getQuestioner();
+        Project project = qna.getProject();
+
+        notificationService.send(
+                questioner.getId(),                     // 질문을 작성한 서포터
+                "Q&A 답변이 등록되었습니다",
+                "[" + project.getTitle() + "] 질문에 대한 답변이 등록되었습니다.",
+                NotificationType.SUPPORTER,             // 서포터 알림
+                NotificationTargetType.QNA,             // QNA 상세 페이지로 이동
+                qna.getId()                             // QnA ID
+        );
 
         return toResponse(qna);
     }
