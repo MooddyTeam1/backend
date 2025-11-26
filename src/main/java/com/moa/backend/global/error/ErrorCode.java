@@ -18,6 +18,10 @@ public enum ErrorCode {
     NOT_FOUND("COMM-404", HttpStatus.NOT_FOUND, "요청하신 대상을 찾을 수 없습니다."),
     BUSINESS_CONFLICT("BUSN-409", HttpStatus.CONFLICT, "요청이 현재 상태와 충돌합니다."),
 
+    // 🔹 User / Profile 관련
+    USER_NOT_FOUND("USR-404", HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
+    SUPPORTER_PROFILE_NOT_FOUND("SUP-404", HttpStatus.NOT_FOUND, "서포터 프로필을 찾을 수 없습니다."),
+
     ORDER_NOT_FOUND("ORD-404", HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."),
     ORDER_ALREADY_PAID("ORD-409", HttpStatus.CONFLICT, "이미 결제 완료된 주문입니다."),
 
@@ -63,6 +67,14 @@ public enum ErrorCode {
     SETTLEMENT_ALREADY_PROCESSED("SET-409", HttpStatus.CONFLICT, "이미 처리된 정산입니다."),
     SETTLEMENT_NOT_READY("SET-410", HttpStatus.CONFLICT, "정산 상태가 요구 조건을 충족하지 않습니다."),
     ALREADY_PROCESSED("COMM-409-02", HttpStatus.CONFLICT, "이미 처리된 요청입니다."),
+
+    // Maker
+    MAKER_NOT_FOUND("MAKER-404", HttpStatus.NOT_FOUND, "메이커 정보를 찾을 수 없습니다."),
+    ACCESS_DENIED("AUTH-403-02", HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+
+    //notification
+    NOTIFICATION_NOT_FOUND("NOT-404", HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다."),
+    NOTIFICATION_NOT_READ("NOT-403", HttpStatus.FORBIDDEN, "알림을 읽을 권한이 없습니다."),
 
     // 서버 내부 오류
     INTERNAL_ERROR("SYS-500", HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");

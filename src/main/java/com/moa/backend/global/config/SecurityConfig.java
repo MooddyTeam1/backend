@@ -79,7 +79,17 @@ public class SecurityConfig {
                                 "/project/category",
                                 "/project/closing-soon",
                                 "/project/id/**",
-                                "/uploads/**"
+                                "/uploads/**",
+                                // ✅ API 문서 접근 허용 (Swagger / SpringDoc)
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                // 🔥 새로 추가한 공개 프로젝트 홈용 API
+                                "/public/projects/**",
+                                "/notifications/subscribe",
+                                "/notifications/test/**",
+                                "/public/**",
+                                "/api/makers/**"
 
                         ).permitAll()
                         .anyRequest().authenticated()
@@ -131,7 +141,7 @@ public class SecurityConfig {
         // ✅ 프론트엔드 주소(Origin) 허용 (Vite dev server)
         config.setAllowedOriginPatterns(java.util.List.of(
                 "http://localhost:5173",
-                "https://frontend-97n5meqb9-jinhyuns-projects-6d19dc50.vercel.app/"
+                "https://frontend-97n5meqb9-jinhyuns-projects-6d19dc50.vercel.app"
                 // "https://moa-frontend.vercel.app"  // 나중에 실제 도메인 나오면 이렇게 명시적으로 추가해도 됨
         ));
 

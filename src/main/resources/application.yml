@@ -11,17 +11,37 @@ toss:
 spring:
   application:
     name: backend
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 32MB
 
   sql:
     init:
       mode: always
-      data-locations: classpath:data-postgres.sql   # ✅ 여기! spring.sql.init.* 로 인식됨
+      data-locations: classpath:data-postgres.sql
+
+  mail:
+    host: smtp.naver.com                # 한글 설명: 네이버 SMTP 서버 주소
+    port: 465                           # 한글 설명: SSL 포트 (587 + starttls 도 가능)
+    username: ${NAVER_MAIL_USERNAME}    # 한글 설명: 네이버 메일 주소 (예: mymail@naver.com)
+    password: ${NAVER_MAIL_PASSWORD}    # 한글 설명: 앱 비밀번호 또는 계정 비밀번호(권장 X)
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true                    # 한글 설명: SMTP 인증 사용
+          ssl:
+            enable: true                # 한글 설명: SSL 사용 (465 포트인 경우)
+          starttls:
+            enable: false               # 한글 설명: 465+SSL 쓸 거면 false, 587이면 true
+    default-encoding: UTF-8
 
   security:
     oauth2:
       client:
         registration:
-          google:        # ✅ 구글 OAuth2 설정
+          google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             redirect-uri: http://localhost:8080/login/oauth2/code/google
@@ -29,9 +49,9 @@ spring:
               - profile
               - email
 
-          kakao:         # ✅ 카카오 OAuth2 설정
+          kakao:
             client-id: ${KAKAO_CLIENT_ID}
-            client-secret: ${KAKAO_CLIENT_SECRET}  # 대부분 비워도 무방
+            client-secret: ${KAKAO_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
             redirect-uri: http://localhost:8080/login/oauth2/code/kakao
@@ -41,26 +61,31 @@ spring:
             provider: kakao
 
         provider:
-          kakao:         # ✅ 카카오 OAuth2 Provider 엔드포인트 지정
+          kakao:
             authorization-uri: https://kauth.kakao.com/oauth/authorize
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/moa  # ✅ docker run에서 지정한 DB 이름(moa)에 접속
-    driver-class-name: org.postgresql.Driver   # ✅ Postgres JDBC 드라이버
-    username: moa                              # ✅ POSTGRES_USER와 동일
-    password: moa1234                          # ✅ POSTGRES_PASSWORD와 동일
+    url: jdbc:postgresql://localhost:5432/moa
+    driver-class-name: org.postgresql.Driver
+    username: moa
+    password: moa1234
 
   jpa:
     hibernate:
-      ddl-auto: update                         # ✅ 개발용: 엔티티 기반으로 테이블 자동 생성/수정
-    show-sql: true                             # ✅ 실행되는 SQL 로그 출력
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
-        format_sql: true                       # ✅ SQL 로그 포맷팅
-        dialect: org.hibernate.dialect.PostgreSQLDialect  # ✅ Postgres용 방언 설정 (사실 안 써도 됨)
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha        # 태그를 알파벳 순으로 정렬 (Auth가 최상단)
+    operations-sorter: alpha  # 같은 태그 내 엔드포인트를 알파벳 순 정렬
 
 logging:
   level:
@@ -68,6 +93,16 @@ logging:
     org.springframework.web.client.RestTemplate: DEBUG
 
 app:
+  email:
+    verification-expiration-minutes: 10
+  password-reset:
+    base-url: "http://localhost:5173/password/reset"
+    token-validity-minutes: 60
   file-storage:
-    root-dir: ./uploads        # ✅ 실제 파일이 저장될 루트 디렉터리 (프로젝트 기준 상대경로)
-    image-dir: images          # ✅ 이미지 하위 디렉터리 (/uploads/images)
+    root-dir: ./uploads
+    image-dir: images
+
+openai:
+  base-url: https://api.openai.com        # 한글 설명: OpenAI API 기본 URL
+  api-key: ${OPENAI_API_KEY}             # 한글 설명: 환경변수에서 주입 (운영 서버/로컬에 export 필요)
+  model: gpt-4o-mini

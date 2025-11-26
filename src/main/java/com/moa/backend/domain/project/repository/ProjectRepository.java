@@ -1,15 +1,18 @@
 package com.moa.backend.domain.project.repository;
 
+import com.moa.backend.domain.project.dto.TrendingProjectResponse;
 import com.moa.backend.domain.project.entity.*;
-
+import com.moa.backend.domain.order.entity.OrderStatus;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
@@ -57,6 +60,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             LocalDate end
     );
 
+    List<Project> findByLifecycleStatusAndEndDate(
+            ProjectLifecycleStatus lifecycleStatus,
+            LocalDate date
+    );
+
     /**
      * 펀딩 종료 스케줄러가 처리할 프로젝트 목록 조회.
      * (LIVE + APPROVED + 아직 결과 미정 + 종료일 <= 기준일)
@@ -67,4 +75,326 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             ProjectResultStatus resultStatus,
             LocalDate endDate
     );
+
+    // 한글 설명: 라이프사이클/심사 상태 조건에 맞는 프로젝트 중,
+    // 서포터 찜(북마크) 개수가 많은 순으로 정렬하여 상위 N개를 조회한다.
+    @Query("""
+        SELECT new com.moa.backend.domain.project.dto.TrendingProjectResponse(
+            p.id,
+            p.title,
+            p.summary,
+            p.coverImageUrl,
+            p.category,
+            p.lifecycleStatus,
+            COUNT(sb.id)
+        )
+        FROM Project p
+        LEFT JOIN com.moa.backend.domain.follow.entity.SupporterBookmarkProject sb
+               ON sb.project = p
+        WHERE p.lifecycleStatus IN :statuses
+          AND p.reviewStatus = :reviewStatus
+        GROUP BY p.id, p.title, p.summary, p.coverImageUrl, p.category, p.lifecycleStatus
+        HAVING COUNT(sb.id) > 0
+        ORDER BY COUNT(sb.id) DESC, p.createdAt DESC
+        """)
+    List<TrendingProjectResponse> findTrendingProjects(
+            @Param("statuses") List<ProjectLifecycleStatus> statuses,
+            @Param("reviewStatus") ProjectReviewStatus reviewStatus,
+            Pageable pageable
+    );
+
+    /**
+     * 한글 설명: 최근 업로드된(생성일 기준) 신규 프로젝트 조회.
+     * - 조건: 지정한 라이프사이클 상태 목록 + 특정 심사 상태 + createdAt >= 기준일
+     * - 정렬: createdAt 내림차순(가장 최근 생성 프로젝트부터)
+     */
+    @Query("""
+        SELECT p
+        FROM Project p
+        WHERE p.lifecycleStatus IN :statuses
+          AND p.reviewStatus = :reviewStatus
+          AND p.createdAt >= :createdAfter
+        ORDER BY p.createdAt DESC
+        """)
+    List<Project> findNewlyUploadedProjects(
+            @Param("statuses") List<ProjectLifecycleStatus> statuses,
+            @Param("reviewStatus") ProjectReviewStatus reviewStatus,
+            @Param("createdAfter") LocalDateTime createdAfter,
+            Pageable pageable
+    );
+    /**
+     * 한글 설명: 과거에 성공(SUCCESS)한 프로젝트가 하나 이상 있는 메이커의
+     * 현재 진행/공개 예정(LIVE/SCHEDULED) 프로젝트를 조회한다.
+     * - 조건: p.lifecycleStatus IN (:statuses)
+     *        p.reviewStatus = :reviewStatus
+     *        EXISTS (과거 성공 프로젝트)
+     * - 정렬: 최신 생성일(createdAt) 내림차순
+     */
+    @Query("""
+        SELECT p
+        FROM Project p
+        WHERE p.lifecycleStatus IN :statuses
+          AND p.reviewStatus = :reviewStatus
+          AND EXISTS (
+              SELECT 1
+              FROM Project past
+              WHERE past.maker = p.maker
+                AND past.resultStatus = :successResult
+          )
+        ORDER BY p.createdAt DESC
+        """)
+    List<Project> findNewProjectsBySuccessfulMakers(
+            @Param("statuses") List<ProjectLifecycleStatus> statuses,
+            @Param("reviewStatus") ProjectReviewStatus reviewStatus,
+            @Param("successResult") ProjectResultStatus successResult,
+            Pageable pageable
+    );
+    /**
+     * 한글 설명: 해당 메이커에게 이 프로젝트가 '첫 프로젝트'인 경우만 조회한다.
+     * - 조건: p.lifecycleStatus IN (:statuses)
+     *        p.reviewStatus = :reviewStatus
+     *        NOT EXISTS (같은 메이커의 다른 프로젝트)
+     *   → 즉, 메이커 입장에서 아직 이 프로젝트 하나만 존재하는 상태.
+     */
+    @Query("""
+        SELECT p
+        FROM Project p
+        WHERE p.lifecycleStatus IN :statuses
+          AND p.reviewStatus = :reviewStatus
+          AND NOT EXISTS (
+              SELECT 1
+              FROM Project other
+              WHERE other.maker = p.maker
+                AND other.id <> p.id
+          )
+        ORDER BY p.createdAt DESC
+        """)
+    List<Project> findFirstChallengeMakerProjects(
+            @Param("statuses") List<ProjectLifecycleStatus> statuses,
+            @Param("reviewStatus") ProjectReviewStatus reviewStatus,
+            Pageable pageable
+    );
+
+
+    /**
+     * 한글 설명:
+     * - 최근에 생성된(업로드된) 프로젝트를 가져온다.
+     * - 상태는 'LIVE' 또는 'SCHEDULED' 이면서, 심사 상태는 'APPROVED' 인 것만.
+     * - createdAt 기준 최신순 정렬.
+     */
+    @Query("""
+        select p
+        from Project p
+        where p.lifecycleStatus in :lifecycleStatuses
+          and p.reviewStatus = :reviewStatus
+        order by p.createdAt desc
+        """)
+    List<Project> findNewProjectsForHome(
+            List<ProjectLifecycleStatus> lifecycleStatuses,
+            ProjectReviewStatus reviewStatus,
+            Pageable pageable
+    );
+
+    // ========== 통계 API용 메서드 ==========
+
+    /**
+     * 기간별 신규 프로젝트 수
+     */
+    Long countByCreatedAtBetween(LocalDateTime startDateTime, LocalDateTime endDateTime);
+
+    /**
+     * 기간별 심사 요청된 프로젝트 수 (REVIEW)
+     */
+    Long countByReviewStatusAndCreatedAtBetween(
+            ProjectReviewStatus reviewStatus,
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
+    );
+
+    /**
+     * 기간별 승인 완료된 프로젝트 수 (APPROVED)
+     */
+    Long countByReviewStatusAndApprovedAtBetween(
+            ProjectReviewStatus reviewStatus,
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
+    );
+
+    /**
+     * 기간 내 종료된 프로젝트 수 (ENDED, endDate 기준)
+     */
+    Long countByLifecycleStatusAndEndDateBetween(
+            ProjectLifecycleStatus lifecycleStatus,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 종료일 기준 결과 상태 카운트
+     */
+    Long countByResultStatusAndEndDateBetween(
+            ProjectResultStatus resultStatus,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 시작일 기준 카운트
+     */
+    Long countByStartDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 시작일 기준 + 결과 상태 카운트
+     */
+    Long countByStartDateBetweenAndResultStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 종료일 기준 카운트
+     */
+    Long countByEndDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 종료일 기준 + 결과 상태 카운트
+     */
+    Long countByEndDateBetweenAndResultStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 목표금액 구간 + 종료일 기준 카운트
+     */
+    Long countByGoalAmountBetweenAndEndDateBetween(
+            Long minGoal,
+            Long maxGoal,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 목표금액 구간 + 종료일 + 결과 상태 카운트
+     */
+    Long countByGoalAmountBetweenAndEndDateBetweenAndResultStatus(
+            Long minGoal,
+            Long maxGoal,
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 카테고리별 종료일 기준 카운트
+     */
+    Long countByCategoryAndEndDateBetween(
+            Category category,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    /**
+     * 카테고리별 종료일 + 결과 상태 카운트
+     */
+    Long countByCategoryAndEndDateBetweenAndResultStatus(
+            Category category,
+            LocalDate startDate,
+            LocalDate endDate,
+            ProjectResultStatus resultStatus
+    );
+
+    /**
+     * 프로젝트 성과 리포트용 집계 (프로젝트별)
+     * 결과: Object[] {projectId, projectName, makerId, makerName, category, goalAmount, endDate, resultStatus, fundingAmount, supporterCount, bookmarkCount}
+     */
+    @Query("""
+        SELECT p.id,
+               p.title,
+               m.id,
+               m.name,
+               p.category,
+               p.goalAmount,
+               p.endDate,
+               p.resultStatus,
+               COALESCE(SUM(o.totalAmount), 0) as fundingAmount,
+               COUNT(DISTINCT o.user.id) as supporterCount,
+               COUNT(DISTINCT sb.id) as bookmarkCount
+        FROM Project p
+        JOIN p.maker m
+        LEFT JOIN Order o ON o.project = p AND o.status = :status
+        LEFT JOIN com.moa.backend.domain.follow.entity.SupporterBookmarkProject sb
+               ON sb.project = p
+        WHERE (:category IS NULL OR p.category = :category)
+          AND (:makerId IS NULL OR m.id = :makerId)
+        GROUP BY p.id, p.title, m.id, m.name, p.category, p.goalAmount, p.endDate, p.resultStatus
+        ORDER BY COALESCE(SUM(o.totalAmount), 0) DESC
+        """)
+    List<Object[]> findProjectPerformanceStats(
+            @Param("status") OrderStatus status,
+            @Param("category") Category category,
+            @Param("makerId") Long makerId
+    );
+
+    // 한글 설명: '예정되어 있는 펀딩' 섹션용 프로젝트 조회
+// - 조건:
+//   - lifecycleStatus = SCHEDULED
+//   - reviewStatus = APPROVED
+//   - liveStartAt >= now (아직 시작 전이거나 곧 시작할 프로젝트)
+//   - (선택) liveEndAt > now 인 경우만 포함하고 싶으면 AND 조건 추가
+    @Query("""
+    SELECT p
+    FROM Project p
+    WHERE p.lifecycleStatus = :lifecycleStatus
+      AND p.reviewStatus = :reviewStatus
+      AND p.liveStartAt >= :now
+    ORDER BY p.liveStartAt ASC, p.createdAt DESC
+    """)
+    List<Project> findScheduledProjects(
+            @Param("lifecycleStatus") ProjectLifecycleStatus lifecycleStatus,
+            @Param("reviewStatus") ProjectReviewStatus reviewStatus,
+            @Param("now") LocalDateTime now,
+            Pageable pageable
+    );
+
+    /**
+     * 한글 설명:
+     * - 프로젝트 ID와 메이커 소유자(user.id)로 권한 체크용 존재 여부 확인.
+     * - ownerUserId == users.id (Maker.owner.id)
+     */
+    boolean existsByIdAndMaker_Owner_Id(Long projectId, Long ownerUserId);
+
+    /**
+     * 한글 설명: 특정 메이커(maker.id)에 속한 모든 프로젝트 조회.
+     * - 메이커 마이페이지(내 프로젝트 관리)에서 기본 데이터 소스로 사용한다.
+     */
+    List<Project> findAllByMakerId(Long makerId);
+
+    /**
+     * 한글 설명:
+     * 메이커 홈(공개 화면)에서 사용할 프로젝트 목록 조회용 쿼리.
+     *
+     * 포함되는 프로젝트:
+     *  - lifecycleStatus = SCHEDULED (공개 예정)
+     *  - lifecycleStatus = LIVE (진행 중)
+     *  - lifecycleStatus = ENDED 이면서 resultStatus = SUCCESS (성공 종료)
+     *
+     * 정렬은 Pageable의 Sort 설정을 그대로 사용한다.
+     */
+    @Query("""
+        select p
+        from Project p
+        where p.maker.id = :makerId
+          and (
+              p.lifecycleStatus = com.moa.backend.domain.project.entity.ProjectLifecycleStatus.SCHEDULED
+              or p.lifecycleStatus = com.moa.backend.domain.project.entity.ProjectLifecycleStatus.LIVE
+              or (
+                    p.lifecycleStatus = com.moa.backend.domain.project.entity.ProjectLifecycleStatus.ENDED
+                and p.resultStatus = com.moa.backend.domain.project.entity.ProjectResultStatus.SUCCESS
+              )
+          )
+        """)
+    Page<Project> findMakerPublicProjects(@Param("makerId") Long makerId, Pageable pageable);
 }

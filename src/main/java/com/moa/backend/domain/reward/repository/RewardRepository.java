@@ -19,5 +19,10 @@ public interface RewardRepository extends JpaRepository<Reward, Long> {
     Optional<Reward> findByIdAndProjectId(Long rewardId, Long projectId);
 
     void deleteByProject(Project project);
+
+    // 한글 설명: 프로젝트 ID 기준으로 해당 프로젝트에 속한 리워드 전체 조회
+    // - Maker 프로젝트 관리화면에서 리워드 목록/요약 정보 조회용
+    List<Reward> findByProject_Id(Long projectId);
+
 }
 

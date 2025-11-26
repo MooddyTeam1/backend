@@ -2,6 +2,8 @@
 package com.moa.backend.domain.image;
 
 import com.moa.backend.global.file.LocalFileStorageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/uploads")
 @RequiredArgsConstructor
+@Tag(name = "Upload", description = "이미지 업로드")
 public class ImageUploadController {
 
     private final LocalFileStorageService fileStorageService;
@@ -34,6 +37,7 @@ public class ImageUploadController {
      *  - @RequestParam("usage") ImageUsage usage 파라미터를 다시 살리면 됨
      */
     @PostMapping("/images")
+    @Operation(summary = "이미지 업로드(단일)")
     public ResponseEntity<ImageUploadResponse> uploadImage(
             @RequestParam("file") MultipartFile file
             // 🔴 지금은 사용 안 하는 용도 파라미터 (필요해지면 주석 해제)
@@ -60,6 +64,7 @@ public class ImageUploadController {
         return ResponseEntity.ok(response);
     }
     @PostMapping("/images/batch")
+    @Operation(summary = "이미지 업로드(배치)")
     public ResponseEntity<List<ImageUploadResponse>> uploadImages(
             @RequestParam("files") List<MultipartFile> files // ✅ 여러 개 받기
     ) throws IOException {

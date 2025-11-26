@@ -69,6 +69,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknownException(Exception ex) {
         ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
+        ex.printStackTrace();
         return ResponseEntity.status(errorCode.getStatus())
             .body(new ErrorResponse(
                 errorCode.getStatus().value(),
