@@ -70,4 +70,14 @@ public class StatisticsAdminController {
     ) {
         return statisticsService.getProjectPerformance(category, makerId);
     }
+
+    @GetMapping("/funnel")
+    @Operation(summary = "퍼널 리포트 조회")
+    public com.moa.backend.domain.admin.dto.statistics.funnel.FunnelReportDto getFunnelReport(
+            @Parameter(example = "2025-11-01") @RequestParam("startDate") java.time.LocalDate startDate,
+            @Parameter(example = "2025-11-30") @RequestParam("endDate") java.time.LocalDate endDate,
+            @Parameter(example = "1201") @RequestParam(value = "projectId", required = false) Long projectId
+    ) {
+        return statisticsService.getFunnelReport(startDate, endDate, projectId);
+    }
 }

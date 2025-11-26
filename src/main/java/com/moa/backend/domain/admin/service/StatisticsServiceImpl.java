@@ -17,6 +17,8 @@ import com.moa.backend.domain.admin.dto.statistics.daily.PaymentStatisticsDto;
 import com.moa.backend.domain.admin.dto.statistics.daily.ProjectActivityDto;
 import com.moa.backend.domain.admin.dto.statistics.daily.ProjectDetailDto;
 import com.moa.backend.domain.admin.dto.statistics.daily.TrafficDto;
+import com.moa.backend.domain.admin.dto.statistics.funnel.FunnelReportDto;
+import com.moa.backend.domain.admin.dto.statistics.funnel.FunnelStepDto;
 import com.moa.backend.domain.admin.dto.statistics.monthly.CategorySuccessItemDto;
 import com.moa.backend.domain.admin.dto.statistics.monthly.CategorySuccessRateDto;
 import com.moa.backend.domain.admin.dto.statistics.monthly.GoalAmountRangeDto;
@@ -570,9 +572,8 @@ public class StatisticsServiceImpl implements StatisticsService {
                     Long fundingAmount = ((Number) row[3]).longValue();
                     Long goalAmount = ((Number) row[4]).longValue();
                     Double achievementRate = ((Number) row[5]).doubleValue();
-                    LocalDate endDate = (LocalDate) row[6];
-                    Integer remainingDays = endDate == null ? 0 :
-                            (int) ChronoUnit.DAYS.between(LocalDate.now(), endDate);
+                    // row[6]은 JPQL에서 timestampdiff 결과로 Number 타입(일 수)로 반환된다.
+                    Integer remainingDays = row[6] == null ? 0 : ((Number) row[6]).intValue();
 
                     return TopProjectDto.builder()
                             .projectId(projectId)
@@ -1102,6 +1103,50 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .makerAverages(makerAverages)
                 .riskProjects(riskProjects)
                 .opportunityProjects(opportunityProjects)
+                .build();
+    }
+
+    /**
+     * 퍼널 리포트 조회 (데이터 미수집 상태라 0값으로 응답)
+     */
+    @Override
+    public FunnelReportDto getFunnelReport(LocalDate startDate, LocalDate endDate, Long projectId) {
+        List<FunnelStepDto> steps = List.of(
+                FunnelStepDto.builder()
+                        .stepName("카드 노출")
+                        .eventType("PROJECT_CARD_IMPRESSION")
+                        .count(0L)
+                        .conversionRate(0.0)
+                        .dropOffRate(0.0)
+                        .build(),
+                FunnelStepDto.builder()
+                        .stepName("상세 조회")
+                        .eventType("PROJECT_VIEW")
+                        .count(0L)
+                        .conversionRate(0.0)
+                        .dropOffRate(0.0)
+                        .build(),
+                FunnelStepDto.builder()
+                        .stepName("결제 시도")
+                        .eventType("CHECKOUT_ATTEMPT")
+                        .count(0L)
+                        .conversionRate(0.0)
+                        .dropOffRate(0.0)
+                        .build(),
+                FunnelStepDto.builder()
+                        .stepName("결제 완료")
+                        .eventType("PAYMENT_SUCCESS")
+                        .count(0L)
+                        .conversionRate(0.0)
+                        .dropOffRate(0.0)
+                        .build()
+        );
+
+        return FunnelReportDto.builder()
+                .startDate(startDate)
+                .endDate(endDate)
+                .steps(steps)
+                .totalConversionRate(0.0)
                 .build();
     }
 
