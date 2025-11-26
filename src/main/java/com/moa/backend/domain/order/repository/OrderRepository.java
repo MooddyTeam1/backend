@@ -328,7 +328,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 결과: Object[] {hour(INT), count(LONG), amount(LONG)}
      */
     @Query("""
-        SELECT FUNCTION('DATE_PART', 'hour', o.createdAt) as hour,
+        SELECT extract(hour from o.createdAt) as hour,
                COUNT(o) as orderCount,
                COALESCE(SUM(o.totalAmount), 0) as totalAmount
         FROM Order o
@@ -337,7 +337,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
           AND o.status = :status
           AND (:category IS NULL OR p.category = :category)
           AND (:makerId IS NULL OR p.maker.id = :makerId)
-        GROUP BY FUNCTION('DATE_PART', 'hour', o.createdAt)
+        GROUP BY extract(hour from o.createdAt)
         ORDER BY hour
         """)
     List<Object[]> findHourlyStatsByStatusAndFilters(
