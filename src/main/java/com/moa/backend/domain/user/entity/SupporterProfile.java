@@ -1,11 +1,15 @@
 package com.moa.backend.domain.user.entity;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moa.backend.domain.onboarding.model.AcquisitionChannel;
 import com.moa.backend.domain.onboarding.model.BudgetRange;
 import com.moa.backend.domain.onboarding.model.FundingExperience;
 import com.moa.backend.domain.onboarding.model.NotificationPreference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -200,5 +204,27 @@ public class SupporterProfile {
 
     public void updateNotificationPreference(NotificationPreference preference) {
         this.notificationPreference = preference;
+    }
+
+    // 관심 카테고리 JSON → List<String>
+    public List<String> getInterestCategories() {
+        if (interests == null || interests.isEmpty()) return List.of();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(interests, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    // 스타일 JSON → List<String>
+    public List<String> getPreferredStylesList() {
+        if (preferredStyles == null || preferredStyles.isEmpty()) return List.of();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(preferredStyles, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 }

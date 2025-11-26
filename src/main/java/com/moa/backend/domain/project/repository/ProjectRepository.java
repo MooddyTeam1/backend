@@ -397,4 +397,34 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
           )
         """)
     Page<Project> findMakerPublicProjects(@Param("makerId") Long makerId, Pageable pageable);
+
+    /**
+     * 한글 설명: 서포터(사용자)의 관심 카테고리 기반으로 추천할 프로젝트 조회.
+     * - 카테고리는 온보딩 Step1에서 선택한 값(JSON) 기준.
+     * - 대소문자 섞인 입력을 방지하기 위해 UPPER()로 비교한다.
+     * - 현재 LIVE 상태이면서 심사 승인(Approved)된 프로젝트만 추천 대상으로 포함한다.
+     */
+    @Query("""
+        SELECT p
+        FROM Project p
+        WHERE UPPER(p.category) IN :categories
+          AND p.lifecycleStatus = 'LIVE'
+          AND p.reviewStatus = 'APPROVED'
+    """)
+    List<Project> findRecommendedByCategories(@Param("categories") List<String> categories);
+
+    /**
+     * 한글 설명: 특정 프로젝트에 대해 실제 결제 완료된 후원(주문) 수를 조회.
+     * - 추천 점수(인기도 가중치)에서 사용된다.
+     * - OrderStatus 의 PAID 상태만 집계 대상.
+     * - 취소된 주문(CANCELED) 및 결제 대기(PENDING)는 제외된다.
+     */
+    @Query("""
+        SELECT COUNT(o.id)
+        FROM Order o
+        WHERE o.project.id = :projectId
+          AND o.status = 'PAID'
+    """)
+    int countSupporters(@Param("projectId") Long projectId);
+
 }
