@@ -1,9 +1,9 @@
 package com.moa.backend.domain.notification.dto;
 
 import com.moa.backend.domain.notification.entity.Notification;
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -22,6 +22,10 @@ public class NotificationResponse {
     private String message;
     @Schema(description = "알림 타입", example = "SUPPORTER")
     private NotificationType type;
+    @Schema(description = "상세 페이지로 이동하기 위한 Target ID", example = "123")
+    private Long targetId;
+    @Schema(description = "알림 대상 타입 (페이지 이동 구분)", example = "ORDER")
+    private NotificationTargetType targetType;
     @Schema(description = "읽음 여부", example = "false")
     private boolean read;
     @Schema(description = "생성 시각", example = "2025-11-25T12:00:00")
@@ -33,6 +37,8 @@ public class NotificationResponse {
                 .title(notification.getTitle())
                 .message(notification.getMessage())
                 .type(notification.getType())
+                .targetId(notification.getTargetId())
+                .targetType(notification.getTargetType())
                 .read(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .build();

@@ -1,5 +1,6 @@
 package com.moa.backend.domain.order.scheduler;
 
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.order.entity.DeliveryStatus;
@@ -48,7 +49,9 @@ public class DeliveryScheduler {
                     receiverId,
                     "배송 준비중",
                     "주문하신 리워드가 곧 출고될 예정입니다.",
-                    NotificationType.SUPPORTER
+                    NotificationType.SUPPORTER,
+                    NotificationTargetType.ORDER,
+                    order.getId()
             );
         });
 
@@ -77,7 +80,9 @@ public class DeliveryScheduler {
                     receiverId,
                     "배송 출발",
                     "주문하신 리워드가 출발했습니다. 수령 후 '수령 완료' 버튼을 눌러주세요.",
-                    NotificationType.SUPPORTER
+                    NotificationType.SUPPORTER,
+                    NotificationTargetType.ORDER,
+                    order.getId()
             );
         });
 
@@ -103,7 +108,9 @@ public class DeliveryScheduler {
                     receiverId,
                     "배송 완료",
                     "주문하신 리워드가 도착한 것으로 확인되어 배송 완료 처리되었습니다.",
-                    NotificationType.SUPPORTER
+                    NotificationType.SUPPORTER,
+                    NotificationTargetType.ORDER,
+                    order.getId()
             );
         });
 

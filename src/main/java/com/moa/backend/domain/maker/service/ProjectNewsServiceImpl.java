@@ -1,9 +1,13 @@
 package com.moa.backend.domain.maker.service;
 
+import com.moa.backend.domain.follow.repository.SupporterBookmarkProjectRepository;
 import com.moa.backend.domain.maker.dto.ProjectNoticeCreateRequest;
 import com.moa.backend.domain.maker.dto.manageproject.ProjectNoticeResponse;
 import com.moa.backend.domain.maker.entity.ProjectNews;
 import com.moa.backend.domain.maker.repository.ProjectNewsRepository;
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
+import com.moa.backend.domain.notification.entity.NotificationType;
+import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.user.entity.User;
@@ -34,6 +38,8 @@ public class ProjectNewsServiceImpl implements ProjectNewsService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final ProjectNewsRepository projectNewsRepository;
+    private final NotificationService notificationService;
+    private final SupporterBookmarkProjectRepository supporterBookmarkProjectRepository;
 
     // ====================================================
     // 1) 소식 생성 (메이커 전용)
@@ -69,6 +75,22 @@ public class ProjectNewsServiceImpl implements ProjectNewsService {
                 .build();
 
         ProjectNews saved = projectNewsRepository.save(news);
+
+        // 이 프로젝트를 북마크한 서포터들만 알림
+        List<Long> supporterIds =
+                supporterBookmarkProjectRepository.findSupporterIdsByProject(project.getId());
+
+        if (!supporterIds.isEmpty()) {
+            supporterIds.forEach(userId -> notificationService.send(
+                    userId,
+                    "새 소식 안내",
+                    "[" + project.getTitle() + "] '" + request.getTitle() + "' 업데이트가 등록되었습니다!",
+                    NotificationType.SUPPORTER,
+                    NotificationTargetType.NEWS,
+                    news.getId()
+            ));
+        }
+
         return ProjectNoticeResponse.from(saved);
     }
 

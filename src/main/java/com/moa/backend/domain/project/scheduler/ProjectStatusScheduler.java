@@ -1,6 +1,7 @@
 package com.moa.backend.domain.project.scheduler;
 
 import com.moa.backend.domain.follow.repository.SupporterBookmarkProjectRepository;
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.order.repository.OrderRepository;
@@ -45,7 +46,9 @@ public class ProjectStatusScheduler {
                     receiverId,
                     "공개 예정 안내",
                     "[" + project.getTitle() + "] 프로젝트가 " + project.getStartDate() + "에 공개됩니다.",
-                    NotificationType.MAKER
+                    NotificationType.MAKER,
+                    NotificationTargetType.PROJECT,
+                    project.getId()
             );
         });
         projectRepository.saveAll(scheduled);
@@ -64,7 +67,9 @@ public class ProjectStatusScheduler {
                     receiverId,
                     "프로젝트 공개",
                     "[" + project.getTitle() + "] 프로젝트가 오늘부터 공개되었습니다!",
-                    NotificationType.MAKER
+                    NotificationType.MAKER,
+                    NotificationTargetType.PROJECT,
+                    project.getId()
             );
         });
         projectRepository.saveAll(live);
@@ -83,7 +88,9 @@ public class ProjectStatusScheduler {
                     receiverId,
                     "프로젝트 공개",
                     "[" + project.getTitle() + "] 프로젝트가 오늘부터 바로 공개되었습니다!",
-                    NotificationType.MAKER
+                    NotificationType.MAKER,
+                    NotificationTargetType.PROJECT,
+                    project.getId()
             );
         });
         projectRepository.saveAll(lived);
@@ -118,12 +125,14 @@ public class ProjectStatusScheduler {
                 message = "[" + project.getTitle() + "] 목표 금액 미달성으로 펀딩이 종료되었습니다.";
             }
 
-            // 6) 알림 발송
+            // 알림 발송
             notificationService.send(
                     receiverId,
                     title,
                     message,
-                    NotificationType.MAKER
+                    NotificationType.MAKER,
+                    NotificationTargetType.PROJECT,
+                    project.getId()
             );
         });
 
