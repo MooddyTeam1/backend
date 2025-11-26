@@ -202,12 +202,28 @@ public class ProjectTrafficQueryService {
 
             long safeViewCount = (viewCount != null) ? viewCount : 0L;
 
+            // Include funding metrics for most-viewed cards
+            long paidAmount = orderRepository
+                    .sumTotalAmountByProjectIdAndStatus(project.getId(), OrderStatus.PAID)
+                    .orElse(0L);
+            long supporterCount = getPaidSupporterCount(project.getId());
+
+            Integer achievementRate = null;
+            Long goal = project.getGoalAmount();
+            if (goal != null && goal > 0) {
+                double rate = (double) paidAmount / goal;
+                achievementRate = (int) Math.floor(rate * 100);
+            }
+
             // ✅ 한글 설명: 공통 카드 + 트래픽 필드를 담은 ProjectListResponse로 변환
             result.add(
-                    ProjectListResponse.fromMostViewed(
+                    ProjectListResponse.fromMostViewedWithFunding(
                             project,
                             safeViewCount,
-                            windowLabel
+                            windowLabel,
+                            paidAmount,
+                            supporterCount,
+                            achievementRate
                     )
             );
         }
@@ -378,11 +394,13 @@ public class ProjectTrafficQueryService {
                     }
 
                     // ✅ 공통 카드 + 트래킹/결제 지표를 함께 세팅한 ProjectListResponse 생성
+                    long supporterCount = getPaidSupporterCount(project.getId());
                     return ProjectListResponse.fromTrending(
                             project,
                             raw.recentViewCount(),
                             raw.bookmarkCount(),
                             raw.paidAmount(),
+                            supporterCount,
                             raw.score(),
                             achievementRate
                     );
