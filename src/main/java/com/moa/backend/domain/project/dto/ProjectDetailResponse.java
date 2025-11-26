@@ -21,12 +21,18 @@ public class ProjectDetailResponse {
     @Schema(description = "프로젝트 ID", example = "101")
     private Long id;
 
+    @Schema(description = "프로젝트 슬러그", example = "my-awesome-project")
+    private String slug;
+
     // 한글 설명: 메이커 ID (프로필 페이지 이동 등에 사용)
     @Schema(description = "메이커 ID", example = "1003")
     private Long makerId;
 
     @Schema(description = "메이커 이름(사업자명)", example = "모아 스튜디오")
     private String maker;                 // 메이커 이름(사업자명)
+
+    @Schema(description = "메이커 이름 별칭", example = "모아 스튜디오")
+    private String makerName;             // 프론트 호환용 필드
 
     @Schema(description = "프로젝트 제목", example = "친환경 텀블러 프로젝트")
     private String title;                 // 프로젝트 제목
@@ -78,6 +84,19 @@ public class ProjectDetailResponse {
     @Schema(description = "리워드 목록")
     private List<RewardResponse> rewards; // 리워드 목록
 
+    // 펀딩 집계 필드
+    @Schema(description = "누적 모금액(원)", example = "3500000")
+    private Long raised;
+
+    @Schema(description = "후원자 수", example = "123")
+    private Long backerCount;
+
+    @Schema(description = "진행률(%)", example = "72.5")
+    private Double progressPercent;
+
+    @Schema(description = "마감까지 남은 일수", example = "12")
+    private Long daysRemaining;
+
     // 👇 여기부터 북마크 관련 필드
 
     // 한글 설명: 현재 로그인한 서포터 기준으로 이 프로젝트를 찜했는지 여부.
@@ -92,9 +111,11 @@ public class ProjectDetailResponse {
     public static ProjectDetailResponse from(Project project) {
         return ProjectDetailResponse.builder()
                 .id(project.getId())
+                .slug(project.getId() != null ? String.valueOf(project.getId()) : null)
                 // ✅ 메이커 ID 매핑
                 .makerId(project.getMaker().getId())
                 .maker(project.getMaker().getBusinessName())
+                .makerName(project.getMaker().getName())
                 .title(project.getTitle())
                 .summary(project.getSummary())
                 .storyMarkdown(project.getStoryMarkdown())
@@ -119,6 +140,10 @@ public class ProjectDetailResponse {
                 .rewards(project.getRewards().stream()
                         .map(RewardResponse::from)
                         .toList())
+                .raised(0L)
+                .backerCount(0L)
+                .progressPercent(0.0)
+                .daysRemaining(null)
                 // 한글 설명: 북마크 정보는 기본값으로 채워두고,
                 // 실제 로그인 유저 정보가 있을 때 컨트롤러/서비스에서 덮어쓴다.
                 .bookmarked(false)

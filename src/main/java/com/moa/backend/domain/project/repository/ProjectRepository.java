@@ -94,7 +94,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         WHERE p.lifecycleStatus IN :statuses
           AND p.reviewStatus = :reviewStatus
         GROUP BY p.id, p.title, p.summary, p.coverImageUrl, p.category, p.lifecycleStatus
-        HAVING COUNT(sb.id) > 0
         ORDER BY COUNT(sb.id) DESC, p.createdAt DESC
         """)
     List<TrendingProjectResponse> findTrendingProjects(
