@@ -3,38 +3,31 @@ name: CI/CD Pipeline (prod)
 on:
   push:
     branches:
-      - main           # ✅ main에 push 되면
-      - feature/ci-cd  # ✅ 지금 네가 작업 중인 브랜치에서도 CI 빌드만
+      - main
+      - feature/ci-cd   # 작업 브랜치에서도 빌드는 돌게
   pull_request:
     branches:
-      - main           # ✅ main으로 향하는 PR에서도 빌드
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ 저장소 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ JDK 17 설정
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: "17"
           distribution: "temurin"
 
-      # 3️⃣ Gradle로 Spring Boot jar 빌드 (backend 폴더 기준)
       - name: Build with Gradle (bootJar)
-        working-directory: backend   # ✅ 백엔드 폴더 이름
         run: |
           chmod +x ./gradlew
           ./gradlew clean bootJar -x test
-        # 결과: backend/build/libs/*.jar 생성
 
-      # 4️⃣ EC2에서 기존 애플리케이션 종료 & 디렉터리 정리
-      # 👉 main 일 때만 실행되도록 조건 추가
       - name: Cleanup on EC2
         if: github.ref == 'refs/heads/main'
         uses: appleboy/ssh-action@v1.2.0
@@ -54,7 +47,6 @@ jobs:
             rm -f /home/ubuntu/app/*.jar
             rm -f /home/ubuntu/app/app.log
 
-      # 5️⃣ GitHub에서 빌드된 jar를 EC2로 복사
       - name: Copy jar to EC2
         if: github.ref == 'refs/heads/main'
         uses: appleboy/scp-action@master
@@ -62,11 +54,10 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ubuntu
           key: ${{ secrets.PRIVATE_KEY }}
-          source: "backend/build/libs/*.jar"  # ✅ 경로 체크
+          source: "build/libs/*.jar"
           target: "/home/ubuntu/app"
-          strip_components: 3                 # backend / build / libs
+          strip_components: 2
 
-      # 6️⃣ EC2에서 prod 프로필로 애플리케이션 실행
       - name: Run Spring Boot (prod profile)
         if: github.ref == 'refs/heads/main'
         uses: appleboy/ssh-action@v1.2.0
