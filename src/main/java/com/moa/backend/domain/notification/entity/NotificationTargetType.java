@@ -6,4 +6,5 @@ public enum NotificationTargetType {
     ORDER,
     SETTLEMENT,
     MAKER,
+    QNA,
 }

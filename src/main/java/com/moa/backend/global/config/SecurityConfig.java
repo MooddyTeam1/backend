@@ -65,6 +65,7 @@ public class SecurityConfig {
 
                 // ✅ 요청별 인가 정책
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/oauth2/**",
