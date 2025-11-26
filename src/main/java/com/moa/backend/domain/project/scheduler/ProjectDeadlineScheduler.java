@@ -1,6 +1,7 @@
 package com.moa.backend.domain.project.scheduler;
 
 import com.moa.backend.domain.follow.repository.SupporterBookmarkProjectRepository;
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.project.entity.Project;
@@ -42,7 +43,9 @@ public class ProjectDeadlineScheduler {
                     makerId,
                     "마감 임박 (D-3)",
                     "[" + project.getTitle() + "] 펀딩 종료 3일 전입니다. 홍보를 진행해보세요!",
-                    NotificationType.MAKER
+                    NotificationType.MAKER,
+                    NotificationTargetType.PROJECT,
+                    project.getId()
             );
         });
 
@@ -59,19 +62,25 @@ public class ProjectDeadlineScheduler {
                     makerId,
                     "마감 임박 (D-1)",
                     "[" + project.getTitle() + "] 펀딩이 내일 종료됩니다. 마지막 홍보를 진행하세요!",
-                    NotificationType.MAKER
+                    NotificationType.MAKER,
+                    NotificationTargetType.PROJECT,
+                    project.getId()
             );
 
             // 이 프로젝트를 북마크한 서포터들만 알림
             List<Long> supporterIds =
                     supporterBookmarkProjectRepository.findSupporterIdsByProject(project.getId());
 
-            supporterIds.forEach(userId -> notificationService.send(
-                    userId,
-                    "마감 임박 (D-1)",
-                    "[" + project.getTitle() + "] 펀딩이 곧 종료됩니다! 놓치지 마세요!",
-                    NotificationType.SUPPORTER
-            ));
+            if (!supporterIds.isEmpty()) {
+                supporterIds.forEach(userId -> notificationService.send(
+                        userId,
+                        "마감 임박 (D-1)",
+                        "[" + project.getTitle() + "] 펀딩이 곧 종료됩니다! 놓치지 마세요!",
+                        NotificationType.SUPPORTER,
+                        NotificationTargetType.PROJECT,
+                        project.getId()
+                ));
+            }
         });
     }
 }

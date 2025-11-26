@@ -1,5 +1,6 @@
 package com.moa.backend.domain.wallet.service;
 
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.order.entity.Order;
@@ -126,7 +127,9 @@ public class ProjectWalletService {
                 receiverId,
                 "정산 예정 안내",
                 "[" + project.getTitle() + "] 프로젝트의 정산(" + amount + "원)이 예정되었습니다.",
-                NotificationType.MAKER
+                NotificationType.MAKER,
+                NotificationTargetType.PROJECT,
+                project.getId()
         );
     }
 
@@ -161,7 +164,9 @@ public class ProjectWalletService {
                 receiverId,
                 "정산 지급 완료",
                 "[" + project.getTitle() + "] 정산 금액 " + amount + "원이 지급되었습니다.",
-                NotificationType.MAKER
+                NotificationType.MAKER,
+                NotificationTargetType.PROJECT,
+                project.getId()
         );
     }
 }

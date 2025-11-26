@@ -1,5 +1,6 @@
 package com.moa.backend.domain.admin.service;
 
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
@@ -61,7 +62,9 @@ public class AdminServiceImpl implements AdminService {
                 makerUserId,
                 "프로젝트 심사 승인",
                 "[" + project.getTitle() + "] 의 프로젝트가 심사에서 승인되었습니다.",
-                NotificationType.MAKER
+                NotificationType.MAKER,
+                NotificationTargetType.PROJECT,
+                project.getId()
         );
 
         return ProjectStatusResponse.from(project);
@@ -100,7 +103,9 @@ public class AdminServiceImpl implements AdminService {
                 makerUserId,
                 "프로젝트 심사 거절",
                 "[" + project.getTitle() + "] 프로젝트 심사가 거절되었습니다.\n사유: " + reason,
-                NotificationType.MAKER
+                NotificationType.MAKER,
+                NotificationTargetType.PROJECT,
+                project.getId()
         );
 
         return ProjectStatusResponse.from(project);
