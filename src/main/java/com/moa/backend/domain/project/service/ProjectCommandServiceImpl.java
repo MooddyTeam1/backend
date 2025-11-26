@@ -2,6 +2,7 @@ package com.moa.backend.domain.project.service;
 
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.project.dto.CreateProject.CreateProjectRequest;
@@ -90,7 +91,10 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 admin.getId(),
                 "프로젝트 심사 요청",
                 "[" + project.getTitle() + "] 신규 프로젝트가 생성되어 심사를 요청했습니다.",
-                NotificationType.ADMIN));
+                NotificationType.ADMIN,
+                NotificationTargetType.PROJECT,
+                project.getId()
+        ));
 
         return CreateProjectResponse.from(saved);
     }

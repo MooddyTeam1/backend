@@ -1,5 +1,6 @@
 package com.moa.backend.domain.payment.service;
 
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
 import com.moa.backend.domain.notification.entity.NotificationType;
 import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.order.entity.Order;
@@ -104,14 +105,31 @@ public class PaymentService {
         order.markPaid();
         orderRepository.save(order);
 
+        // 결제 완료 알림(서포터에게)
         Long receiverId = order.getUser().getId();
         notificationService.send(
                 receiverId,
                 "결제 완료",
                 "[" + order.getProject().getTitle() + "} 의 결제가 완료되었습니다.",
-                NotificationType.SUPPORTER
+                NotificationType.SUPPORTER,
+                NotificationTargetType.ORDER,
+                order.getId()
         );
 
+        // 첫 후원 알림 (메이커에게)
+        Long supporterCount = orderRepository.countPaidSupporters(order.getProject().getId());
+
+        if (supporterCount == 1) {
+            Long makerId = order.getProject().getMaker().getOwner().getId();
+            notificationService.send(
+                    makerId,
+                    "첫 후원 달성",
+                    "[" + order.getProject().getTitle() + "] 첫 후원이 발생했습니다!",
+                    NotificationType.MAKER,
+                    NotificationTargetType.ORDER,
+                    order.getId()
+            );
+        }
 
         // Wallet 동기화
         Long grossAmount = payment.getAmount();
@@ -143,7 +161,9 @@ public class PaymentService {
                 receiverId,
                 "결제 취소",
                 "[" + order.getProject().getTitle() + "] 결제가 취소되었습니다.\n사유: " + reason,
-                NotificationType.SUPPORTER
+                NotificationType.SUPPORTER,
+                NotificationTargetType.ORDER,
+                order.getId()
         );
     }
 

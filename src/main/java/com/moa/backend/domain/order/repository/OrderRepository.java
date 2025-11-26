@@ -695,4 +695,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("deliveryStatus") DeliveryStatus deliveryStatus,
             Pageable pageable
     );
+
+    /**
+     * 한글 설명: 특정 프로젝트에서 결제 상태 기준(PAID 등) 고유 서포터 수 집계.
+     * - '결제 완료된 후원자 수'를 의미하며, 단순 주문 수가 아닌 실제 구매한 인원을 센다.
+     * - 메이커 프로젝트 정보에서 supporterCount(총 후원자 수) 계산 시 사용된다.
+     */
+    @Query("""
+    SELECT COUNT(o.id) 
+    FROM Order o 
+    WHERE o.project.id = :projectId AND o.status = 'PAID'
+""")
+    Long countPaidSupporters(Long projectId);
 }

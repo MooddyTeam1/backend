@@ -53,7 +53,8 @@ public class MakerProjectService {
         LIVE,
         ENDED_SUCCESS,
         ENDED_FAILED,
-        REJECTED;
+        REJECTED,
+        SCHEDULED;
 
         static MakerProjectStatusFilter from(String raw) {
             if (raw == null || raw.isBlank()) {

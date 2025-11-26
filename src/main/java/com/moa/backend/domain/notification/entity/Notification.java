@@ -28,6 +28,11 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     private NotificationType type;
 
+    @Enumerated(EnumType.STRING)
+    private NotificationTargetType targetType;
+
+    private Long targetId;
+
     @Builder.Default
     private boolean read = false;
 
