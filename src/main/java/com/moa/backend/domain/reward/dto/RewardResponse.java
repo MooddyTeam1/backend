@@ -52,6 +52,16 @@ public class RewardResponse {
      * - 옵션/세트/정보고시까지 모두 포함해서 매핑한다.
      */
     public static RewardResponse from(Reward reward) {
+        return baseBuilder(reward).build();
+    }
+
+    public static RewardResponse fromWithDisclosure(Reward reward) {
+        return baseBuilder(reward)
+                .disclosure(RewardDisclosureResponseDTO.from(reward))
+                .build();
+    }
+
+    private static RewardResponseBuilder baseBuilder(Reward reward) {
         return RewardResponse.builder()
                 .id(reward.getId())
                 .name(reward.getName())
@@ -60,20 +70,16 @@ public class RewardResponse {
                 .price(reward.getPrice())
                 .estimatedDeliveryDate(reward.getEstimatedDeliveryDate())
                 .active(reward.isActive())
-                // 세트 응답 매핑
                 .rewardSets(reward.getRewardSets() != null
                         ? reward.getRewardSets().stream()
                         .map(RewardSetResponse::from)
                         .toList()
                         : null)
-                // 옵션 그룹 응답 매핑
                 .optionGroups(reward.getOptionGroups() != null
                         ? reward.getOptionGroups().stream()
                         .map(OptionGroupResponse::from)
                         .toList()
-                        : null)
-                // 정보고시 응답 매핑
-                .disclosure(RewardDisclosureResponseDTO.from(reward))
-                .build();
+                        : null);
     }
+
 }
