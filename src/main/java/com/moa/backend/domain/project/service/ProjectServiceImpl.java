@@ -15,6 +15,7 @@ import com.moa.backend.domain.project.entity.ProjectResultStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.Nullable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +60,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트을 찾을 수없습니다. id=" + projectId));
 
-        return ProjectDetailResponse.from(project);
+        return enrichDetailWithStats(ProjectDetailResponse.from(project), projectId);
     }
 
     //프로젝트 단일 조회 (로그인 사용자 기준 북마크 정보 포함)
@@ -69,7 +70,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new NoSuchElementException("프로젝트를 찾을 수 없습니다."));
 
-        ProjectDetailResponse response = ProjectDetailResponse.from(project);
+        ProjectDetailResponse response = enrichDetailWithStats(ProjectDetailResponse.from(project), projectId);
 
         // ✔ follow 도메인에 있는 북마크 서비스 사용
         SupporterProjectBookmarkService.BookmarkStatus status =
@@ -78,6 +79,33 @@ public class ProjectServiceImpl implements ProjectService {
         response.setBookmarked(status.bookmarked());
         response.setBookmarkCount(status.bookmarkCount());
 
+        return response;
+    }
+
+    /**
+     * 한글 설명: 프로젝트 상세 DTO에 모금액/후원자/진행률/남은일수 등을 채워준다.
+     */
+    private ProjectDetailResponse enrichDetailWithStats(ProjectDetailResponse response, Long projectId) {
+        long fundedAmount = orderRepository
+                .sumTotalAmountByProjectIdAndStatus(projectId, OrderStatus.PAID)
+                .orElse(0L);
+        long supporterCount = getPaidSupporterCount(projectId);
+
+        Double progressPercent = 0.0;
+        if (response.getGoalAmount() != null && response.getGoalAmount() > 0) {
+            progressPercent = (fundedAmount * 100.0) / response.getGoalAmount();
+        }
+
+        Long daysRemaining = null;
+        if (response.getEndDate() != null) {
+            long diff = java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), response.getEndDate());
+            daysRemaining = Math.max(diff, 0);
+        }
+
+        response.setRaised(fundedAmount);
+        response.setBackerCount(supporterCount);
+        response.setProgressPercent(progressPercent);
+        response.setDaysRemaining(daysRemaining);
         return response;
     }
 
@@ -106,8 +134,8 @@ public class ProjectServiceImpl implements ProjectService {
                         LocalDate.now(),
                         LocalDate.now().plusDays(7)
                 ).stream()
-                // 한글 설명: 마감 임박 섹션용이므로 badgeClosingSoon = true로 설정.
-                .map(p -> ProjectListResponse.fromWithBadges(
+                // 한글 설명: 마감 임박 섹션용이므로 badgeClosingSoon = true로 설정 + 기본 지표 채움.
+                .map(p -> toCardWithStats(
                         p,
                         false,  // badgeNew
                         true,   // badgeClosingSoon
@@ -195,7 +223,7 @@ public class ProjectServiceImpl implements ProjectService {
                         PageRequest.of(0, safeSize)
                 ).stream()
                 // 한글 설명: 신규 업로드 섹션이므로 badgeNew = true 로 내려준다.
-                .map(p -> ProjectListResponse.fromWithBadges(
+                .map(p -> toCardWithStats(
                         p,
                         true,   // badgeNew
                         false,  // badgeClosingSoon
@@ -223,7 +251,7 @@ public class ProjectServiceImpl implements ProjectService {
                         PageRequest.of(0, safeSize)
                 ).stream()
                 // 한글 설명: 성공 메이커 섹션용이므로 badgeSuccessMaker = true.
-                .map(p -> ProjectListResponse.fromWithBadges(
+                .map(p -> toCardWithStats(
                         p,
                         false,  // badgeNew
                         false,  // badgeClosingSoon
@@ -250,7 +278,7 @@ public class ProjectServiceImpl implements ProjectService {
                         PageRequest.of(0, safeSize)
                 ).stream()
                 // 한글 설명: 첫 도전 메이커 섹션용이므로 badgeFirstChallengeMaker = true.
-                .map(p -> ProjectListResponse.fromWithBadges(
+                .map(p -> toCardWithStats(
                         p,
                         false,  // badgeNew
                         false,  // badgeClosingSoon
@@ -292,20 +320,20 @@ public class ProjectServiceImpl implements ProjectService {
 
                     return new ProjectProgress(project, fundedAmount, rate);
                 })
-                // 4) 아직 한 번도 후원이 안 된 프로젝트는 제외하고 싶으면 여기서 필터
-                .filter(pp -> pp.fundedAmount() > 0)
-                // 5) 달성률 내림차순 정렬 (가장 목표에 가까운 프로젝트부터)
+                // 4) 달성률 내림차순 정렬 (가장 목표에 가까운 프로젝트부터)
                 .sorted(Comparator.comparing(ProjectProgress::progressRate).reversed())
-                // 6) 상위 N개만
+                // 5) 상위 N개만
                 .limit(safeSize)
-                // 7) ProjectListResponse로 매핑 + 달성률(%) 세팅
+                // 6) ProjectListResponse로 매핑 + 달성률(%) 세팅
                 .map(pp -> {
                     Project project = pp.project();
                     int percentage = (int) Math.floor(pp.progressRate() * 100); // 예: 0.83 -> 83
+                    long supporterCount = getPaidSupporterCount(project.getId());
 
                     // 한글 설명: 카드 공통 정보 + 달성률만 추가 세팅.
                     return ProjectListResponse.base(project)
                             .fundedAmount(pp.fundedAmount())
+                            .supporterCount(supporterCount)
                             .achievementRate(percentage)
                             .build();
                 })
@@ -337,8 +365,54 @@ public class ProjectServiceImpl implements ProjectService {
                         now,
                         PageRequest.of(0, safeSize)
                 ).stream()
-                // 한글 설명: 공개 예정 상태이므로 카드 공통 형태로 내려준다.
-                .map(project -> ProjectListResponse.base(project).build())
+                // 한글 설명: 공개 예정 상태이므로 카드 공통 형태 + 기본 지표 세팅.
+                .map(project -> toCardWithStats(
+                        project,
+                        false,
+                        false,
+                        false,
+                        false
+                ))
                 .toList();
+    }
+
+    /**
+     * 한글 설명: 홈 섹션 공통 카드에 모금액/서포터/달성률/뱃지를 세팅한다.
+     */
+    private ProjectListResponse toCardWithStats(
+            Project project,
+            boolean badgeNew,
+            boolean badgeClosingSoon,
+            boolean badgeSuccessMaker,
+            boolean badgeFirstChallengeMaker
+    ) {
+        long fundedAmount = orderRepository
+                .sumTotalAmountByProjectIdAndStatus(project.getId(), OrderStatus.PAID)
+                .orElse(0L);
+        long supporterCount = getPaidSupporterCount(project.getId());
+
+        Long goalAmount = project.getGoalAmount();
+        Integer achievementRate = null;
+        if (goalAmount != null && goalAmount > 0) {
+            achievementRate = (int) Math.floor((fundedAmount * 100.0) / goalAmount);
+        }
+
+        return ProjectListResponse.base(project)
+                .fundedAmount(fundedAmount)
+                .supporterCount(supporterCount)
+                .achievementRate(achievementRate)
+                .badgeNew(badgeNew)
+                .badgeClosingSoon(badgeClosingSoon)
+                .badgeSuccessMaker(badgeSuccessMaker)
+                .badgeFirstChallengeMaker(badgeFirstChallengeMaker)
+                .build();
+    }
+
+    private long getPaidSupporterCount(Long projectId) {
+        Integer count = orderRepository.countDistinctSupporterByProjectIdAndStatus(
+                projectId,
+                OrderStatus.PAID
+        );
+        return count != null ? count : 0L;
     }
 }

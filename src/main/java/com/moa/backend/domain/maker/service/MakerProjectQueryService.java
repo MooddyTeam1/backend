@@ -7,6 +7,9 @@ import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
+import com.moa.backend.domain.order.entity.OrderStatus;
+import com.moa.backend.domain.order.repository.OrderRepository;
+import com.moa.backend.domain.follow.repository.SupporterBookmarkProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 /**
  * 한글 설명: 메이커 홈(공개)에서 사용하는 프로젝트 목록 조회 서비스.
@@ -28,6 +32,8 @@ public class MakerProjectQueryService {
 
     private final MakerRepository makerRepository;
     private final ProjectRepository projectRepository;
+    private final OrderRepository orderRepository;
+    private final SupporterBookmarkProjectRepository bookmarkRepository;
 
     /**
      * 한글 설명:
@@ -92,11 +98,16 @@ public class MakerProjectQueryService {
 
         // 5) Project → DTO 변환 + daysLeft, progressPercentage 계산
         Page<MakerProjectResponse> dtoPage = projectPage.map(project -> {
-            // ⚠ 현재 Project 엔티티에는 모금액/서포터수/북마크수 필드가 없으므로 0으로 처리
             Long goalAmount = project.getGoalAmount();
-            Long raisedAmount = 0L;          // TODO: 주문/결제 통계 테이블 연동 후 실제 값 매핑
-            int supporterCount = 0;          // TODO: 후원자 수 집계 컬럼/쿼리 연동
-            int bookmarkCount = 0;           // TODO: 북마크 수 집계 컬럼/쿼리 연동
+            Long raisedAmount = orderRepository
+                    .sumTotalAmountByProjectIdAndStatus(project.getId(), OrderStatus.PAID)
+                    .orElse(0L);
+            long supporterCount = Optional.ofNullable(
+                    orderRepository.countDistinctSupporterByProjectAndStatus(project.getId(), OrderStatus.PAID)
+            ).orElse(0L);
+            long bookmarkCount = bookmarkRepository.countByProject(project);
+            int supporterCountInt = Math.toIntExact(supporterCount);
+            int bookmarkCountInt = Math.toIntExact(bookmarkCount);
 
             // 진행률 계산
             double progressPercentage = 0.0;
@@ -127,8 +138,8 @@ public class MakerProjectQueryService {
                     .goalAmount(goalAmount)
                     .raisedAmount(raisedAmount)
                     .progressPercentage(progressPercentage)
-                    .supporterCount(supporterCount)
-                    .bookmarkCount(bookmarkCount)
+                    .supporterCount(supporterCountInt)
+                    .bookmarkCount(bookmarkCountInt)
                     .makerId(maker.getId())
                     .makerName(maker.getName())
                     .createdAt(project.getCreatedAt())
