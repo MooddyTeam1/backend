@@ -166,58 +166,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
       @Param("createdAfter") LocalDateTime createdAfter,
       Pageable pageable);
 
-  /**
-   * 한글 설명: 과거에 성공(SUCCESS)한 프로젝트가 하나 이상 있는 메이커의
-   * 현재 진행/공개 예정(LIVE/SCHEDULED) 프로젝트를 조회한다.
-   * - 조건: p.lifecycleStatus IN (:statuses)
-   * p.reviewStatus = :reviewStatus
-   * EXISTS (과거 성공 프로젝트)
-   * - 정렬: 최신 생성일(createdAt) 내림차순
-   */
-  @Query("""
-      SELECT p
-      FROM Project p
-      WHERE p.lifecycleStatus IN :statuses
-        AND p.reviewStatus = :reviewStatus
-        AND EXISTS (
-            SELECT 1
-            FROM Project past
-            WHERE past.maker = p.maker
-              AND past.resultStatus = :successResult
-        )
-        FROM Project p
-        LEFT JOIN com.moa.backend.domain.follow.entity.SupporterBookmarkProject sb
-               ON sb.project = p
-        WHERE p.lifecycleStatus IN :statuses
-          AND p.reviewStatus = :reviewStatus
-        GROUP BY p.id, p.title, p.summary, p.coverImageUrl, p.category, p.lifecycleStatus
-        ORDER BY COUNT(sb.id) DESC, p.createdAt DESC
-        """)
-    List<TrendingProjectResponse> findTrendingProjects(
-            @Param("statuses") List<ProjectLifecycleStatus> statuses,
-            @Param("reviewStatus") ProjectReviewStatus reviewStatus,
-            Pageable pageable
-    );
-
-    /**
-     * 한글 설명: 최근 업로드된(생성일 기준) 신규 프로젝트 조회.
-     * - 조건: 지정한 라이프사이클 상태 목록 + 특정 심사 상태 + createdAt >= 기준일
-     * - 정렬: createdAt 내림차순(가장 최근 생성 프로젝트부터)
-     */
-    @Query("""
-        SELECT p
-        FROM Project p
-        WHERE p.lifecycleStatus IN :statuses
-          AND p.reviewStatus = :reviewStatus
-          AND p.createdAt >= :createdAfter
-        ORDER BY p.createdAt DESC
-        """)
-    List<Project> findNewlyUploadedProjects(
-            @Param("statuses") List<ProjectLifecycleStatus> statuses,
-            @Param("reviewStatus") ProjectReviewStatus reviewStatus,
-            @Param("createdAfter") LocalDateTime createdAfter,
-            Pageable pageable
-    );
     /**
      * 한글 설명: 과거에 성공(SUCCESS)한 프로젝트가 하나 이상 있는 메이커의
      * 현재 진행/공개 예정(LIVE/SCHEDULED) 프로젝트를 조회한다.
