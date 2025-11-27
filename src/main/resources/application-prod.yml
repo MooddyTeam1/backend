@@ -138,7 +138,7 @@ app:
     image-dir: images
   frontend:
     # ✅ 운영용 프론트엔드 배포 주소 (Vercel)
-    base-url: "http://frontend-tau-ten-k8c2lpql65.vercel.app/"
+    base-url: "https://frontend-tau-ten-k8c2lpql65.vercel.app/"
 
 openai:
   base-url: https://api.openai.com        # 한글 설명: OpenAI API 기본 URL
