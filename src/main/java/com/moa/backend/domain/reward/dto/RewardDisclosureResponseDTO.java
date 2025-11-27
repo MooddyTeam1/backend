@@ -42,17 +42,36 @@ public class RewardDisclosureResponseDTO {
      * 한글 설명: Reward 엔티티에서 정보고시 데이터를 읽어와
      * RewardDisclosureResponseDTO 로 변환하는 팩토리 메서드.
      *
-     * - 엔티티에 정보고시 데이터가 없으면 null 을 반환한다.
+     * - 엔티티에 정보고시 데이터가 없으면 빈 객체를 반환한다 (null이 아닌 빈 객체로 응답에 포함되도록).
      */
     public static RewardDisclosureResponseDTO from(Reward reward) {
-        if (reward == null || reward.getDisclosureCategory() == null) {
-            return null;
+        if (reward == null) {
+            // 한글 설명: null 대신 빈 객체를 반환하여 JSON 응답에 disclosure 필드가 항상 포함되도록 함
+            return RewardDisclosureResponseDTO.builder()
+                    .category(null)
+                    .common(Collections.emptyMap())
+                    .categorySpecific(Collections.emptyMap())
+                    .build();
         }
 
         ObjectMapper mapper = new ObjectMapper();
 
         Map<String, Object> commonMap = Collections.emptyMap();
         Map<String, Object> specificMap = Collections.emptyMap();
+
+        // 한글 설명: disclosureCommonJson 또는 disclosureCategorySpecificJson이 있으면 disclosure 정보가 있는 것으로 간주
+        boolean hasDisclosureData = reward.getDisclosureCommonJson() != null 
+                || reward.getDisclosureCategorySpecificJson() != null 
+                || reward.getDisclosureCategory() != null;
+
+        if (!hasDisclosureData) {
+            // 한글 설명: disclosure 정보가 전혀 없는 경우 빈 객체 반환
+            return RewardDisclosureResponseDTO.builder()
+                    .category(null)
+                    .common(Collections.emptyMap())
+                    .categorySpecific(Collections.emptyMap())
+                    .build();
+        }
 
         try {
             if (reward.getDisclosureCommonJson() != null) {
@@ -77,8 +96,16 @@ public class RewardDisclosureResponseDTO {
             specificMap = Collections.emptyMap();
         }
 
-        RewardDisclosureCategory categoryEnum =
-                RewardDisclosureCategory.valueOf(reward.getDisclosureCategory());
+        // 한글 설명: category가 null이 아닌 경우에만 Enum으로 변환
+        RewardDisclosureCategory categoryEnum = null;
+        if (reward.getDisclosureCategory() != null) {
+            try {
+                categoryEnum = RewardDisclosureCategory.valueOf(reward.getDisclosureCategory());
+            } catch (Exception e) {
+                // 한글 설명: Enum 변환 실패 시 null로 유지
+                categoryEnum = null;
+            }
+        }
 
         return RewardDisclosureResponseDTO.builder()
                 .category(categoryEnum)
