@@ -33,4 +33,7 @@ public interface ProjectQnaService {
             int page,
             int size
     );
+
+    // 공개 Q&A 목록 조회 (비로그인/일반 사용자용)
+    List<ProjectQnaResponse> getPublicQnaList(Long projectId);
 }
