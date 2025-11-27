@@ -50,6 +50,7 @@ public class MakerProjectService {
         ALL,
         DRAFT,
         REVIEW,
+        APPROVED,
         LIVE,
         ENDED_SUCCESS,
         ENDED_FAILED,
@@ -283,6 +284,11 @@ public class MakerProjectService {
         }
         if (lifecycle == ProjectLifecycleStatus.DRAFT && review == ProjectReviewStatus.REVIEW) {
             return "REVIEW";
+        }
+        // 승인됨(UI) 상태: 심사 승인 완료이지만 공개/진행 전 단계
+        // 조건: lifecycle = DRAFT 이고 review = APPROVED
+        if (lifecycle == ProjectLifecycleStatus.DRAFT && review == ProjectReviewStatus.APPROVED) {
+            return "APPROVED";
         }
         if (lifecycle == ProjectLifecycleStatus.LIVE && review == ProjectReviewStatus.APPROVED) {
             return "LIVE";

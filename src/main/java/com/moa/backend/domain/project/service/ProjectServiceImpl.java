@@ -113,7 +113,29 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<ProjectListResponse> searchByTitle(String keyword) {
         return projectRepository.searchByTitle(keyword).stream()
-                .map(ProjectListResponse::searchProjects)
+                // 공개 대상만 노출: 승인된(Review=APPROVED) + 공개예정/진행/종료 상태
+                .filter(p -> p.getReviewStatus() == ProjectReviewStatus.APPROVED)
+                .filter(p -> {
+                    ProjectLifecycleStatus lc = p.getLifecycleStatus();
+                    return lc == ProjectLifecycleStatus.LIVE
+                            || lc == ProjectLifecycleStatus.SCHEDULED
+                            || lc == ProjectLifecycleStatus.ENDED;
+                })
+                // 카드에 모금/후원/달성률 집계 포함
+                .filter(p -> p.getReviewStatus() == ProjectReviewStatus.APPROVED)
+                .filter(p -> {
+                    ProjectLifecycleStatus lc = p.getLifecycleStatus();
+                    return lc == ProjectLifecycleStatus.LIVE
+                            || lc == ProjectLifecycleStatus.SCHEDULED
+                            || lc == ProjectLifecycleStatus.ENDED;
+                })
+                .map(p -> toCardWithStats(
+                        p,
+                        false, // badgeNew
+                        false, // badgeClosingSoon
+                        false, // badgeSuccessMaker
+                        false  // badgeFirstChallengeMaker
+                ))
                 .toList();
     }
 
@@ -121,7 +143,21 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<ProjectListResponse> getByCategory(Category category) {
         return projectRepository.findByCategory(category).stream()
-                .map(ProjectListResponse::searchProjects)
+                .filter(p -> p.getReviewStatus() == ProjectReviewStatus.APPROVED)
+                .filter(p -> {
+                    ProjectLifecycleStatus lc = p.getLifecycleStatus();
+                    return lc == ProjectLifecycleStatus.LIVE
+                            || lc == ProjectLifecycleStatus.SCHEDULED
+                            || lc == ProjectLifecycleStatus.ENDED;
+                })
+                // 카테고리 목록도 모금/후원/달성률 집계를 포함해 반환
+                .map(p -> toCardWithStats(
+                        p,
+                        false, // badgeNew
+                        false, // badgeClosingSoon
+                        false, // badgeSuccessMaker
+                        false  // badgeFirstChallengeMaker
+                ))
                 .toList();
     }
 

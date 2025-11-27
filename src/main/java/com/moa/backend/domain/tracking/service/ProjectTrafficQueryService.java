@@ -199,6 +199,14 @@ public class ProjectTrafficQueryService {
                 // 이미 삭제된 프로젝트일 수 있으므로 스킵
                 continue;
             }
+            // 공개 대상만 노출: 승인(APPROVED) + 공개예정/진행/종료 상태
+            if (project.getReviewStatus() != ProjectReviewStatus.APPROVED) {
+                continue;
+            }
+            ProjectLifecycleStatus lc = project.getLifecycleStatus();
+            if (!(lc == ProjectLifecycleStatus.LIVE || lc == ProjectLifecycleStatus.SCHEDULED || lc == ProjectLifecycleStatus.ENDED)) {
+                continue;
+            }
 
             long safeViewCount = (viewCount != null) ? viewCount : 0L;
 
