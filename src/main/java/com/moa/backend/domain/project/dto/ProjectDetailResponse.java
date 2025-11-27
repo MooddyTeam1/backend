@@ -33,6 +33,8 @@ public class ProjectDetailResponse {
 
     @Schema(description = "메이커 이름 별칭", example = "모아 스튜디오")
     private String makerName;             // 프론트 호환용 필드
+    @Schema(description = "메이커 프로필 이미지 URL", example = "https://cdn.moa.dev/makers/maker1.png")
+    private String makerImageUrl;         // 메이커 프로필 이미지
 
     @Schema(description = "프로젝트 제목", example = "친환경 텀블러 프로젝트")
     private String title;                 // 프로젝트 제목
@@ -116,6 +118,7 @@ public class ProjectDetailResponse {
                 .makerId(project.getMaker().getId())
                 .maker(project.getMaker().getBusinessName())
                 .makerName(project.getMaker().getName())
+                .makerImageUrl(project.getMaker().getImageUrl())
                 .title(project.getTitle())
                 .summary(project.getSummary())
                 .storyMarkdown(project.getStoryMarkdown())
