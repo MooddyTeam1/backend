@@ -102,6 +102,8 @@ app:
   file-storage:
     root-dir: ./uploads
     image-dir: images
+  frontend:
+    base-url: "http://localhost:5173"
 
 openai:
   base-url: https://api.openai.com        # 한글 설명: OpenAI API 기본 URL

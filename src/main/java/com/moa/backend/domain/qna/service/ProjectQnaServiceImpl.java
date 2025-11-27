@@ -89,9 +89,14 @@ public class ProjectQnaServiceImpl implements ProjectQnaService {
     // ==========================
     @Override
     public List<ProjectQnaResponse> getMyQnaList(Long supporterUserId, Long projectId) {
-        return projectQnaRepository
-                .findByProject_IdAndQuestioner_IdOrderByCreatedAtDesc(projectId, supporterUserId)
-                .stream()
+        // 내 문의 + 공개 문의(비공개 아님)를 함께 제공
+        List<ProjectQna> mine = projectQnaRepository
+                .findByProject_IdAndQuestioner_IdOrderByCreatedAtDesc(projectId, supporterUserId);
+        List<ProjectQna> publicList = projectQnaRepository
+                .findByProject_IdAndIsPrivateFalseOrderByCreatedAtDesc(projectId);
+
+        return java.util.stream.Stream.concat(mine.stream(), publicList.stream())
+                .sorted(java.util.Comparator.comparing(ProjectQna::getCreatedAt).reversed())
                 .map(this::toResponse)
                 .toList();
     }
@@ -241,6 +246,16 @@ public class ProjectQnaServiceImpl implements ProjectQnaService {
 
         // 5) 공통 PageResponse로 변환
         return PageResponse.of(dtoPage);
+    }
+
+    // 공개 Q&A 목록 조회 (비로그인/일반 사용자용)
+    @Override
+    public List<ProjectQnaResponse> getPublicQnaList(Long projectId) {
+        return projectQnaRepository
+                .findByProject_IdAndIsPrivateFalseOrderByCreatedAtDesc(projectId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     // ==========================

@@ -97,7 +97,9 @@ public class Reward {
     // ===================== 연관관계 =====================
 
     // 한글 설명: 리워드 직속 옵션 그룹 목록 (색상/사이즈 등)
+    // 한글 설명: @BatchSize를 사용하여 배치 로딩으로 N+1 문제 방지 및 MultipleBagFetchException 회피
     @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.BatchSize(size = 20)
     @Builder.Default
     private List<OptionGroup> optionGroups = new ArrayList<>();
 

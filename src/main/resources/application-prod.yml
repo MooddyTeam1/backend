@@ -17,6 +17,11 @@ spring:
   application:
     name: backend
 
+  servlet:
+    multipart:
+      max-file-size: 8MB      # 한글 설명: 단일 파일 최대 8MB
+      max-request-size: 32MB  # 한글 설명: 요청 전체(멀티파트) 최대 32MB
+
   # ===========================
   # SQL 초기화 (운영용)
   # ===========================
@@ -25,6 +30,22 @@ spring:
       # 한글 설명: 운영 DB는 애플리케이션 실행 시 자동으로 data.sql을 실행하지 않도록 설정
       mode: never
       # 필요하다면 직접 마이그레이션 도구(Flyway/Liquibase) 도입을 추천
+
+  mail:
+    host: smtp.naver.com                # 한글 설명: 네이버 SMTP 서버 주소
+    port: 465                           # 한글 설명: SSL 포트 (587 + starttls 도 가능)
+    username: ${NAVER_MAIL_USERNAME}    # 한글 설명: 네이버 메일 주소 (예: mymail@naver.com)
+    password: ${NAVER_MAIL_PASSWORD}    # 한글 설명: 앱 비밀번호 또는 계정 비밀번호(권장 X)
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true                    # 한글 설명: SMTP 인증 사용
+          ssl:
+            enable: true                # 한글 설명: SSL 사용 (465 포트인 경우)
+          starttls:
+            enable: false               # 한글 설명: 465+SSL 쓸 거면 false, 587이면 true
+    default-encoding: UTF-8
 
   security:
     oauth2:
@@ -80,13 +101,18 @@ spring:
     hibernate:
       # 한글 설명:
       #   - 운영에서는 보통 validate 또는 none 권장
-      #   - 개발 단계에서 테이블 자동 생성/수정이 필요하면 update로 둬도 됨
+      #   - 지금은 편의상 update, 나중에 마이그레이션 도구 도입 후 조정
       ddl-auto: update
     show-sql: false      # 한글 설명: 운영에서는 SQL 로그는 보통 끄거나 DEBUG 에서만
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha        # 태그를 알파벳 순으로 정렬 (Auth가 최상단)
+    operations-sorter: alpha  # 같은 태그 내 엔드포인트를 알파벳 순 정렬
 
 logging:
   level:
@@ -97,6 +123,12 @@ logging:
     # com.moa.backend: INFO
 
 app:
+  email:
+    verification-expiration-minutes: 10
+  password-reset:
+    # 한글 설명: 프론트 비밀번호 재설정 페이지 운영 URL (환경변수로 오버라이드 가능)
+    base-url: ${PASSWORD_RESET_BASE_URL:http://localhost:5173/password/reset}
+    token-validity-minutes: 60
   file-storage:
     # 한글 설명:
     #   운영 서버에서 실제 파일이 저장될 루트 디렉터리.
@@ -104,3 +136,11 @@ app:
     #   필요하면 APP_FILE_ROOT_DIR 환경변수로 override.
     root-dir: ${APP_FILE_ROOT_DIR:/home/ubuntu/app/uploads}
     image-dir: images
+  frontend:
+    # ✅ 운영용 프론트엔드 배포 주소 (Vercel)
+    base-url: "https://frontend-11h6fal1j-jinhyuns-projects-6d19dc50.vercel.app"
+
+openai:
+  base-url: https://api.openai.com        # 한글 설명: OpenAI API 기본 URL
+  api-key: ${OPENAI_API_KEY}             # 한글 설명: 환경변수에서 주입 (운영 서버/로컬에 export 필요)
+  model: gpt-4o-mini

@@ -48,4 +48,13 @@ public interface StatisticsService {
             String category,
             Long makerId
     );
+
+    /**
+     * 퍼널 리포트 조회
+     */
+    com.moa.backend.domain.admin.dto.statistics.funnel.FunnelReportDto getFunnelReport(
+            java.time.LocalDate startDate,
+            java.time.LocalDate endDate,
+            Long projectId
+    );
 }

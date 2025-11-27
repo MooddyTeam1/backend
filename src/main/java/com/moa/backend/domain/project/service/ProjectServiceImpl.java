@@ -1,6 +1,7 @@
 package com.moa.backend.domain.project.service;
 
 import com.moa.backend.domain.follow.service.SupporterProjectBookmarkService;
+import com.moa.backend.domain.follow.repository.SupporterBookmarkProjectRepository;
 import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.order.repository.OrderRepository;
 import com.moa.backend.domain.project.dto.ProjectDetailResponse;
@@ -34,6 +35,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final SupporterProjectBookmarkService supporterProjectBookmarkService;
+    private final SupporterBookmarkProjectRepository bookmarkRepository;
 
     // 결제 완료(PAID) 주문 기준으로 펀딩 금액을 합산하기 위해 OrderRepository 사용.
     private final OrderRepository orderRepository;
@@ -113,7 +115,29 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<ProjectListResponse> searchByTitle(String keyword) {
         return projectRepository.searchByTitle(keyword).stream()
-                .map(ProjectListResponse::searchProjects)
+                // 공개 대상만 노출: 승인된(Review=APPROVED) + 공개예정/진행/종료 상태
+                .filter(p -> p.getReviewStatus() == ProjectReviewStatus.APPROVED)
+                .filter(p -> {
+                    ProjectLifecycleStatus lc = p.getLifecycleStatus();
+                    return lc == ProjectLifecycleStatus.LIVE
+                            || lc == ProjectLifecycleStatus.SCHEDULED
+                            || lc == ProjectLifecycleStatus.ENDED;
+                })
+                // 카드에 모금/후원/달성률 집계 포함
+                .filter(p -> p.getReviewStatus() == ProjectReviewStatus.APPROVED)
+                .filter(p -> {
+                    ProjectLifecycleStatus lc = p.getLifecycleStatus();
+                    return lc == ProjectLifecycleStatus.LIVE
+                            || lc == ProjectLifecycleStatus.SCHEDULED
+                            || lc == ProjectLifecycleStatus.ENDED;
+                })
+                .map(p -> toCardWithStats(
+                        p,
+                        false, // badgeNew
+                        false, // badgeClosingSoon
+                        false, // badgeSuccessMaker
+                        false  // badgeFirstChallengeMaker
+                ))
                 .toList();
     }
 
@@ -121,7 +145,21 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<ProjectListResponse> getByCategory(Category category) {
         return projectRepository.findByCategory(category).stream()
-                .map(ProjectListResponse::searchProjects)
+                .filter(p -> p.getReviewStatus() == ProjectReviewStatus.APPROVED)
+                .filter(p -> {
+                    ProjectLifecycleStatus lc = p.getLifecycleStatus();
+                    return lc == ProjectLifecycleStatus.LIVE
+                            || lc == ProjectLifecycleStatus.SCHEDULED
+                            || lc == ProjectLifecycleStatus.ENDED;
+                })
+                // 카테고리 목록도 모금/후원/달성률 집계를 포함해 반환
+                .map(p -> toCardWithStats(
+                        p,
+                        false, // badgeNew
+                        false, // badgeClosingSoon
+                        false, // badgeSuccessMaker
+                        false  // badgeFirstChallengeMaker
+                ))
                 .toList();
     }
 
@@ -320,6 +358,8 @@ public class ProjectServiceImpl implements ProjectService {
 
                     return new ProjectProgress(project, fundedAmount, rate);
                 })
+                // 4) 목표 초과 프로젝트는 제외, 70% 이상만 노출
+                .filter(pp -> pp.progressRate() < 1.0 && pp.progressRate() >= 0.7)
                 // 4) 달성률 내림차순 정렬 (가장 목표에 가까운 프로젝트부터)
                 .sorted(Comparator.comparing(ProjectProgress::progressRate).reversed())
                 // 5) 상위 N개만
@@ -329,11 +369,13 @@ public class ProjectServiceImpl implements ProjectService {
                     Project project = pp.project();
                     int percentage = (int) Math.floor(pp.progressRate() * 100); // 예: 0.83 -> 83
                     long supporterCount = getPaidSupporterCount(project.getId());
+                    long bookmarkCount = bookmarkRepository.countByProject(project);
 
                     // 한글 설명: 카드 공통 정보 + 달성률만 추가 세팅.
                     return ProjectListResponse.base(project)
                             .fundedAmount(pp.fundedAmount())
                             .supporterCount(supporterCount)
+                            .bookmarkCount(bookmarkCount)
                             .achievementRate(percentage)
                             .build();
                 })
@@ -396,10 +438,12 @@ public class ProjectServiceImpl implements ProjectService {
         if (goalAmount != null && goalAmount > 0) {
             achievementRate = (int) Math.floor((fundedAmount * 100.0) / goalAmount);
         }
+        long bookmarkCount = bookmarkRepository.countByProject(project);
 
         return ProjectListResponse.base(project)
                 .fundedAmount(fundedAmount)
                 .supporterCount(supporterCount)
+                .bookmarkCount(bookmarkCount)
                 .achievementRate(achievementRate)
                 .badgeNew(badgeNew)
                 .badgeClosingSoon(badgeClosingSoon)

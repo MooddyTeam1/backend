@@ -27,8 +27,10 @@ public class OptionGroup {
     @Column(name = "group_name")
     private String groupName;
 
+    // 한글 설명: @BatchSize를 사용하여 배치 로딩으로 N+1 문제 방지 및 MultipleBagFetchException 회피
     @Builder.Default
     @OneToMany(mappedBy = "optionGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.BatchSize(size = 20)
     private List<OptionValue> optionValues = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
