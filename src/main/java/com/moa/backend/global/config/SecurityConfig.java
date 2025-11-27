@@ -30,6 +30,9 @@ public class SecurityConfig {
     @Value("${spring.h2.console.enabled:false}")
     private boolean h2ConsoleEnabled;
 
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -104,7 +107,7 @@ public class SecurityConfig {
                             String message = exception.getMessage();
                             log.error("❌ OAuth2 로그인 실패: {}", message, exception);
 
-                            String frontendUrl = "http://localhost:5173/login";
+                            String frontendUrl = frontendBaseUrl;
                             String redirect = frontendUrl
                                     + "?social=google&error="
                                     + java.net.URLEncoder.encode(
@@ -142,7 +145,8 @@ public class SecurityConfig {
         // ✅ 프론트엔드 주소(Origin) 허용 (Vite dev server)
         config.setAllowedOriginPatterns(java.util.List.of(
                 "http://localhost:5173",
-                "https://frontend-97n5meqb9-jinhyuns-projects-6d19dc50.vercel.app"
+                "https://frontend-97n5meqb9-jinhyuns-projects-6d19dc50.vercel.app",
+                "https://frontend-11h6fal1j-jinhyuns-projects-6d19dc50.vercel.app"
                 // "https://moa-frontend.vercel.app"  // 나중에 실제 도메인 나오면 이렇게 명시적으로 추가해도 됨
         ));
 
