@@ -146,7 +146,9 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(java.util.List.of(
                 "http://localhost:5173",
                 "https://frontend-97n5meqb9-jinhyuns-projects-6d19dc50.vercel.app",
-                "https://frontend-11h6fal1j-jinhyuns-projects-6d19dc50.vercel.app"
+                "https://frontend-11h6fal1j-jinhyuns-projects-6d19dc50.vercel.app",
+                "https://frontend-tau-ten-k8c2lpql65.vercel.app",
+                "http://frontend-tau-ten-k8c2lpql65.vercel.app"
                 // "https://moa-frontend.vercel.app"  // 나중에 실제 도메인 나오면 이렇게 명시적으로 추가해도 됨
         ));
 
