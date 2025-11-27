@@ -58,7 +58,8 @@ public class TempProjectResponse {
                 .coverImageUrl(project.getCoverImageUrl())
                 .coverGallery(project.getCoverGallery())
                 .tags(project.getTags())
-                .rewards(project.getRewards().stream().map(RewardResponse::from).toList())
+                // 한글 설명: disclosure 정보를 포함하여 리워드 응답 생성
+                .rewards(project.getRewards().stream().map(RewardResponse::fromWithDisclosure).toList())
                 .build();
     }
 }

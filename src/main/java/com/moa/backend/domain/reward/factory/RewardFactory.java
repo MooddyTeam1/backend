@@ -32,10 +32,18 @@ public class RewardFactory {
      */
     public Reward createReward(Project project, RewardRequest dto) {
         // 1) 기본 리워드 필드 세팅
+        // 한글 설명: DB NOT NULL 제약조건을 충족하기 위해 null 체크 및 기본값 설정
+        String name = (dto.getName() != null && !dto.getName().trim().isEmpty())
+                ? dto.getName()
+                : "";
+        String description = (dto.getDescription() != null && !dto.getDescription().trim().isEmpty())
+                ? dto.getDescription()
+                : "";
+        
         Reward reward = Reward.builder()
                 .project(project)
-                .name(dto.getName())
-                .description(dto.getDescription())
+                .name(name)
+                .description(description)
                 .price(dto.getPrice())
                 .stockQuantity(dto.getStockQuantity())
                 .estimatedDeliveryDate(dto.getEstimatedDeliveryDate())
@@ -43,9 +51,14 @@ public class RewardFactory {
                 .build();
 
         // 2) 전자상거래 정보고시 매핑
-        if (dto.getDisclosure() != null && dto.getDisclosure().getCategory() != null) {
+        // 한글 설명: disclosure가 존재하면 category 여부와 관계없이 저장하여 응답에 포함되도록 함
+        if (dto.getDisclosure() != null) {
             // 카테고리(Enum name) 문자열 저장
-            reward.setDisclosureCategory(dto.getDisclosure().getCategory().name());
+            if (dto.getDisclosure().getCategory() != null) {
+                reward.setDisclosureCategory(dto.getDisclosure().getCategory().name());
+            } else {
+                reward.setDisclosureCategory(null);
+            }
 
             // 공통 항목 JSON 직렬화
             try {
@@ -73,6 +86,11 @@ public class RewardFactory {
                 // 한글 설명: 직렬화 실패 시 전체 로직이 죽지 않도록 null 로 처리 (로그는 별도 처리 가능)
                 reward.setDisclosureCategorySpecificJson(null);
             }
+        } else {
+            // 한글 설명: disclosure가 null인 경우 기존 값을 유지하거나 null로 설정
+            reward.setDisclosureCategory(null);
+            reward.setDisclosureCommonJson(null);
+            reward.setDisclosureCategorySpecificJson(null);
         }
 
         // 3) 옵션 그룹 매핑 (직접 옵션이 달린 구조)
