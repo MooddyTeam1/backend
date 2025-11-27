@@ -22,6 +22,9 @@ public interface ProjectQnaRepository extends JpaRepository<ProjectQna, Long> {
             ProjectQnaStatus status
     );
 
+    // 공개 Q&A(비공개 아님) 목록
+    List<ProjectQna> findByProject_IdAndIsPrivateFalseOrderByCreatedAtDesc(Long projectId);
+
     // ==============================
     // 🔥 페이지네이션용 메서드 추가
     // ==============================
