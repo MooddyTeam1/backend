@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # 1. 인프라: 메인 데이터베이스 (PostgreSQL)
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: moa-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: moa
+      POSTGRES_USER: moa
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-moa1234} # 실서버에선 .env 파일의 비밀번호를 읽음
+      TZ: Asia/Seoul
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: always
+    # DB가 완전히 켜졌는지 확인하는 Healthcheck. (서버가 DB 켜지기도 전에 붙다가 뻗는 걸 방지)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moa -d moa"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # 2. 인프라: Redis
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: moa-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ==========================================
+  # 3. 코어: MOA 백엔드 애플리케이션 (Spring Boot)
+  # ==========================================
+  moa-backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile # 캐싱 최적화 멀티스테이지 Dockerfile
+    container_name: moa-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # 운영(prod) 프로필로 실행. DB와 Redis 주소는 도커 컨테이너 이름으로 찌른다.
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=moa
+      - DB_USERNAME=moa
+      - DB_PASSWORD=${DB_PASSWORD:-moa1234}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # 외부 API 시크릿 키는 반드시 .env 파일에서 주입받는다 (하드코딩 금지)
+      - TOSS_CLIENT_KEY=${TOSS_CLIENT_KEY}
+      - TOSS_SECRET_KEY=${TOSS_SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy # DB가 완벽히 켜진 후 Spring Boot 기동
+      redis:
+        condition: service_healthy # Redis가 완벽히 켜진 후 Spring Boot 기동
+    restart: always
+
+  # ==========================================
+  # 4. 보안/통신: Nginx Proxy Manager (NPM)
+  # ==========================================
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    ports:
+      - "80:80"     # HTTP 요청
+      - "443:443"   # HTTPS 요청 (Let's Encrypt SSL)
+      - "81:81"     # NPM 관리자 웹 UI
+    volumes:
+      - npm-data:/data
+      - letsencrypt-data:/etc/letsencrypt
+    depends_on:
+      - moa-backend
+    restart: always
+
+  # ==========================================
+  # 5. 모니터링 레이더 (Prometheus & Grafana)
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: moa-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: moa-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: always
+
+volumes:
+  postgres-data:
+  redis-data:
+  npm-data:
+  letsencrypt-data:
+  grafana-data:

@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # 1. 로컬 개발용 DB (PostgreSQL)
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: moa-postgres-local
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: moa
+      POSTGRES_USER: moa
+      POSTGRES_PASSWORD: moa1234
+      TZ: Asia/Seoul
+    volumes:
+      - postgres-local-data:/var/lib/postgresql/data
+    restart: always
+
+  # ==========================================
+  # 2. 로컬 캐시 & 분산 락 (Redis)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: moa-redis-local
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-local-data:/data
+    restart: always
+
+  # ==========================================
+  # 3. 로컬 메트릭 수집기 (Prometheus)
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: moa-prometheus-local
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: always
+
+  # ==========================================
+  # 4. 로컬 시각화 레이더 (Grafana)
+  # ==========================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: moa-grafana-local
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-local-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: always
+
+volumes:
+  postgres-local-data:
+  redis-local-data:
+  grafana-local-data:
