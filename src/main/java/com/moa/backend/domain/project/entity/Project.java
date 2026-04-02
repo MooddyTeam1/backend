@@ -90,6 +90,7 @@ public class Project {
     private ProjectReviewStatus reviewStatus = ProjectReviewStatus.NONE;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private ProjectResultStatus resultStatus = ProjectResultStatus.NONE;
 
     private LocalDateTime requestAt;
@@ -104,6 +105,7 @@ public class Project {
     // postgres(운영용) = TEXT 옆 (json_valid(cover_gallery))추가 및 data.sql 이중따옴표 제거
     @Column(columnDefinition = "TEXT")
     @Convert(converter = StringListConverter.class)
+    @Builder.Default
     private List<String> coverGallery = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false)
@@ -121,6 +123,7 @@ public class Project {
             joinColumns = @JoinColumn(name = "project_id")
     )
     @Column(name = "tag")
+    @Builder.Default
     private List<String> tags = new ArrayList<>();
 
     private LocalDateTime canceledAt;
@@ -172,6 +175,31 @@ public class Project {
         this.rejectedAt = LocalDateTime.now();
         this.rejectedReason = reason;
         this.approvedAt = null;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 심사 승인 직후 호출. 공개 시작일이 {@code today} 이전이거나 같으면 자정 배치를 기다리지 않고 LIVE로 올린다.
+     * <p>시작일 당일 00:00 배치 이후에만 승인되는 경우, 이전에는 DRAFT+APPROVED로 남아 공개 전환이 영구히 안 되는
+     * 상태(좀비)가 발생할 수 있었음.</p>
+     */
+    public void promoteLifecycleAfterApproval(LocalDate today) {
+        if (this.reviewStatus != ProjectReviewStatus.APPROVED) {
+            return;
+        }
+        if (this.lifecycleStatus != ProjectLifecycleStatus.DRAFT) {
+            return;
+        }
+        if (this.startDate == null) {
+            return;
+        }
+        if (this.startDate.isAfter(today)) {
+            return;
+        }
+        this.lifecycleStatus = ProjectLifecycleStatus.LIVE;
+        if (this.liveStartAt == null) {
+            this.liveStartAt = LocalDateTime.now();
+        }
         this.updatedAt = LocalDateTime.now();
     }
 }

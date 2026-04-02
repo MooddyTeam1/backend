@@ -2,6 +2,7 @@ package com.moa.backend.domain.project.service;
 
 import com.moa.backend.domain.follow.service.SupporterProjectBookmarkService;
 import com.moa.backend.domain.follow.repository.SupporterBookmarkProjectRepository;
+import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.order.entity.OrderStatus;
 import com.moa.backend.domain.order.repository.OrderRepository;
 import com.moa.backend.domain.project.dto.ProjectDetailResponse;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final MakerRepository makerRepository;
     private final SupporterProjectBookmarkService supporterProjectBookmarkService;
     private final SupporterBookmarkProjectRepository bookmarkRepository;
 
@@ -187,21 +189,23 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public StatusSummaryResponse getProjectSummary(Long userId) {
+        long makerId = requireMakerId(userId);
         return StatusSummaryResponse.builder()
-                .draftCount(count(userId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.NONE))            //작성 중
-                .reviewCount(count(userId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.REVIEW))          //심사 중
-                .approvedCount(count(userId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.APPROVED))        //승인 됨
-                .scheduledCount(count(userId, ProjectLifecycleStatus.SCHEDULED, ProjectReviewStatus.APPROVED))    //공개 예정
-                .liveCount(count(userId, ProjectLifecycleStatus.LIVE, ProjectReviewStatus.APPROVED))         //진행 중
-                .endCount(count(userId, ProjectLifecycleStatus.ENDED, ProjectReviewStatus.APPROVED))        //종료
-                .rejectedCount(count(userId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.REJECTED))        //반려됨
+                .draftCount(count(makerId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.NONE))            //작성 중
+                .reviewCount(count(makerId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.REVIEW))          //심사 중
+                .approvedCount(count(makerId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.APPROVED))        //승인 됨
+                .scheduledCount(count(makerId, ProjectLifecycleStatus.SCHEDULED, ProjectReviewStatus.APPROVED))    //공개 예정
+                .liveCount(count(makerId, ProjectLifecycleStatus.LIVE, ProjectReviewStatus.APPROVED))         //진행 중
+                .endCount(count(makerId, ProjectLifecycleStatus.ENDED, ProjectReviewStatus.APPROVED))        //종료
+                .rejectedCount(count(makerId, ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.REJECTED))        //반려됨
                 .build();
     }
 
     //특정 상태 프로젝트 필요한데이터만 조회
     @Override
     public List<?> getProjectByStatus(Long userId, ProjectLifecycleStatus lifecycle, ProjectReviewStatus review) {
-        List<Project> projects = projectRepository.findAllByMakerIdAndLifecycleStatusAndReviewStatus(userId, lifecycle, review);
+        long makerId = requireMakerId(userId);
+        List<Project> projects = projectRepository.findAllByMakerIdAndLifecycleStatusAndReviewStatus(makerId, lifecycle, review);
 
         // 작성중 상태: 임시 프로젝트 응답 DTO 사용
         if (lifecycle == ProjectLifecycleStatus.DRAFT && review == ProjectReviewStatus.NONE) {
@@ -216,8 +220,14 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
     }
 
-    private long count(Long userId, ProjectLifecycleStatus lifecycle, ProjectReviewStatus review) {
-        return projectRepository.countByMakerIdAndLifecycleStatusAndReviewStatus(userId, lifecycle, review);
+    private long count(long makerId, ProjectLifecycleStatus lifecycle, ProjectReviewStatus review) {
+        return projectRepository.countByMakerIdAndLifecycleStatusAndReviewStatus(makerId, lifecycle, review);
+    }
+
+    private long requireMakerId(Long userId) {
+        return makerRepository.findByOwner_Id(userId)
+                .orElseThrow(() -> new NoSuchElementException("메이커를 찾을 수 없습니다. userId=" + userId))
+                .getId();
     }
 
     // 홈 화면 '지금 뜨는 프로젝트' 섹션용 인기 프로젝트 조회.

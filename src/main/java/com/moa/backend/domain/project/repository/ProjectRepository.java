@@ -81,7 +81,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     Optional<Project> findByIdAndMaker_Id(Long projectId, Long makerId);
 
-    long countByMakerIdAndLifecycleStatusAndReviewStatus(Long userId, ProjectLifecycleStatus lifecycleStatus,
+    long countByMakerIdAndLifecycleStatusAndReviewStatus(Long makerId, ProjectLifecycleStatus lifecycleStatus,
             ProjectReviewStatus reviewStatus);
 
     List<Project> findByLifecycleStatusAndReviewStatusAndStartDateAfter(
@@ -90,6 +90,14 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             LocalDate date);
 
     List<Project> findByLifecycleStatusAndReviewStatusAndStartDate(
+            ProjectLifecycleStatus lifecycleStatus,
+            ProjectReviewStatus reviewStatus,
+            LocalDate date);
+
+    /**
+     * DRAFT+APPROVED 이고 시작일이 주어진 날짜 이하인 프로젝트 (당일 공개·지연 승인 복구용).
+     */
+    List<Project> findByLifecycleStatusAndReviewStatusAndStartDateLessThanEqual(
             ProjectLifecycleStatus lifecycleStatus,
             ProjectReviewStatus reviewStatus,
             LocalDate date);
@@ -455,4 +463,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
                   AND o.status = 'PAID'
             """)
     int countSupporters(@Param("projectId") Long projectId);
+
+    Optional<Project> findByTitle(String title);
 }

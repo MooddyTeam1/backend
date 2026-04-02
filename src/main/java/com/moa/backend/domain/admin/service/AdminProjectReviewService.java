@@ -8,9 +8,13 @@ import com.moa.backend.domain.admin.dto.RejectProjectRequest;
 import com.moa.backend.domain.admin.dto.RejectReasonPresetResponse;
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.maker.repository.MakerRepository;
+import com.moa.backend.domain.notification.entity.NotificationTargetType;
+import com.moa.backend.domain.notification.entity.NotificationType;
+import com.moa.backend.domain.notification.service.NotificationService;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
+import com.moa.backend.domain.wallet.service.ProjectWalletService;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
@@ -18,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +40,8 @@ public class AdminProjectReviewService {
 
     private final ProjectRepository projectRepository;
     private final MakerRepository makerRepository;
+    private final ProjectWalletService projectWalletService;
+    private final NotificationService notificationService;
 
     /**
      * 한글 설명: 관리자 여부를 확인하는 공통 검증 메서드.
@@ -108,8 +115,21 @@ public class AdminProjectReviewService {
             throw new AppException(ErrorCode.PROJECT_NOT_IN_REVIEW);
         }
 
-        project.approve(); // Project 엔티티 도메인 메서드
+        project.approve();
+        project.promoteLifecycleAfterApproval(LocalDate.now());
+
         projectRepository.save(project);
+        projectWalletService.createForProject(project);
+
+        Long makerUserId = project.getMaker().getOwner().getId();
+        notificationService.send(
+                makerUserId,
+                "프로젝트 심사 승인",
+                "[" + project.getTitle() + "] 의 프로젝트가 심사에서 승인되었습니다.",
+                NotificationType.MAKER,
+                NotificationTargetType.PROJECT,
+                project.getId()
+        );
 
         return ProjectStatusResponse.from(project);
     }

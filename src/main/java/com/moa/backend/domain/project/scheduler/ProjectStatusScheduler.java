@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -74,12 +75,15 @@ public class ProjectStatusScheduler {
         });
         projectRepository.saveAll(live);
 
-        //시작일이 오늘인 프로젝트 LIVE로 전환 (공개예정 거치지 않고 바로 전환(전날승인했을경우))
-        List<Project> lived = projectRepository.findByLifecycleStatusAndReviewStatusAndStartDate(
+        // DRAFT+APPROVED 이고 시작일 <= 오늘 → LIVE (당일 자정 직후 승인 누락·지연 승인 등 복구 포함)
+        List<Project> lived = projectRepository.findByLifecycleStatusAndReviewStatusAndStartDateLessThanEqual(
                 ProjectLifecycleStatus.DRAFT, ProjectReviewStatus.APPROVED, today
         );
         lived.forEach(project -> {
             project.setLifecycleStatus(ProjectLifecycleStatus.LIVE);
+            if (project.getLiveStartAt() == null) {
+                project.setLiveStartAt(LocalDateTime.now());
+            }
 
             //메이커에게 LIVE 알림
             Long receiverId = project.getMaker().getOwner().getId();

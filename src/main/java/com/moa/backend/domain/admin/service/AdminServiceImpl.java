@@ -40,17 +40,12 @@ public class AdminServiceImpl implements AdminService {
 
         validateProjectStatusChangeable(project);
 
-        project.setApprovedAt(LocalDateTime.now());
-
-        //시작일이 오늘이거나 오늘 이전인 프로젝트 진행중 상태로 변환
-        LocalDate today =  LocalDate.now();
-        if (project.getStartDate().isEqual(today) || project.getStartDate().isBefore(today)) {
-            project.setReviewStatus(ProjectReviewStatus.APPROVED);
-            project.setLifecycleStatus(ProjectLifecycleStatus.LIVE);
-        } else {    // 시작일이 미래인 프로젝트는 승인됨 상태로 변환
-            project.setLifecycleStatus(ProjectLifecycleStatus.DRAFT);
-            project.setReviewStatus(ProjectReviewStatus.APPROVED);
+        if (project.getReviewStatus() != ProjectReviewStatus.REVIEW) {
+            throw new AppException(ErrorCode.PROJECT_NOT_IN_REVIEW);
         }
+
+        project.approve();
+        project.promoteLifecycleAfterApproval(LocalDate.now());
 
         projectRepository.save(project);
         projectWalletService.createForProject(project);

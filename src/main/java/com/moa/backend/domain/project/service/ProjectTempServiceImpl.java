@@ -39,8 +39,9 @@ public class ProjectTempServiceImpl implements ProjectTempService {
         Project project;
 
         if (projectId != null) {
-            // 기존 임시저장 수정
-            project = projectRepository.findByIdAndMaker_Id(projectId, userId)
+            // 기존 임시저장 수정 (findByIdAndMaker_Id 두 번째 인자는 makers.id)
+            long makerId = requireMakerId(userId);
+            project = projectRepository.findByIdAndMaker_Id(projectId, makerId)
                     .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
 
             // 상태 검증
@@ -117,7 +118,8 @@ public class ProjectTempServiceImpl implements ProjectTempService {
     @Override
     @Transactional
     public CreateProjectResponse requestTemp(Long userId, Long projectId, CreateProjectRequest request) {
-        Project project = projectRepository.findByIdAndMaker_Id(projectId, userId)
+        long makerId = requireMakerId(userId);
+        Project project = projectRepository.findByIdAndMaker_Id(projectId, makerId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
 
         // 상태 검증
@@ -170,7 +172,8 @@ public class ProjectTempServiceImpl implements ProjectTempService {
     @Override
     @Transactional
     public void deleteTemp(Long userId, Long projectId) {
-        Project project = projectRepository.findByIdAndMaker_Id(projectId, userId)
+        long makerId = requireMakerId(userId);
+        Project project = projectRepository.findByIdAndMaker_Id(projectId, makerId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_FOUND));
 
         if (!(project.getLifecycleStatus() == ProjectLifecycleStatus.DRAFT &&
@@ -179,5 +182,11 @@ public class ProjectTempServiceImpl implements ProjectTempService {
         }
 
         projectRepository.delete(project);
+    }
+
+    private long requireMakerId(Long userId) {
+        return makerRepository.findByOwner_Id(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.FORBIDDEN))
+                .getId();
     }
 }
