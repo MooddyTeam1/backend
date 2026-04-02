@@ -8,8 +8,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.util.Base64;
@@ -148,25 +150,78 @@ public class OpenAiListingClient {
             ObjectNode responseFormat = requestBody.putObject("response_format");
             responseFormat.put("type", "json_object");
 
-            log.info("OpenAI Listing Request: {}", objectMapper.writeValueAsString(requestBody));
+            log.info("[OpenAI] 요청 시작 - model={}, imageSizeBytes={}, hint={}, tone={}",
+                    properties.getModel(), imageBytes.length,
+                    hint != null ? hint : "없음",
+                    tone != null ? tone : "없음");
+            log.debug("[OpenAI] Request Body: {}", objectMapper.writeValueAsString(requestBody));
 
             String responseJson = openAiWebClient.post()
                     .uri("/v1/chat/completions")
                     .bodyValue(requestBody)
                     .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, clientResponse ->
+                            clientResponse.bodyToMono(String.class).flatMap(errorBody -> {
+                                log.error("[OpenAI] 4xx 클라이언트 에러 - status={}, body={}",
+                                        clientResponse.statusCode(), errorBody);
+                                String reason = switch (clientResponse.statusCode().value()) {
+                                    case 401 -> "API 키가 유효하지 않습니다. OPENAI_API_KEY 환경변수를 확인하세요.";
+                                    case 403 -> "API 키 권한이 없습니다.";
+                                    case 404 -> "요청한 모델(" + properties.getModel() + ")을 찾을 수 없습니다.";
+                                    case 429 -> "OpenAI 요청 한도를 초과했습니다. (Rate limit / Quota 초과)";
+                                    default -> "OpenAI 클라이언트 에러 [" + clientResponse.statusCode().value() + "]: " + errorBody;
+                                };
+                                return Mono.error(new RuntimeException(reason));
+                            })
+                    )
+                    .onStatus(HttpStatusCode::is5xxServerError, clientResponse ->
+                            clientResponse.bodyToMono(String.class).flatMap(errorBody -> {
+                                log.error("[OpenAI] 5xx 서버 에러 - status={}, body={}",
+                                        clientResponse.statusCode(), errorBody);
+                                return Mono.error(new RuntimeException(
+                                        "OpenAI 서버 에러 [" + clientResponse.statusCode().value() + "]: " + errorBody));
+                            })
+                    )
                     .bodyToMono(String.class)
+                    .onErrorResume(WebClientResponseException.class, ex -> {
+                        log.error("[OpenAI] WebClient 응답 에러 - status={}, message={}, responseBody={}",
+                                ex.getStatusCode(), ex.getMessage(), ex.getResponseBodyAsString(), ex);
+                        return Mono.error(new RuntimeException(
+                                "OpenAI 응답 에러 [" + ex.getStatusCode() + "]: " + ex.getResponseBodyAsString()));
+                    })
                     .onErrorResume(ex -> {
-                        log.error("OpenAI 호출 실패", ex);
-                        return Mono.error(new RuntimeException("OpenAI 호출 중 오류가 발생했습니다."));
+                        if (ex instanceof RuntimeException) {
+                            return Mono.error(ex);
+                        }
+                        log.error("[OpenAI] 예상치 못한 에러 - type={}, message={}",
+                                ex.getClass().getName(), ex.getMessage(), ex);
+                        return Mono.error(new RuntimeException("OpenAI 호출 중 오류가 발생했습니다: " + ex.getMessage(), ex));
                     })
                     .block();
 
-            log.info("OpenAI Listing Raw Response: {}", responseJson);
+            log.info("[OpenAI] 응답 수신 완료 - responseLength={}", responseJson != null ? responseJson.length() : 0);
+            log.debug("[OpenAI] Raw Response: {}", responseJson);
 
             JsonNode root = objectMapper.readTree(responseJson);
+
+            JsonNode errorNode = root.path("error");
+            if (!errorNode.isMissingNode()) {
+                String errorMsg = errorNode.path("message").asText();
+                String errorType = errorNode.path("type").asText();
+                log.error("[OpenAI] 응답 내 에러 필드 감지 - type={}, message={}", errorType, errorMsg);
+                throw new RuntimeException("OpenAI 에러 응답 [" + errorType + "]: " + errorMsg);
+            }
+
             JsonNode choices = root.path("choices");
             if (!choices.isArray() || choices.isEmpty()) {
+                log.error("[OpenAI] choices 필드 없음 - 전체 응답: {}", responseJson);
                 throw new RuntimeException("OpenAI 응답에 choices 항목이 없습니다.");
+            }
+
+            String finishReason = choices.get(0).path("finish_reason").asText();
+            log.info("[OpenAI] finish_reason={}", finishReason);
+            if ("length".equals(finishReason)) {
+                log.warn("[OpenAI] 응답이 max_tokens에 의해 잘렸습니다. JSON 파싱에 실패할 수 있습니다.");
             }
 
             String content = choices.get(0)
@@ -174,12 +229,13 @@ public class OpenAiListingClient {
                     .path("content")
                     .asText();
 
-            log.info("OpenAI Listing Content(JSON): {}", content);
+            log.info("[OpenAI] Content(JSON) 파싱 시작 - contentLength={}", content.length());
+            log.debug("[OpenAI] Content: {}", content);
 
             return objectMapper.readValue(content, OpenAiListingResponse.class);
 
         } catch (Exception e) {
-            log.error("OpenAI Listing 호출/파싱 중 오류", e);
+            log.error("[OpenAI] 최종 오류 - type={}, message={}", e.getClass().getName(), e.getMessage(), e);
             throw new RuntimeException("AI 설명 생성에 실패했습니다: " + e.getMessage(), e);
         }
     }
