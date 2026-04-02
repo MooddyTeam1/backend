@@ -34,6 +34,7 @@ public class RewardResponse {
     private Long price;
     @Schema(description = "예상 배송일", example = "2025-02-28")
     private LocalDate estimatedDeliveryDate;
+    @Builder.Default
     @Schema(description = "판매 활성 여부", example = "true")
     private boolean active = true;
 

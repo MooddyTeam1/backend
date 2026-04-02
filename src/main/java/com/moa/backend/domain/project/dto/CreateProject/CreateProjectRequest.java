@@ -45,7 +45,7 @@ public class CreateProjectRequest {
     @NotNull(message = "종료일은 필수입니다")
     private LocalDate endDate;
 
-    @Schema(description = "카테고리", example = "TECH")
+    @Schema(description = "카테고리 (예: TECH, FASHION, FOOD, LIVING 등 서버 정의 enum 값)", example = "TECH")
     @NotNull(message = "카테고리는 필수입니다")
     private Category category;
 

@@ -34,7 +34,7 @@ public class TempProjectRequest {  //임시 저장
     @Schema(description = "펀딩 종료일", example = "2025-02-10")
     @JsonDeserialize(using = MonthToLocalDateDeserializer.class)
     private LocalDate endDate;
-    @Schema(description = "카테고리", example = "TECH")
+    @Schema(description = "카테고리 (예: TECH, FASHION, FOOD, LIVING 등 서버 정의 enum 값)", example = "TECH")
     private Category category;
     @Schema(description = "대표 이미지 URL", example = "https://cdn.moa.com/project/cover.png")
     private String coverImageUrl;
