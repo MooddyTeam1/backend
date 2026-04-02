@@ -1,5 +1,6 @@
 package com.moa.backend.domain.admin.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moa.backend.domain.maker.entity.Maker;
@@ -23,38 +24,65 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "AdminMakerProfileResponse DTO")
 public class AdminMakerProfileResponse {
 
     // ================= 공통 필드 =================
 
+    @Schema(description = "id", example = "1")
+
     private Long id;                 // 메이커 ID
+    @Schema(description = "ownerUserId", example = "1")
     private Long ownerUserId;        // 메이커 소유자 유저 ID
+    @Schema(description = "makerType (허용값은 서버 enum 정의 참조)", example = "makerType")
     private MakerType makerType;     // INDIVIDUAL / BUSINESS
+    @Schema(description = "name", example = "name")
     private String name;             // 메이커 이름(개인명 or 상호명)
 
+    @Schema(description = "productIntro", example = "productIntro")
+
     private String productIntro;     // 제품/브랜드 소개
+    @Schema(description = "coreCompetencies", example = "coreCompetencies")
     private String coreCompetencies; // 핵심 역량
+    @Schema(description = "contactEmail", example = "contactEmail")
     private String contactEmail;     // 연락 이메일
+    @Schema(description = "contactPhone", example = "contactPhone")
     private String contactPhone;     // 연락 전화번호
 
+    @Schema(description = "createdAt", example = "2025-11-01T10:00:00")
+
     private LocalDateTime createdAt;
+    @Schema(description = "updatedAt", example = "2025-11-01T10:00:00")
     private LocalDateTime updatedAt;
 
     // ================= 개인 메이커 전용 필드 =================
 
+    @Schema(description = "imageUrl", example = "imageUrl")
+
     private String imageUrl;         // 프로필 이미지
+    @Schema(description = "techStack", example = "[]")
     private List<String> techStack;  // 기술 스택
+    @Schema(description = "keywords", example = "[]")
     private List<String> keywords;  // 관심/키워드 목록 (쉼표 구분 문자열을 파싱)
 
     // ================= 사업자 메이커 전용 필드 =================
 
+    @Schema(description = "businessNumber", example = "businessNumber")
+
     private String businessNumber;           // 사업자번호
+    @Schema(description = "businessName", example = "businessName")
     private String businessName;             // 사업자명
+    @Schema(description = "businessItem", example = "businessItem")
     private String businessItem;             // 업태/업종 요약 (예: "제조업, 도매 및 소매업")
+    @Schema(description = "onlineSalesReportNumber", example = "onlineSalesReportNumber")
     private String onlineSalesReportNumber;  // 통신판매업 신고번호
+    @Schema(description = "establishedAt", example = "2025-11-01")
     private LocalDate establishedAt;         // 설립일
+    @Schema(description = "industryType", example = "industryType")
     private String industryType;             // 업종 (예: 전자제품 제조업)
+    @Schema(description = "representative", example = "representative")
     private String representative;           // 대표자명
+    @Schema(description = "location", example = "location")
     private String location;                 // 소재지 주소
 
     /**

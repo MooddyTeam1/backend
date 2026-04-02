@@ -1,5 +1,6 @@
 package com.moa.backend.domain.admin.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,9 +18,13 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "RewardDisclosureResponse DTO")
 public class RewardDisclosureResponse {
 
+    @Schema(description = "category", example = "category")
+
     private String category;
+    @Schema(description = "common", example = "common")
     private RewardCommonDisclosureResponse common;
     private Map<String, Object> categorySpecific;
 

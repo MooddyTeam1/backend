@@ -3,6 +3,7 @@ package com.moa.backend.domain.admin.dto;
 import com.moa.backend.domain.reward.dto.RewardDisclosureResponseDTO;
 import com.moa.backend.domain.reward.dto.select.OptionGroupResponse;
 import com.moa.backend.domain.reward.entity.Reward;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,21 +23,32 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "관리자 심사용 리워드 응답")
 public class RewardResponse {
 
     // 기본 리워드 정보
+    @Schema(description = "리워드 ID", example = "5001")
     private Long id;
+    @Schema(description = "리워드 제목", example = "얼리버드 텀블러 1개 세트")
     private String title; // 한글 설명: 실제 엔티티는 name 필드 사용
+    @Schema(description = "리워드 설명", example = "친환경 소재 텀블러 1개와 세척솔 구성")
     private String description;
+    @Schema(description = "리워드 가격(원)", example = "29000")
     private Long price;
+    @Schema(description = "수량 제한", example = "300")
     private Integer limitQty; // 한글 설명: 실제 엔티티는 stockQuantity 필드 사용
+    @Schema(description = "예상 배송 월", example = "2026-01-01")
     private LocalDate estShippingMonth; // 한글 설명: 실제 엔티티는 estimatedDeliveryDate 필드 사용
-    private Boolean available; // 한글 설명: 실제 엔티티는 active 필드 사용
+    @Schema(description = "판매 가능 여부", example = "true")
+    @Builder.Default
+    private Boolean available = Boolean.FALSE; // 한글 설명: 실제 엔티티는 active 필드 사용
 
     // 한글 설명: 옵션 구성 (색상/사이즈 등)
+    @Schema(description = "옵션 구성 정보")
     private RewardOptionConfigResponse optionConfig;
 
     // 한글 설명: 전자상거래법 정보고시
+    @Schema(description = "전자상거래법 정보고시")
     private RewardDisclosureResponse disclosure;
 
     /**

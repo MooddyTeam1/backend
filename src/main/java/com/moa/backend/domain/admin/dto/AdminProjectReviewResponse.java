@@ -1,5 +1,6 @@
 package com.moa.backend.domain.admin.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.moa.backend.domain.project.entity.Project;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import lombok.AllArgsConstructor;
@@ -18,24 +19,31 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "AdminProjectReviewResponse DTO")
 public class AdminProjectReviewResponse {
 
     // 한글 설명: 프로젝트 ID
+    @Schema(description = "projectId", example = "1")
     private Long projectId;
 
     // 한글 설명: 메이커 이름
+    @Schema(description = "maker", example = "maker")
     private String maker;
 
     // 한글 설명: 프로젝트 제목
+    @Schema(description = "title", example = "title")
     private String title;
 
     // 한글 설명: 심사 요청 시각 (requestAt)
+    @Schema(description = "requestAt", example = "2025-11-01T10:00:00")
     private LocalDateTime requestAt;
 
     // 한글 설명: 심사 상태 (REVIEW 등)
+    @Schema(description = "reviewStatus (허용값은 서버 enum 정의 참조)", example = "reviewStatus")
     private ProjectReviewStatus reviewStatus;
 
     // 한글 설명: 리워드 이름 목록
+    @Schema(description = "rewardNames", example = "[]")
     private List<String> rewardNames;
 
     /**

@@ -1,5 +1,6 @@
 package com.moa.backend.domain.admin.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,12 +16,15 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "RewardOptionConfigResponse DTO")
 public class RewardOptionConfigResponse {
 
     // 한글 설명: 옵션 존재 여부 (false 이면 옵션 없음)
+    @Schema(description = "hasOptions", example = "true")
     private Boolean hasOptions;
 
     // 한글 설명: 옵션 리스트
+    @Schema(description = "options", example = "[]")
     private List<RewardOptionItemResponse> options;
 
     /**

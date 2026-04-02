@@ -1,5 +1,6 @@
 package com.moa.backend.domain.admin.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,7 +16,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "RejectReasonPresetResponse DTO")
 public class RejectReasonPresetResponse {
+
+    @Schema(description = "presets", example = "[]")
 
     private List<String> presets;
 
