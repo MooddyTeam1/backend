@@ -1,6 +1,7 @@
 package com.moa.backend.domain.maker.dto;
 
 import com.moa.backend.domain.maker.entity.MakerSettlementProfile;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
@@ -8,13 +9,21 @@ import java.time.LocalDateTime;
  * 한글 설명: 메이커 정산 계좌 정보 응답 DTO.
  * - GET/PUT 응답 바디 형식.
  */
+@Schema(description = "메이커 정산 계좌 응답")
 public record MakerSettlementResponse(
+        @Schema(description = "정산 계좌 ID", example = "88")
         Long id,                 // 정산 계좌 정보 ID
+        @Schema(description = "메이커 ID", example = "310")
         Long makerId,            // 메이커 ID
+        @Schema(description = "은행명", example = "신한은행")
         String bankName,         // 은행명
+        @Schema(description = "계좌번호(운영 정책에 따라 마스킹될 수 있음)", example = "***456789")
         String accountNumber,    // 계좌번호 (실제 운영 시 마스킹 추천)
+        @Schema(description = "예금주명", example = "김진현")
         String accountHolder,    // 예금주명
+        @Schema(description = "생성 시각", example = "2025-10-01T09:20:00")
         LocalDateTime createdAt, // 생성일시
+        @Schema(description = "수정 시각", example = "2025-10-20T17:05:00")
         LocalDateTime updatedAt  // 수정일시
 ) {
 

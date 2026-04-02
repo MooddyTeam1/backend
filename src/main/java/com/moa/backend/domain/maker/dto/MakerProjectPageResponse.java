@@ -1,5 +1,6 @@
 package com.moa.backend.domain.maker.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,24 +17,34 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "메이커 프로젝트 페이지 응답")
 public class MakerProjectPageResponse {
 
     // 한글 설명: 실제 프로젝트 데이터 목록
+    @Schema(description = "프로젝트 목록")
     private List<MakerProjectResponse> content;
 
     // 한글 설명: 페이지 정보
+    @Schema(description = "페이지 정보")
     private PageInfo page;
 
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "페이지 메타 정보")
     public static class PageInfo {
+        @Schema(description = "현재 페이지 번호(1부터 시작)", example = "1")
         private int number;         // 현재 페이지 번호 (1부터 시작으로 변환해서 내려줌)
+        @Schema(description = "페이지 크기", example = "12")
         private int size;           // 페이지 크기
+        @Schema(description = "전체 항목 수", example = "57")
         private long totalElements; // 전체 항목 수
+        @Schema(description = "전체 페이지 수", example = "5")
         private int totalPages;     // 전체 페이지 수
+        @Schema(description = "첫 페이지 여부", example = "true")
         private boolean first;      // 첫 페이지 여부
+        @Schema(description = "마지막 페이지 여부", example = "false")
         private boolean last;       // 마지막 페이지 여부
     }
 

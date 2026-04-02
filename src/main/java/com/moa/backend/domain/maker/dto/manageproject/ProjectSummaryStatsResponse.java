@@ -1,5 +1,6 @@
 package com.moa.backend.domain.maker.dto.manageproject;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,10 +14,16 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "ProjectSummaryStatsResponse DTO")
 public class ProjectSummaryStatsResponse {
 
+    @Schema(description = "totalProjects", example = "1")
+
     private Integer totalProjects;        // 전체 프로젝트 수
+    @Schema(description = "liveProjects", example = "1")
     private Integer liveProjects;         // 진행중(LIVE + APPROVED) 프로젝트 수
+    @Schema(description = "totalRaised", example = "1")
     private Long totalRaised;             // 총 모금액 합계 (PAID 기준)
+    @Schema(description = "newProjectsThisMonth", example = "1")
     private Integer newProjectsThisMonth; // 이번 달 신규 프로젝트 수
 }
