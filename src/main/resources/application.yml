@@ -1,42 +1,17 @@
-jwt:
-  secret: change-me-to-secure-key-change-this-in-prod
-  access-token-validity-in-seconds: 3600        # 1시간
-  refresh-token-validity-in-seconds: 1209600    # 2주
-  issuer: moa-backend
-
-toss:
-  client-key: ${TOSS_CLIENT_KEY}     # 토스페이먼츠 샌드박스 클라이언트 키
-  secret-key: ${TOSS_SECRET_KEY}     # 토스페이먼츠 샌드박스 시크릿 키
-
+# src/main/resources/application.yml
 spring:
   application:
-    name: backend
+    name: moa-backend
+  profiles:
+    # 기본 실행 프로필을 dev(로컬 개발)로 강제 지정
+    active: dev
+
   servlet:
     multipart:
       max-file-size: 8MB
       max-request-size: 32MB
 
-  sql:
-    init:
-      mode: always
-      data-locations: classpath:dataqqq.sql
-
-  mail:
-    host: smtp.naver.com                # 한글 설명: 네이버 SMTP 서버 주소
-    port: 465                           # 한글 설명: SSL 포트 (587 + starttls 도 가능)
-    username: ${NAVER_MAIL_USERNAME}    # 한글 설명: 네이버 메일 주소 (예: mymail@naver.com)
-    password: ${NAVER_MAIL_PASSWORD}    # 한글 설명: 앱 비밀번호 또는 계정 비밀번호(권장 X)
-    protocol: smtp
-    properties:
-      mail:
-        smtp:
-          auth: true                    # 한글 설명: SMTP 인증 사용
-          ssl:
-            enable: true                # 한글 설명: SSL 사용 (465 포트인 경우)
-          starttls:
-            enable: false               # 한글 설명: 465+SSL 쓸 거면 false, 587이면 true
-    default-encoding: UTF-8
-
+  # 공통 OAuth2 설정 (시크릿 키는 환경변수로 주입)
   security:
     oauth2:
       client:
@@ -44,22 +19,14 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            redirect-uri: http://localhost:8080/login/oauth2/code/google
-            scope:
-              - profile
-              - email
-
+            scope: [profile, email]
           kakao:
             client-id: ${KAKAO_CLIENT_ID}
-            client-secret: ${KAKAO_CLIENT_SECRET}
+            client-secret: ${KAKAO_CLIENT_SECRET:}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
-            scope:
-              - profile_nickname
-              - profile_image
+            scope: [profile_nickname, profile_image]
             provider: kakao
-
         provider:
           kakao:
             authorization-uri: https://kauth.kakao.com/oauth/authorize
@@ -67,45 +34,48 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
-  datasource:
-    url: jdbc:postgresql://localhost:5432/moa
-    driver-class-name: org.postgresql.Driver
-    username: moa
-    password: moa1234
-
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    defer-datasource-initialization: true
-    show-sql: true
+  # 이메일 발송 기본 설정
+  mail:
+    host: smtp.naver.com
+    port: 587
+    username: ${NAVER_MAIL_USERNAME}
+    password: ${NAVER_MAIL_PASSWORD}
+    protocol: smtp
+    default-encoding: UTF-8
     properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          starttls:
+            enable: false
+
+# 공통 토큰 & 외부 API 설정
+jwt:
+  secret: ${JWT_SECRET:change-me-to-secure-key-change-this-in-prod}
+  access-token-validity-in-seconds: 3600
+  refresh-token-validity-in-seconds: 1209600
+  issuer: moa-backend
+
+toss:
+  client-key: ${TOSS_CLIENT_KEY}
+  secret-key: ${TOSS_SECRET_KEY}
+
+openai:
+  base-url: https://api.openai.com
+  api-key: ${OPENAI_API_KEY}
+  model: gpt-4o-mini
 
 springdoc:
   swagger-ui:
-    tags-sorter: alpha        # 태그를 알파벳 순으로 정렬 (Auth가 최상단)
-    operations-sorter: alpha  # 같은 태그 내 엔드포인트를 알파벳 순 정렬
-
-logging:
-  level:
-    org.springframework.security.oauth2.client: DEBUG
-    org.springframework.web.client.RestTemplate: DEBUG
+    tags-sorter: alpha
+    operations-sorter: alpha
 
 app:
   email:
     verification-expiration-minutes: 10
   password-reset:
-    base-url: "http://localhost:5173/password/reset"
     token-validity-minutes: 60
   file-storage:
-    root-dir: ./uploads
     image-dir: images
-  frontend:
-    base-url: "http://localhost:5173"
-
-openai:
-  base-url: https://api.openai.com        # 한글 설명: OpenAI API 기본 URL
-  api-key: ${OPENAI_API_KEY}             # 한글 설명: 환경변수에서 주입 (운영 서버/로컬에 export 필요)
-  model: gpt-4o-mini

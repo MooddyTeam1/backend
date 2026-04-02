@@ -1,38 +1,71 @@
+# src/main/resources/application-dev.yml
+
+# ngrok 등 프록시 환경에서 https 리다이렉트를 정상 처리하기 위한 설정
+server:
+  forward-headers-strategy: framework
+
 spring:
-  sql:
-    init:
-      mode: always
-      data-locations: classpath:data.sql
+  config:
+    activate:
+      on-profile: dev
 
-  mail:
-    host: localhost
-    port: 1025
-    username: ""
-    password: ""
-    properties:
-      mail:
-        smtp:
-          auth: false
-          starttls:
-            enable: false
-
+  # 로컬 도커의 PostgreSQL 연결
   datasource:
-    url: jdbc:h2:mem:moa;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:postgresql://localhost:5432/moa
+    driver-class-name: org.postgresql.Driver
+    username: moa
+    password: moa1234
+
+  # 로컬 도커의 Redis 연결 (분산 락, 캐싱용)
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
   jpa:
     hibernate:
       ddl-auto: update
     defer-datasource-initialization: true
-    show-sql: true
+    show-sql: false # 주의: 부하 테스트 시 I/O 병목을 막기 위해 평소엔 false 권장
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+  sql:
+    init:
+      mode: never
+      data-locations: classpath:data.sql
+
+  # 로컬 OAuth2 리다이렉트 URI (spring: 중복 제거 및 들여쓰기 수정)
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          kakao:
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+# Actuator & Prometheus (그라파나 연동용)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: moa-backend-dev
+
+logging:
+  level:
+    org.springframework.security.oauth2.client: DEBUG
+    org.springframework.web.client.RestTemplate: DEBUG
+
+app:
+  frontend:
+    base-url: "http://localhost:5173"
+  password-reset:
+    base-url: "http://localhost:5173/password/reset"
+  file-storage:
+    root-dir: ./uploads
