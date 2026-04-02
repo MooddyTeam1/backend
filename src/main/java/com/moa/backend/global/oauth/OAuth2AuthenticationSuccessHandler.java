@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -30,9 +31,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final AuthService authService;
 
-    // TODO: 나중에 @Value("${app.oauth2.redirect-uri}") 등으로 yml에서 빼는 게 좋음
-    private static final String FRONTEND_OAUTH2_CALLBACK_URL =
-            "http://localhost:5173/oauth2/callback";
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
 
     @Override
     public void onAuthenticationSuccess(
@@ -56,6 +56,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String email = oauth2User.getAttribute("email");
         Long userId = extractUserId(oauth2User.getAttribute("userId"));
 
+        String callbackUrl = frontendBaseUrl + "/oauth2/callback";
+
         if (userId == null && email == null) {
             log.error("❌ OAuth2 성공 후 사용자 식별 정보를 찾을 수 없습니다. attributes={}",
                     oauth2User.getAttributes());
@@ -63,7 +65,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             getRedirectStrategy().sendRedirect(
                     request,
                     response,
-                    FRONTEND_OAUTH2_CALLBACK_URL + "?error=missing_user_info"
+                    callbackUrl + "?error=missing_user_info"
             );
             return;
         }
@@ -73,7 +75,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         // 4️⃣ 프론트 콜백 URL로 리다이렉트 + 쿼리스트링으로 토큰 전달
         String redirectUrl = UriComponentsBuilder
-                .fromUriString(FRONTEND_OAUTH2_CALLBACK_URL)
+                .fromUriString(callbackUrl)
                 .queryParam("accessToken", tokenResponse.getAccessToken())
                 .queryParam("refreshToken", tokenResponse.getRefreshToken())
                 .build()

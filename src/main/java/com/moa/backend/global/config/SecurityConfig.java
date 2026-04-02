@@ -107,9 +107,16 @@ public class SecurityConfig {
                             String message = exception.getMessage();
                             log.error("❌ OAuth2 로그인 실패: {}", message, exception);
 
-                            String frontendUrl = frontendBaseUrl;
-                            String redirect = frontendUrl
-                                    + "?social=google&error="
+                            String provider = "unknown";
+                            String requestUri = request.getRequestURI();
+                            if (requestUri != null && requestUri.contains("/code/")) {
+                                provider = requestUri.substring(requestUri.lastIndexOf("/code/") + "/code/".length());
+                            }
+
+                            String redirect = frontendBaseUrl
+                                    + "/oauth2/callback?social="
+                                    + java.net.URLEncoder.encode(provider, java.nio.charset.StandardCharsets.UTF_8)
+                                    + "&error="
                                     + java.net.URLEncoder.encode(
                                     message != null ? message : "OAuth2 login failed",
                                     java.nio.charset.StandardCharsets.UTF_8
