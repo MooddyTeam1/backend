@@ -83,17 +83,6 @@ public class Reward {
     @Column(name = "disclosure_category_specific_json", columnDefinition = "TEXT")
     private String disclosureCategorySpecificJson;
 
-    // ===================== 재고/락 필드 =====================
-
-    /**
-     * 한글 설명: 낙관적 락(Optimistic Lock)을 위한 버전 필드.
-     * JPA가 UPDATE 시 자동으로 version 값을 확인하고 증가시킨다.
-     * 동시에 여러 트랜잭션이 같은 재고를 수정하려 할 때 충돌을 감지한다.
-     */
-    @Version
-    @Column(name = "version")
-    private Long version;
-
     // ===================== 연관관계 =====================
 
     // 한글 설명: 리워드 직속 옵션 그룹 목록 (색상/사이즈 등)

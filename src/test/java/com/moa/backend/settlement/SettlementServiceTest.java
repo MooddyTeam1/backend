@@ -112,7 +112,7 @@ class SettlementServiceTest {
                 "encodedPw",
                 "테스터"
         ));
-        Maker maker = makerRepository.save(Maker.create(user, "테스트메이커"));
+        Maker maker = makerRepository.save(Maker.createIndividual(user, "테스트메이커"));
         Project project = projectRepository.save(Project.builder()
                 .maker(maker)
                 .title("정산 테스트 " + UUID.randomUUID())

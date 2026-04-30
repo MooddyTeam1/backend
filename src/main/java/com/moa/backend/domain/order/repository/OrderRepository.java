@@ -27,6 +27,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // ===================== 기본 조회 메서드 =====================
 
     /**
+     * K6 부하 테스트 초기화용: 특정 프로젝트에서 loadtest 유저 이메일 접두로 주문만 조회.
+     */
+    List<Order> findAllByProject_IdAndUser_EmailStartingWith(Long projectId, String emailPrefix);
+
+    /**
      * 주문 코드로 단건 조회
      */
     Optional<Order> findByOrderCode(String orderCode);

@@ -117,7 +117,7 @@ class PlatformWalletServiceTest {
                 "encodedPw",
                 "플랫폼서포터"
         ));
-        Maker maker = makerRepository.save(Maker.create(user, "플랫폼메이커"));
+        Maker maker = makerRepository.save(Maker.createIndividual(user, "플랫폼메이커"));
         Project project = projectRepository.save(Project.builder()
                 .maker(maker)
                 .title("플랫폼 프로젝트 " + UUID.randomUUID())

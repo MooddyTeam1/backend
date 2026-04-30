@@ -135,7 +135,7 @@ class PaymentServiceTest {
                 "encodedPw",
                 "결제테스터"
         ));
-        Maker maker = makerRepository.save(Maker.create(user, "결제테스트메이커"));
+        Maker maker = makerRepository.save(Maker.createIndividual(user, "결제테스트메이커"));
         Project project = projectRepository.save(Project.builder()
                 .maker(maker)
                 .title("결제 테스트 프로젝트")

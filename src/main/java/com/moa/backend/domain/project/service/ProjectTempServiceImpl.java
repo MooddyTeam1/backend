@@ -1,5 +1,6 @@
 package com.moa.backend.domain.project.service;
 
+import com.moa.backend.domain.inventory.redis.RewardStockRedisRepository;
 import com.moa.backend.domain.maker.repository.MakerRepository;
 import com.moa.backend.domain.project.dto.CreateProject.CreateProjectRequest;
 import com.moa.backend.domain.project.dto.CreateProject.CreateProjectResponse;
@@ -10,6 +11,7 @@ import com.moa.backend.domain.project.entity.ProjectLifecycleStatus;
 import com.moa.backend.domain.project.entity.ProjectReviewStatus;
 import com.moa.backend.domain.project.repository.ProjectRepository;
 import com.moa.backend.domain.reward.dto.RewardRequest;
+import com.moa.backend.domain.reward.entity.Reward;
 import com.moa.backend.domain.reward.factory.RewardFactory;
 import com.moa.backend.domain.reward.repository.RewardRepository;
 import com.moa.backend.global.error.AppException;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class ProjectTempServiceImpl implements ProjectTempService {
     private final RewardFactory rewardFactory;
     private final RewardRepository rewardRepository;
     private final EntityManager entityManager;
+    private final RewardStockRedisRepository rewardStockRedisRepository;
 
     // 프로젝트 임시 저장 (수정까지같이)
     @Override
@@ -85,6 +89,20 @@ public class ProjectTempServiceImpl implements ProjectTempService {
 
         if (projectId == null) {
             projectRepository.save(project);
+        }
+
+        // 기존 리워드의 Redis 재고 키를 먼저 삭제한다.
+        // — 리워드 ID는 DB 삭제 후 접근 불가하므로 flush 전에 수행해야 한다.
+        // — DRAFT 프로젝트는 LIVE 상태가 아니므로 실제 주문 유입은 없지만,
+        //   애플리케이션 기동 시 StockSyncService 가 전 리워드를 로드하기 때문에
+        //   삭제된 리워드의 키가 Redis 에 남아 있으면 의미 없는 고아(orphan) 키가 된다.
+        List<Reward> oldRewards = project.getRewards();
+        if (oldRewards != null) {
+            oldRewards.forEach(r -> {
+                if (r.getStockQuantity() != null) {
+                    rewardStockRedisRepository.deleteStockKey(r.getId());
+                }
+            });
         }
 
         // 기존 리워드 전체 삭제

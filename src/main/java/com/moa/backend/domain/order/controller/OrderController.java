@@ -3,7 +3,7 @@ package com.moa.backend.domain.order.controller;
 import com.moa.backend.domain.order.dto.OrderCreateRequest;
 import com.moa.backend.domain.order.dto.OrderDetailResponse;
 import com.moa.backend.domain.order.dto.OrderPageResponse;
-import com.moa.backend.domain.order.service.OrderService;
+import com.moa.backend.domain.order.service.OrderRedisFacade;
 import com.moa.backend.global.error.ErrorResponse;
 import com.moa.backend.global.security.jwt.JwtUserPrincipal;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Order", description = "주문 생성/조회/취소 API")
 public class OrderController {
 
-    private final OrderService orderService;
+    private final OrderRedisFacade orderRedisFacade;
 
     /**
      * 서포터가 주문을 신규 생성한다.
@@ -54,7 +54,7 @@ public class OrderController {
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @Valid @RequestBody OrderCreateRequest request
     ) {
-        OrderDetailResponse response = orderService.createOrder(principal.getId(), request);
+        OrderDetailResponse response = orderRedisFacade.createOrder(principal.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -73,7 +73,7 @@ public class OrderController {
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @Parameter(description = "조회할 주문 ID", example = "1400") @PathVariable Long orderId
     ) {
-        OrderDetailResponse response = orderService.getOrder(principal.getId(), orderId);
+        OrderDetailResponse response = orderRedisFacade.getOrder(principal.getId(), orderId);
         return ResponseEntity.ok(response);
     }
 
@@ -92,7 +92,7 @@ public class OrderController {
             @Parameter(description = "페이지 번호(0부터 시작)", example = "0") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기(기본 10, 권장 최대 100)", example = "10") @RequestParam(defaultValue = "10") int size
     ) {
-        OrderPageResponse response = orderService.getOrders(principal.getId(), page, size);
+        OrderPageResponse response = orderRedisFacade.getOrders(principal.getId(), page, size);
         return ResponseEntity.ok(response);
     }
 
@@ -106,14 +106,14 @@ public class OrderController {
             @ApiResponse(responseCode = "401", description = "로그인 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "403", description = "주문 취소 권한 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "주문을 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "이미 결제 완료되어 취소 불가", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "409", description = "이미 결제 완료되어 취소 불가 등 비즈니스 충돌", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<Void> cancelOrder(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @Parameter(description = "취소할 주문 ID", example = "1400") @PathVariable Long orderId,
             @Parameter(description = "취소 사유(운영 로그 기록용)", example = "색상이 예상과 달라 주문 취소") @RequestParam(required = false, defaultValue = "사용자 취소") String reason
     ) {
-        orderService.cancelOrder(principal.getId(), orderId, reason);
+        orderRedisFacade.cancelOrder(principal.getId(), orderId, reason);
         return ResponseEntity.ok().build();
     }
 }

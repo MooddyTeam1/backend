@@ -1,0 +1,67 @@
+K6 선착순 부하 — 실행 순서
+========================
+
+[오진 진단] PowerShell 에서 vus_max / NETWORK / data_received 같은 줄이 "CommandNotFound" 로 나오면
+  k6 요약 텍스트를 터미널에 붙여 넣은 것이다. export-tokens.ps1 오류가 아니다. 빈 줄에서 새 명령만 입력한다.
+
+[토큰 추출] gradlew.bat 가 "올바른 응용 프로그램이 아닙니다" 면 gradlew 는 쓰지 말 것.
+  권장: backend 루트에서  .\export-tokens.ps1  또는  export-tokens.cmd  (java -jar gradle-wrapper.jar)
+  k6\export-tokens.ps1 은 루트 export-tokens.ps1 로만 넘긴다(구버전 gradlew 호출 없음).
+  export-tokens 스크립트는 GRADLE_USER_HOME=C:\gradle-moa-cache 를 설정한다(한글 사용자 폴더 아래 .gradle 회피).
+  수동으로 gradlew 를 쓸 때도:  $env:GRADLE_USER_HOME='C:\gradle-moa-cache'
+  k6 실행 결과(표·로그)를 PowerShell에 붙여넣지 말 것 — 줄이 명령으로 실행되어 오류가 난다.
+
+로컬 기동 시 환경변수 (예: PowerShell)
+--------------------------------------
+  $env:NAVER_MAIL_USERNAME='dev@moa.local'
+  $env:NAVER_MAIL_PASSWORD='dummy'
+  $env:GOOGLE_CLIENT_ID='dummy'
+  $env:GOOGLE_CLIENT_SECRET='dummy'
+  $env:KAKAO_CLIENT_ID='dummy'
+  $env:TOSS_CLIENT_KEY='test'
+  $env:TOSS_SECRET_KEY='test'
+  $env:OPENAI_API_KEY='sk-dummy'
+
+1) 애플리케이션 기동 (PostgreSQL 등 DB 연결 확인)
+
+1b) (선택) 이전 부하로 주문·재고가 쌓였다면 dev 에서만 초기화
+   POST http://localhost:8080/public/k6-test-reset
+   → loadtest.k6.* 유저 주문 삭제 + 해당 프로젝트 리워드 재고 시드값(100) 복구
+
+2) POST /public/test-init 호출
+   - 메이커 시드(k6.maker.seed@moa.local) + loadtest.k6.000001~001000@moa.local 유저 + 펀딩 프로젝트/리워드 생성
+   - 응답에 나온 Project ID, Reward ID를 k6/k6-load-test.js 의 CONFIG.projectId / rewardId 에 반영
+
+3) 토큰 → k6/tokens.json (401 방지: 서버가 직접 발급하는 방식 권장)
+   A) 권장: 스프링이 이미 떠 있고 프로필이 dev 일 때
+      - GET http://localhost:8080/public/k6-tokens  → JSON 배열(액세스 토큰 문자열들)
+      - backend 루트에서:  .\fetch-k6-tokens.ps1
+        (다른 포트면:  .\fetch-k6-tokens.ps1 -BaseUrl 'http://localhost:9090')
+      - 실행 중인 서버의 JwtTokenProvider 로 생성하므로 JWT_SECRET 불일치가 나지 않음.
+   B) 대안: Gradle 로 DB 에 붙여 파일만 씀 (export-tokens.ps1 / export-tokens.cmd)
+      - gradle/wrapper/gradle-wrapper.jar 필수. gradlew.bat 는 손상 시 쓰지 말 것.
+      - JWT 는 스프링과 동일한 비밀키로 맞출 것 (build.gradle 기본값 / OS JWT_SECRET / gradle.properties jwtSecret).
+      - IDE Run 구성에만 JWT_SECRET 을 넣었다면 터미널에서도 동일 값 후 export-tokens.ps1
+   - 생성물: k6/tokens.json (gitignore 됨)
+
+   Windows + 한글 경로에서 TokenExportTest 가 ClassNotFound 로 실패하면:
+     subst B: "C:\실제\프로젝트\backend경로"
+     cd B:\
+     gradlew.bat -g C:\gradle-moa-cache test --tests com.moa.backend.global.init.TokenExportTest
+     subst B: /d
+
+4) k6 실행
+   - 저장소 루트(backend): k6 run k6/k6-load-test.js
+   - 또는 k6 폴더에서: k6 run k6-load-test.js
+   - 토큰 경로 수동 지정: $env:TOKENS_FILE='C:\...\tokens.json' (PowerShell)
+   - Gradle로 토큰 발급 시와 서버 기동 시 JWT_SECRET 이 동일해야 401이 나지 않음 (dev 프로필은 액세스 토큰 24h)
+
+Gradle: GradleWorkerMain ClassNotFoundException (compile 시)
+   - build.gradle 에서 JavaCompile 을 in-process(options.fork=false) 로 두었음. 그래도 실패하면:
+   - .\export-tokens.ps1 (GRADLE_USER_HOME=C:\gradle-moa-cache 설정됨) 또는 CMD 의 export-tokens.cmd
+   - gradlew --stop 후 %USERPROFILE%\.gradle\caches 재시도, 또는 subst 로 영문 드라이브에 프로젝트 연결
+
+비고
+----
+- 메이커/로드유저 공통 비밀번호(시드용): UserSeedingService 참고
+- 프로젝트 제목이 이미 있으면 프로젝트는 스킵되지만 유저 시드는 매번 부족분만 채움

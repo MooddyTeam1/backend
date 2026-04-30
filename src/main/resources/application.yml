@@ -51,7 +51,7 @@ spring:
           starttls:
             enable: false
 
-# 공통 토큰 & 외부 API 설정
+# 공통 토큰 & 외부 API 설정 (콜론 뒤 기본값은 build.gradle 의 defaultJwtSecret 과 동일하게 유지)
 jwt:
   secret: ${JWT_SECRET:change-me-to-secure-key-change-this-in-prod}
   access-token-validity-in-seconds: 3600
@@ -79,3 +79,9 @@ app:
     token-validity-minutes: 60
   file-storage:
     image-dir: images
+server:
+  tomcat:
+    threads:
+      max: 200 # 동시에 일할 일꾼 늘리기
+    accept-count: 1000 # 대기열 늘리기
+    max-connections: 10000 # 최대 연결 수 늘리기

@@ -1,5 +1,8 @@
 package com.moa.backend.global.error;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -10,6 +13,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private final Environment environment;
+
+    public GlobalExceptionHandler(Environment environment) {
+        this.environment = environment;
+    }
 
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ErrorResponse> handleAppException(AppException ex) {
@@ -69,13 +80,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknownException(Exception ex) {
         ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
-        ex.printStackTrace();
+        UnhandledExceptionDiagnostics.Result diag = UnhandledExceptionDiagnostics.analyze(ex);
+        log.error(
+                "[Unhandled][{}] rootCause={} summary={}",
+                diag.category(),
+                diag.rootCauseClassName(),
+                diag.shortSummary(),
+                ex);
+
+        String diagnosticPayload = null;
+        if (environment.matchesProfiles("dev")) {
+            diagnosticPayload =
+                    String.format(
+                            "%s | root=%s | %s",
+                            diag.category().name(), diag.rootCauseClassName(), diag.shortSummary());
+        }
+
         return ResponseEntity.status(errorCode.getStatus())
-            .body(new ErrorResponse(
-                errorCode.getStatus().value(),
-                errorCode.getCode(),
-                errorCode.getDefaultMessage()
-            ));
+                .body(
+                        new ErrorResponse(
+                                errorCode.getStatus().value(),
+                                errorCode.getCode(),
+                                errorCode.getDefaultMessage(),
+                                diagnosticPayload));
     }
 }
 

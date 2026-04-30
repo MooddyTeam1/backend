@@ -108,7 +108,7 @@ class ProjectWalletServiceTest {
                 "서포터"
         ));
 
-        Maker maker = makerRepository.save(Maker.create(user, "테스트메이커"));
+        Maker maker = makerRepository.save(Maker.createIndividual(user, "테스트메이커"));
 
         Project project = Project.builder()
                 .maker(maker)

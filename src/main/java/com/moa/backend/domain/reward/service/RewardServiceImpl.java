@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.moa.backend.domain.maker.entity.Maker;
 import com.moa.backend.domain.reward.dto.RewardResponse;
+import com.moa.backend.domain.inventory.redis.StockSyncService;
 import com.moa.backend.domain.reward.dto.RewardStockIncreaseRequest;
 import com.moa.backend.domain.reward.dto.RewardStockIncreaseResponse;
 import com.moa.backend.domain.reward.entity.Reward;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RewardServiceImpl implements RewardService {
 
     private final RewardRepository rewardRepository;
+    private final StockSyncService stockSyncService;
 
     @Override
     @Transactional
@@ -33,6 +35,8 @@ public class RewardServiceImpl implements RewardService {
         }
 
         reward.increaseStock(request.getQuantity());
+
+        stockSyncService.syncSingleRewardEntity(reward);
 
         return new RewardStockIncreaseResponse(reward.getId(), reward.getStockQuantity());
     }

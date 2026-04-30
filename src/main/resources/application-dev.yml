@@ -1,8 +1,12 @@
 # src/main/resources/application-dev.yml
 
 # ngrok 등 프록시 환경에서 https 리다이렉트를 정상 처리하기 위한 설정
+# k6 1000 VU 근처: 기본 톰캣 200 스레드·Hikari 10 연결은 병목되기 쉬움(로컬 전용 튜닝)
 server:
   forward-headers-strategy: framework
+  tomcat:
+    threads:
+      max: 500
 
 spring:
   config:
@@ -15,8 +19,11 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: moa
     password: moa1234
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 20
 
-  # 로컬 도커의 Redis 연결 (분산 락, 캐싱용)
+  # 로컬 도커 Redis — Phase 3 재고 Lua(StringRedisTemplate) + (필요 시) 기타 캐시
   data:
     redis:
       host: localhost
@@ -52,7 +59,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info, prometheus
+        include: health, info, prometheus, metrics
   metrics:
     tags:
       application: moa-backend-dev
@@ -61,8 +68,20 @@ logging:
   level:
     org.springframework.security.oauth2.client: DEBUG
     org.springframework.web.client.RestTemplate: DEBUG
+    com.zaxxer.hikari: DEBUG          # 커넥션 풀 상세 로그
+    com.zaxxer.hikari.HikariPool: DEBUG
+    org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl: DEBUG
+    
+
+# 로컬 부하 테스트(k6) 시 짧은 액세스 토큰으로 인한 401 방지 (TokenExportTest와 서버가 동일 JWT_SECRET 사용 전제)
+jwt:
+  access-token-validity-in-seconds: 86400
 
 app:
+  stock:
+    redis:
+      # 기동 시 DB → Redis 전 리워드 재고 동기화 (대량 DB면 false 고려)
+      sync-on-startup: true
   frontend:
     base-url: "http://localhost:5173"
   password-reset:

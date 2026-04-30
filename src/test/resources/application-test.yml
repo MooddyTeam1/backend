@@ -1,4 +1,20 @@
+# Redis 미기동 CI/로컬에서 컨텍스트 기동만 할 때: 동기화 끔 + Redis 헬스 비활성(선택적 연결 지연)
+app:
+  stock:
+    redis:
+      sync-on-startup: false
+
+management:
+  health:
+    redis:
+      enabled: false
+
 spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
   datasource:
     url: jdbc:h2:mem:moa-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver

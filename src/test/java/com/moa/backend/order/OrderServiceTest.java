@@ -68,7 +68,7 @@ class OrderServiceTest {
                 "encodedPw",
                 "주문테스터"
         ));
-        Maker maker = makerRepository.save(Maker.create(user, "주문테스트메이커"));
+        Maker maker = makerRepository.save(Maker.createIndividual(user, "주문테스트메이커"));
         Project project = projectRepository.save(Project.builder()
                 .maker(maker)
                 .title("주문 테스트 프로젝트")

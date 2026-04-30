@@ -8,6 +8,8 @@ import com.moa.backend.domain.order.entity.DeliveryStatus;
 import com.moa.backend.domain.order.entity.Order;
 import com.moa.backend.domain.order.entity.OrderItem;
 import com.moa.backend.domain.order.entity.OrderStatus;
+import com.moa.backend.domain.inventory.redis.RewardStockRedisRepository;
+import com.moa.backend.domain.order.metrics.OrderCreationMetrics;
 import com.moa.backend.domain.order.repository.OrderRepository;
 import com.moa.backend.domain.payment.entity.Payment;
 import com.moa.backend.domain.payment.repository.PaymentRepository;
@@ -21,14 +23,14 @@ import com.moa.backend.domain.user.entity.User;
 import com.moa.backend.domain.user.repository.UserRepository;
 import com.moa.backend.global.error.AppException;
 import com.moa.backend.global.error.ErrorCode;
-import jakarta.persistence.OptimisticLockException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -40,8 +42,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * 주문 생성/조회 비즈니스 로직을 담당한다.
- * 재고 차감, 주문 코드 생성, 배송지/아이템 조립을 처리한다.
+ * 주문 생성/조회/취소 비즈니스 로직.
+ * <p>
+ * 재고 차감·검증·Order 조립은 이 클래스가 담당한다.
+ * 재고 선차감(Redis Lua)은 {@link OrderRedisFacade} · {@link OrderStockRedisReservationService} 가 담당하고,
+ * 이 클래스는 트랜잭션 내 DB 재고 반영·주문 저장에 집중한다.
  */
 @Slf4j
 @Service
@@ -50,7 +55,6 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private static final DateTimeFormatter ORDER_CODE_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
-    private static final int MAX_RETRY_ATTEMPTS = 3;
 
     private final OrderRepository orderRepository;
     private final ProjectRepository projectRepository;
@@ -58,53 +62,17 @@ public class OrderService {
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
+    private final OrderCreationMetrics orderCreationMetrics;
+    private final RewardStockRedisRepository rewardStockRedisRepository;
 
     /**
      * 서포터 주문을 생성하고 상세 응답을 반환한다.
-     * 낙관적 락 충돌 발생 시 자동으로 재시도한다.
-     */
-    public OrderDetailResponse createOrder(Long userId, OrderCreateRequest request) {
-        int attempt = 0;
-        
-        while (attempt < MAX_RETRY_ATTEMPTS) {
-            try {
-                return createOrderInternal(userId, request);
-                
-            } catch (OptimisticLockException e) {
-                attempt++;
-                log.warn("낙관적 락 충돌 발생 (시도 {}/{}): userId={}, projectId={}", 
-                    attempt, MAX_RETRY_ATTEMPTS, userId, request.getProjectId());
-                
-                if (attempt >= MAX_RETRY_ATTEMPTS) {
-                    log.error("최대 재시도 횟수 초과: userId={}, projectId={}", 
-                        userId, request.getProjectId());
-                    throw new AppException(
-                        ErrorCode.BUSINESS_CONFLICT,
-                        "주문이 집중되어 처리할 수 없습니다. 잠시 후 다시 시도해주세요."
-                    );
-                }
-                
-                // 지수 백오프: 50ms, 100ms, 150ms
-                try {
-                    long sleepTime = 50L * attempt;
-                    log.debug("{}ms 대기 후 재시도합니다.", sleepTime);
-                    Thread.sleep(sleepTime);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new AppException(ErrorCode.INTERNAL_ERROR, "주문 처리 중 오류가 발생했습니다.");
-                }
-            }
-        }
-        
-        throw new AppException(ErrorCode.INTERNAL_ERROR, "주문 처리 중 오류가 발생했습니다.");
-    }
-
-    /**
-     * 실제 주문 생성 로직.
-     * 낙관적 락 충돌 시 OptimisticLockException을 던진다.
+     * <p>
+     * 유한 재고는 {@link OrderRedisFacade} 에서 Redis Lua 로 이미 선차감된 뒤 호출된다.
+     * 여기서는 DB {@code stock_quantity} 를 동일 수량만큼 줄여 Redis 와 맞춘다.
      */
     @Transactional
-    private OrderDetailResponse createOrderInternal(Long userId, OrderCreateRequest request) {
+    public OrderDetailResponse createOrder(Long userId, OrderCreateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
@@ -185,44 +153,20 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        log.info("주문 생성 완료: orderId={}, userId={}, totalAmount={}", 
-            savedOrder.getId(), userId, totalAmount);
+        log.info("주문 생성 완료: orderId={}, userId={}, totalAmount={}",
+                savedOrder.getId(), userId, totalAmount);
+        orderCreationMetrics.recordSuccess();
 
         return OrderDetailResponse.from(savedOrder);
     }
 
     /**
-     * 사용자 소유 주문을 상세 조회한다.
+     * 주문 취소.
+     * <p>
+     * 미결제 취소 시 DB {@link Reward#restoreStock} 와 함께 Redis 재고 키가 있으면 {@code INCRBY} 한다.
+     * (결제 완료 취소 경로는 재고 복구 없음 — 기존과 동일.)
      */
-    @Transactional(Transactional.TxType.SUPPORTS)
-    public OrderDetailResponse getOrder(Long userId, Long orderId) {
-        Order order = orderRepository.findWithItemsByIdAndUserId(orderId, userId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-        Payment payment = paymentRepository.findByOrder(order).orElse(null);
-        return OrderDetailResponse.from(order, payment);
-    }
-
-    /**
-     * 사용자 주문 목록을 페이지 단위로 최신순 조회한다.
-     */
-    @Transactional(Transactional.TxType.SUPPORTS)
-    public OrderPageResponse getOrders(Long userId, int page, int size) {
-        if (page < 0) {
-            throw new AppException(ErrorCode.VALIDATION_FAILED, "page는 0 이상이어야 합니다.");
-        }
-        if (size <= 0) {
-            throw new AppException(ErrorCode.VALIDATION_FAILED, "size는 1 이상이어야 합니다.");
-        }
-
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Order> orderPage = orderRepository.findAllByUserId(userId, pageRequest);
-
-        return OrderPageResponse.fromOrderPage(orderPage);
-    }
-
-    /**
-     * 사용자 주문을 취소한다.
-     */
+    @Transactional
     public void cancelOrder(Long userId, Long orderId, String reason) {
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
@@ -241,14 +185,60 @@ public class OrderService {
 
         order.getOrderItems().forEach(item -> {
             if (item.getReward() != null) {
-                item.getReward().restoreStock(item.getQuantity());
+                var reward = item.getReward();
+                reward.restoreStock(item.getQuantity());
+                if (reward.getStockQuantity() != null) {
+                    rewardStockRedisRepository.incrementIfPresent(reward.getId(), item.getQuantity());
+                }
             }
         });
 
         order.cancel();
         orderRepository.save(order);
-        
+
         log.info("주문 취소 완료: orderId={}, userId={}, reason={}", orderId, userId, reason);
+    }
+
+    /**
+     * 주문 ID와 사용자 ID로 해당 주문의 projectId 를 조회한다.
+     * <p>
+     * (레거시/외부용) 취소 전 주문 소유·프로젝트 확인에 사용할 수 있다.
+     * 존재하지 않는 주문이면 {@link ErrorCode#ORDER_NOT_FOUND} 를 즉시 반환한다.
+     */
+    @Transactional(readOnly = true)
+    public Long resolveProjectIdForOrder(Long userId, Long orderId) {
+        return orderRepository.findByIdAndUserId(orderId, userId)
+                .map(order -> order.getProject().getId())
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+    }
+
+    /**
+     * 사용자 소유 주문을 상세 조회한다.
+     */
+    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+    public OrderDetailResponse getOrder(Long userId, Long orderId) {
+        Order order = orderRepository.findWithItemsByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        Payment payment = paymentRepository.findByOrder(order).orElse(null);
+        return OrderDetailResponse.from(order, payment);
+    }
+
+    /**
+     * 사용자 주문 목록을 페이지 단위로 최신순 조회한다.
+     */
+    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+    public OrderPageResponse getOrders(Long userId, int page, int size) {
+        if (page < 0) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "page는 0 이상이어야 합니다.");
+        }
+        if (size <= 0) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "size는 1 이상이어야 합니다.");
+        }
+
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Order> orderPage = orderRepository.findAllByUserId(userId, pageRequest);
+
+        return OrderPageResponse.fromOrderPage(orderPage);
     }
 
     /**

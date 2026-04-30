@@ -74,6 +74,9 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/actuator/health",
+                                "/actuator/prometheus",
+                                "/actuator/metrics",
+                                "/actuator/metrics/**",
                                 "/api/health",
                                 "/h2-console/**",
                                 "/login",        // 🔥 추가

@@ -125,7 +125,7 @@ class PaymentSettlementFlowTest {
                 "encodedPw",
                 "흐름테스터"
         ));
-        Maker maker = makerRepository.save(Maker.create(user, "흐름메이커"));
+        Maker maker = makerRepository.save(Maker.createIndividual(user, "흐름메이커"));
         Project project = projectRepository.save(Project.builder()
                 .maker(maker)
                 .title("플로우 프로젝트")

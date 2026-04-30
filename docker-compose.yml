@@ -43,6 +43,9 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+      # k6 Docker 가 experimental-prometheus-rw 로 메트릭 푸시할 때 필요
+      - '--web.enable-remote-write-receiver'
+      - '--enable-feature=native-histograms'
     restart: always
 
   # ==========================================
@@ -58,9 +61,39 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana-local-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./k6.json:/dashboard/k6.json:ro
     depends_on:
       - prometheus
     restart: always
+
+  # ==========================================
+  # 5. k6 부하 (선택) — Prometheus remote-write + 호스트의 스프링 API
+  #    실행: docker compose --profile load run --rm k6
+  #    스프링은 호스트에서 8080 (dev), DB/Redis 는 compose 의 postgres/redis 사용
+  # ==========================================
+  k6:
+    profiles:
+      - load
+    image: grafana/k6:latest
+    container_name: moa-k6-load
+    working_dir: /scripts
+    volumes:
+      - ./k6:/scripts
+    command: run -o experimental-prometheus-rw /scripts/k6-load-test.js
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true
+      - BASE_URL=http://host.docker.internal:8080
+      - TOKENS_FILE=tokens.json
+      - K6_REPORT_DIR=/scripts/reports
+      # Grafana 대시보드 testid 드롭다운 필터. 다른 값 쓰려면: K6_TEST_ID=my-run
+      - K6_TEST_ID=moa-order
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      - prometheus
+    restart: 'no'
 
 volumes:
   postgres-local-data:

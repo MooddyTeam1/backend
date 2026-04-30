@@ -121,7 +121,7 @@ class MakerWalletServiceTest {
                 "encodedPw",
                 "메이커유저"
         ));
-        return makerRepository.save(Maker.create(user, "메이커-" + UUID.randomUUID()));
+        return makerRepository.save(Maker.createIndividual(user, "메이커-" + UUID.randomUUID()));
     }
 
     private Settlement createSettlement(Maker maker) {

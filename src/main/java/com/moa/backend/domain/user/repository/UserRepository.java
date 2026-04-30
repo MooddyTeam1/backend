@@ -51,4 +51,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             java.time.LocalDateTime startDateTime,
             java.time.LocalDateTime endDateTime
     );
+
+    long countByEmailStartingWith(String prefix);
+
+    List<User> findByEmailStartingWithOrderByIdAsc(String prefix);
 }

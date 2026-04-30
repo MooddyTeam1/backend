@@ -10,7 +10,7 @@ description = 'Demo project for Spring Boot'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
@@ -24,6 +24,26 @@ repositories {
     mavenCentral()
 }
 
+/**
+ * application.yml 의 jwt.secret 과 동일한 해석:
+ *   ${JWT_SECRET:change-me-to-secure-key-change-this-in-prod}
+ * 이 문자열을 바꾸면 application.yml 기본값도 같이 맞출 것.
+ */
+ext.defaultJwtSecret = 'change-me-to-secure-key-change-this-in-prod'
+
+/** OS JWT_SECRET → gradle.properties jwtSecret → application.yml 기본값 (스프링 부트와 동일 순서) */
+String resolveJwtSecretAlignedWithSpring() {
+    def fromEnv = System.getenv('JWT_SECRET')
+    if (fromEnv != null && !fromEnv.isBlank()) {
+        return fromEnv
+    }
+    def fromProp = findProperty('jwtSecret')
+    if (fromProp != null && !fromProp.toString().isBlank()) {
+        return fromProp.toString()
+    }
+    return defaultJwtSecret
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -35,6 +55,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'io.micrometer:micrometer-core'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    // Phase 3: Redis Lua 재고 — Lettuce (spring-boot-starter-data-redis)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'net.datafaker:datafaker:2.4.1'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -48,6 +73,30 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.incremental = false
+    // Windows + 비ASCII 경로에서 별도 Worker JVM이 GradleWorkerMain 을 못 찾는(ClassNotFoundException) 경우가 있어
+    // 컴파일을 Gradle 데몬 프로세스 안에서 수행해 Worker Daemon 을 우회한다.
+    options.fork = false
+}
+
+/** Gradle test 워커 없이 k6/tokens.json 생성 (한글 경로에서 :test 가 ClassNotFound 일 때) */
+tasks.register('exportK6Tokens', JavaExec) {
+    group = 'verification'
+    description = 'TokenExportCli 로 k6/tokens.json 작성'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.moa.backend.global.init.TokenExportCli'
+    workingDir = layout.projectDirectory.asFile
+    dependsOn compileTestJava
+    environment 'JWT_SECRET', resolveJwtSecretAlignedWithSpring()
+}
+
 tasks.named('test') {
     useJUnitPlatform()
+    // Windows + non-ASCII 프로젝트 경로에서 Gradle 테스트 워커가 testClasses를 못 찾는 경우 완화
+    jvmArgs '-Dfile.encoding=UTF-8', '-Dsun.jnu.encoding=UTF-8'
+    maxParallelForks = 1
+
+    // TokenExportTest 등: 스프링과 동일한 jwt.secret (OS > gradle.properties > application.yml 기본값)
+    environment 'JWT_SECRET', resolveJwtSecretAlignedWithSpring()
 }
