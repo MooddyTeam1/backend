@@ -39,6 +39,7 @@ out/
 .vscode/
 /docs/
 *.md
+!/README.md
 k6/tokens.json
 k6/reports/*
 !k6/reports/.gitkeep
